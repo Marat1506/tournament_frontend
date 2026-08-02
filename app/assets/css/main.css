@@ -1,0 +1,76 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    @apply antialiased;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    @apply text-gray-900;
+  }
+
+  body.theme-light {
+    @apply bg-[#f5f7fb];
+  }
+
+  body.theme-dark {
+    @apply bg-[#0b0f17] text-white;
+  }
+}
+
+@layer components {
+  .page-container {
+    @apply mx-auto w-full max-w-lg px-4 pb-28 pt-2;
+  }
+
+  .page-light {
+    @apply min-h-screen bg-[#f5f7fb];
+  }
+
+  .page-dark {
+    @apply min-h-screen bg-[#0b0f17] text-white;
+  }
+
+  .card {
+    @apply rounded-2xl bg-white shadow-sm ring-1 ring-black/5;
+  }
+
+  .btn-primary {
+    @apply flex min-h-[56px] w-full items-center gap-3 rounded-2xl bg-brand-600 px-4 text-left text-base font-semibold text-white transition active:scale-[0.99];
+  }
+
+  .btn-secondary {
+    @apply flex min-h-[56px] w-full items-center gap-3 rounded-2xl bg-white px-4 text-left text-base font-semibold text-gray-900 ring-1 ring-black/5 transition active:scale-[0.99];
+  }
+
+  .btn-primary-solid {
+    @apply flex min-h-[52px] w-full items-center justify-center rounded-2xl bg-brand-600 px-4 text-base font-semibold text-white shadow-lg transition active:scale-[0.99];
+  }
+
+  .input-field {
+    @apply w-full rounded-xl border-0 bg-white px-4 py-3.5 text-base shadow-sm ring-1 ring-black/5 outline-none focus:ring-2 focus:ring-brand-600;
+  }
+
+  .chip {
+    @apply shrink-0 rounded-full px-4 py-2 text-sm font-medium transition;
+  }
+
+  .chip-active {
+    @apply chip bg-brand-600 text-white;
+  }
+
+  .chip-inactive {
+    @apply chip bg-white text-gray-600 ring-1 ring-black/5;
+  }
+
+  .quick-icon {
+    @apply flex h-14 w-14 items-center justify-center rounded-full ring-1 ring-white/15 bg-white/5 text-white;
+  }
+
+  .search-card {
+    @apply card flex min-h-[148px] flex-col items-center justify-center gap-3 p-4 text-center transition active:scale-[0.99];
+  }
+}
