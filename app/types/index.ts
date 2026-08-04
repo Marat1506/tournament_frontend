@@ -3,6 +3,52 @@ export interface User {
   email: string
   name?: string
   role: string
+  avatar_url?: string
+  belt?: string
+  locale?: string
+  email_verified?: boolean
+  email_verified_at?: string
+}
+
+export interface ProfileStats {
+  found_photos: number
+  purchased_photos: number
+  tournaments_count: number
+}
+
+export interface ProfilePhoto extends Photo {
+  purchased: boolean
+  is_favorite: boolean
+}
+
+export interface ProfilePhotosResult {
+  data: ProfilePhoto[]
+  pagination: Pagination
+  counts: {
+    all: number
+    purchased: number
+    unpurchased: number
+    favorites: number
+  }
+}
+
+export interface ProfileTournament {
+  id: string
+  name: string
+  slug: string
+  date?: string
+  cover_image?: string
+  found_count: number
+  purchased_count: number
+}
+
+export interface ClientSearchSession {
+  id: string
+  tournament_id?: string
+  tournament_name?: string
+  search_type: string
+  result_count: number
+  created_at: string
 }
 
 export interface AuthResponse {
@@ -19,6 +65,7 @@ export interface Order {
   status: string
   guest_email?: string
   paid_at?: string
+  created_at?: string
   items?: OrderItem[]
 }
 
@@ -59,6 +106,9 @@ export interface Athlete {
   name: string
   category?: string
   gender?: string
+  belt?: string
+  age_group?: string
+  weight_class?: string
   photo_count: number
 }
 
@@ -73,6 +123,13 @@ export interface Photo {
   price: number
   preview_url?: string
   thumbnail_url?: string
+  match_confidence?: number
+  athlete_name?: string
+  athlete_category?: string
+  athlete_gender?: string
+  athlete_belt?: string
+  athlete_age_group?: string
+  athlete_weight_class?: string
 }
 
 export interface Pagination {
@@ -89,6 +146,62 @@ export interface ListResponse<T> {
 export interface PhotoListResult {
   data: Photo[]
   pagination: Pagination
+}
+
+export interface TournamentStats {
+  photo_count: number
+  athlete_count: number
+  orders_count: number
+  revenue: number
+  photos_sold: number
+}
+
+export interface AdminStats {
+  users: number
+  tournaments: number
+  photos: number
+  orders: number
+  leads_new: number
+  leads_total: number
+}
+
+export interface PlatformHome {
+  hero_image_url?: string
+  default_price_single: number
+  default_price_bundle: number
+}
+
+export interface AdminSettings extends PlatformHome {}
+
+export interface AdminUser {
+  id: string
+  email: string
+  name?: string
+  role: string
+  created_at: string
+}
+
+export interface AdminOrder {
+  id: string
+  guest_email?: string
+  total: number
+  status: string
+  created_at: string
+}
+
+export interface LeadRequest {
+  id: string
+  type: string
+  name: string
+  email: string
+  phone?: string
+  message?: string
+  photo_id?: string
+  shirt_size?: string
+  event_date?: string
+  event_location?: string
+  status: string
+  created_at: string
 }
 
 export interface CheckoutResult {

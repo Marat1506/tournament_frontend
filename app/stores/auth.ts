@@ -22,6 +22,9 @@ export const useAuthStore = defineStore('auth', () => {
     if (import.meta.client) {
       localStorage.setItem(ACCESS_KEY, tokens.access_token)
       localStorage.setItem(REFRESH_KEY, tokens.refresh_token)
+      const favorites = useFavoritesStore()
+      favorites.synced = false
+      favorites.syncFromServer()
     }
   }
 
@@ -32,13 +35,19 @@ export const useAuthStore = defineStore('auth', () => {
     if (import.meta.client) {
       localStorage.removeItem(ACCESS_KEY)
       localStorage.removeItem(REFRESH_KEY)
+      useFavoritesStore().synced = false
     }
+  }
+
+  function setUser(u: User) {
+    user.value = u
   }
 
   const isLoggedIn = computed(() => !!accessToken.value)
   const isPhotographer = computed(() => user.value?.role === 'photographer')
+  const isAdmin = computed(() => user.value?.role === 'admin')
 
   hydrate()
 
-  return { user, accessToken, refreshToken, setSession, logout, isLoggedIn, isPhotographer, hydrate }
+  return { user, accessToken, refreshToken, setSession, setUser, logout, isLoggedIn, isPhotographer, isAdmin, hydrate }
 })

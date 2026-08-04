@@ -2,15 +2,29 @@
 const route = useRoute()
 const slug = route.params.slug as string
 const api = useApi()
+const { t } = useI18n()
+const { filtersFromRoute, filtersToQuery, activeFilterCount, genderOptions } = useCategoryFilterOptions()
 
+const filters = ref(filtersFromRoute(route.query))
+const showFilters = ref(false)
 const query = ref('')
 
 const { data: tournament } = await useAsyncData(`tournament-${slug}`, () => api.getTournament(slug))
 
 const { data: athletes, pending, refresh } = await useAsyncData(
-  `athletes-${slug}`,
-  () => api.searchAthletes(slug, query.value),
+  () => `athletes-${slug}-${JSON.stringify(filters.value)}-${query.value}`,
+  () => api.searchAthletes(slug, query.value, filtersToQuery(filters.value)),
+  { watch: [filters, query] },
 )
+
+const pageTitle = computed(() => {
+  if (filters.value.gender) {
+    return genderOptions.value.find(g => g.value === filters.value.gender)?.label || t('search.byName')
+  }
+  return t('search.byName')
+})
+
+const filterCount = computed(() => activeFilterCount(filters.value))
 
 let queryTimer: ReturnType<typeof setTimeout>
 watch(query, () => {
@@ -19,17 +33,33 @@ watch(query, () => {
 })
 
 function selectAthlete(id: string, name: string) {
-  navigateTo(`/tournaments/${slug}/photos?athlete_id=${id}&athlete_name=${encodeURIComponent(name)}`)
+  const q = new URLSearchParams({ athlete_id: id, athlete_name: name, ...filtersToQuery(filters.value) })
+  navigateTo(`/tournaments/${slug}/photos?${q.toString()}`)
+}
+
+function onFiltersApply(v: typeof filters.value) {
+  filters.value = v
+  refresh()
 }
 </script>
 
 <template>
   <div>
-    <AppPageHeader title="Поиск по имени">
+    <AppPageHeader :title="pageTitle">
       <template #left>
-        <NuxtLink :to="`/tournaments/${slug}`" class="flex h-10 w-10 items-center justify-center rounded-full hover:bg-gray-100">
+        <NuxtLink :to="`/tournaments/${slug}`" class="flex h-10 w-10 items-center justify-center rounded-full hover:bg-white/10">
           <AppIcon name="back" class="h-5 w-5" />
         </NuxtLink>
+      </template>
+      <template #right>
+        <button
+          class="flex h-10 items-center gap-1 rounded-full px-3 text-sm font-medium"
+          :class="filterCount ? 'bg-brand-50 text-brand-600' : 'text-gray-500'"
+          @click="showFilters = true"
+        >
+          <AppIcon name="filter" class="h-5 w-5" />
+          <span v-if="filterCount" class="hidden sm:inline">{{ t('filters.active', { count: filterCount }) }}</span>
+        </button>
       </template>
     </AppPageHeader>
 
@@ -41,13 +71,13 @@ function selectAthlete(id: string, name: string) {
       <input
         v-model="query"
         type="search"
-        placeholder="Введите имя спортсмена..."
+        :placeholder="t('search.namePlaceholder')"
         class="input-field mb-4"
         autofocus
       >
 
       <div v-if="pending" class="space-y-2">
-        <div v-for="n in 4" :key="n" class="card h-16 animate-pulse bg-gray-100" />
+        <div v-for="n in 4" :key="n" class="card h-16 animate-pulse bg-white/10" />
       </div>
 
       <div v-else-if="athletes?.data?.length" class="space-y-2">
@@ -71,12 +101,14 @@ function selectAthlete(id: string, name: string) {
       </div>
 
       <div v-else-if="query.length >= 1" class="card p-10 text-center text-gray-500">
-        Спортсмены не найдены
+        {{ t('search.notFound') }}
       </div>
 
       <p v-else class="text-center text-sm text-gray-500">
-        Начните вводить имя, например «Иван»
+        {{ filterCount || filters.gender ? t('search.pickAthlete') : t('search.startTyping') }}
       </p>
     </div>
+
+    <CategoryFilterPanel v-model="filters" :open="showFilters" @update:model-value="onFiltersApply" @update:open="showFilters = $event" />
   </div>
 </template>

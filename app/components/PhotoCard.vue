@@ -8,6 +8,7 @@ const props = defineProps<{
 
 const favorites = useFavoritesStore()
 const selection = useSelectionStore()
+const { t } = useI18n()
 
 function onHeart(e: Event) {
   e.preventDefault()
@@ -26,7 +27,7 @@ function onSelect(e: Event) {
 <template>
   <NuxtLink
     :to="`/photos/${photo.id}`"
-    class="group relative block overflow-hidden rounded-xl bg-gray-200"
+    class="group relative block overflow-hidden rounded-xl bg-white/10"
   >
     <div class="aspect-[2/3] w-full">
       <AppImage
@@ -38,7 +39,7 @@ function onSelect(e: Event) {
 
     <button
       class="absolute right-1.5 top-1.5 flex h-8 w-8 items-center justify-center rounded-full bg-black/35 text-white backdrop-blur-sm"
-      aria-label="Избранное"
+      :aria-label="t('photoCard.favorite')"
       @click="onHeart"
     >
       <AppIcon
@@ -56,7 +57,7 @@ function onSelect(e: Event) {
       v-if="selectable"
       class="absolute bottom-1.5 right-1.5 flex h-7 w-7 items-center justify-center rounded-full border-2 bg-white/95 text-xs font-bold"
       :class="selection.has(photo.id) ? 'border-brand-600 text-brand-600' : 'border-gray-300 text-transparent'"
-      aria-label="Выбрать"
+      :aria-label="t('photoCard.select')"
       @click="onSelect"
     >
       <AppIcon v-if="selection.has(photo.id)" name="check" class="h-4 w-4" />

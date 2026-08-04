@@ -4,7 +4,26 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   css: ['~/assets/css/main.css'],
 
-  modules: ['@nuxtjs/tailwindcss', '@pinia/nuxt'],
+  modules: ['@nuxtjs/tailwindcss', '@pinia/nuxt', '@nuxtjs/i18n'],
+
+  i18n: {
+    locales: [
+      { code: 'ru', name: 'Русский' },
+      { code: 'en', name: 'English' },
+      { code: 'es', name: 'Español' },
+    ],
+    defaultLocale: 'ru',
+    strategy: 'no_prefix',
+    vueI18n: './i18n.config.ts',
+    bundle: {
+      optimizeTranslationDirective: false,
+    },
+    detectBrowserLanguage: {
+      useCookie: true,
+      cookieKey: 'bjj_locale',
+      fallbackLocale: 'ru',
+    },
+  },
 
   app: {
     head: {
@@ -17,7 +36,6 @@ export default defineNuxtConfig({
   },
 
   runtimeConfig: {
-    // SSR inside Docker must reach the API container, not localhost.
     apiBase: process.env.NUXT_API_BASE || process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:8080',
     public: {
       apiBase: process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:8080',

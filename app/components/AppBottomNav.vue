@@ -1,25 +1,17 @@
 <script setup lang="ts">
 const route = useRoute()
+const { t } = useI18n()
 
-defineProps<{
-  variant?: 'light' | 'dark'
-}>()
-
-const items = [
-  { to: '/', label: 'Главная', icon: 'home' as const, match: (p: string) => p === '/' },
-  { to: '/tournaments', label: 'Турниры', icon: 'trophy' as const, match: (p: string) => p.startsWith('/tournaments') || p.startsWith('/t/') },
-  { to: '/favorites', label: 'Избранное', icon: 'heart' as const, match: (p: string) => p.startsWith('/favorites') },
-  { to: '/profile', label: 'Профиль', icon: 'user' as const, match: (p: string) => p.startsWith('/profile') },
-]
+const items = computed(() => [
+  { to: '/', label: t('nav.home'), icon: 'home' as const, match: (p: string) => p === '/' },
+  { to: '/tournaments', label: t('nav.tournaments'), icon: 'trophy' as const, match: (p: string) => p.startsWith('/tournaments') || p.startsWith('/t/') },
+  { to: '/favorites', label: t('nav.favorites'), icon: 'heart' as const, match: (p: string) => p.startsWith('/favorites') },
+  { to: '/profile', label: t('nav.profile'), icon: 'user' as const, match: (p: string) => p.startsWith('/profile') },
+])
 </script>
 
 <template>
-  <nav
-    class="fixed inset-x-0 bottom-0 z-50 border-t pb-[env(safe-area-inset-bottom)]"
-    :class="variant === 'dark'
-      ? 'border-white/10 bg-[#0b0f17]/95 backdrop-blur-md'
-      : 'border-gray-100 bg-white shadow-nav'"
-  >
+  <nav class="fixed inset-x-0 bottom-0 z-50 border-t border-white/10 bg-[#0b0f17]/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md">
     <div class="mx-auto grid max-w-lg grid-cols-4">
       <NuxtLink
         v-for="item in items"
@@ -27,8 +19,8 @@ const items = [
         :to="item.to"
         class="flex min-h-[62px] flex-col items-center justify-center gap-1 text-[11px]"
         :class="item.match(route.path)
-          ? (variant === 'dark' ? 'text-brand-400 font-semibold' : 'text-brand-600 font-semibold')
-          : (variant === 'dark' ? 'text-gray-400' : 'text-gray-500')"
+          ? 'font-semibold text-brand-400'
+          : 'text-gray-400'"
       >
         <AppIcon :name="item.icon" class="h-5 w-5" />
         <span>{{ item.label }}</span>

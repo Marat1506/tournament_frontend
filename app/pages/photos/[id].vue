@@ -1,4 +1,5 @@
 <script setup lang="ts">
+const { t } = useI18n()
 const route = useRoute()
 const id = route.params.id as string
 const api = useApi()
@@ -8,7 +9,7 @@ const selection = useSelectionStore()
 const { data: photo, error } = await useAsyncData(`photo-${id}`, () => api.getPhoto(id))
 
 if (error.value || !photo.value) {
-  throw createError({ statusCode: 404, statusMessage: 'Фото не найдено' })
+  throw createError({ statusCode: 404, statusMessage: t('photos.notFound') })
 }
 </script>
 
@@ -43,15 +44,22 @@ if (error.value || !photo.value) {
     <div class="mx-auto max-w-lg space-y-4 px-4 pt-5">
       <div>
         <div class="text-3xl font-bold">${{ photo.price.toFixed(0) }}</div>
-        <div class="mt-1 text-sm text-white/60">Превью с watermark · оригинал после оплаты</div>
+        <div class="mt-1 text-sm text-white/60">{{ t('photos.previewHint') }}</div>
       </div>
 
       <button
         class="btn-primary-solid"
         @click="selection.toggle(photo)"
       >
-        {{ selection.has(photo.id) ? 'Убрать из выбора' : 'Добавить в выбор' }}
+        {{ selection.has(photo.id) ? t('photos.removeFromSelection') : t('photos.addToSelection') }}
       </button>
+
+      <NuxtLink
+        :to="`/shop/tshirts?photo_id=${photo.id}`"
+        class="btn-secondary block text-center"
+      >
+        {{ t('photos.orderTshirt') }}
+      </NuxtLink>
     </div>
   </div>
 </template>

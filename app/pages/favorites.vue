@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import type { Photo } from '~/types'
 
+const { t } = useI18n()
+const auth = useAuthStore()
 const favorites = useFavoritesStore()
 const api = useApi()
 
@@ -8,14 +10,37 @@ const photoMap = ref<Record<string, Photo>>({})
 const loading = ref(false)
 
 async function loadFavoritePhotos() {
-  if (!favorites.ids.length) return
   loading.value = true
   try {
+    if (auth.isLoggedIn) {
+      if (!favorites.synced) {
+        await favorites.syncFromServer()
+      }
+      const resp = await api.getFavorites()
+      photoMap.value = Object.fromEntries(resp.data.map(p => [p.id, p]))
+      favorites.setIds(resp.data.map(p => p.id))
+      return
+    }
+
+    if (!favorites.ids.length) {
+      photoMap.value = {}
+      return
+    }
     const results = await Promise.all(
       favorites.ids.map(id => api.getPhoto(id).catch(() => null)),
     )
-    for (const photo of results) {
-      if (photo) photoMap.value[photo.id] = photo
+    const next: Record<string, Photo> = {}
+    const validIds: string[] = []
+    for (let i = 0; i < results.length; i++) {
+      const photo = results[i]
+      if (photo) {
+        next[photo.id] = photo
+        validIds.push(favorites.ids[i]!)
+      }
+    }
+    photoMap.value = next
+    if (validIds.length !== favorites.ids.length) {
+      favorites.setIds(validIds)
     }
   } finally {
     loading.value = false
@@ -23,18 +48,22 @@ async function loadFavoritePhotos() {
 }
 
 onMounted(loadFavoritePhotos)
-watch(() => favorites.ids.length, loadFavoritePhotos)
+watch(() => [...favorites.ids], loadFavoritePhotos)
+watch(() => auth.isLoggedIn, loadFavoritePhotos)
 
 const photos = computed(() => Object.values(photoMap.value))
 </script>
 
 <template>
   <div>
-    <AppPageHeader title="Избранное" />
+    <AppPageHeader :title="t('favorites.title')" />
     <div class="page-container">
       <PhotoGrid :photos="photos" :loading="loading" />
       <p v-if="!loading && !photos.length" class="mt-8 text-center text-gray-500">
-        Пока пусто — нажмите ♡ на фото в галерее
+        {{ t('favorites.empty') }}
+      </p>
+      <p v-if="!auth.isLoggedIn && photos.length" class="mt-4 text-center text-xs text-gray-400">
+        {{ t('favorites.syncHint') }}
       </p>
     </div>
   </div>

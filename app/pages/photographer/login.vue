@@ -1,6 +1,7 @@
 <script setup lang="ts">
-definePageMeta({ nav: 'light' })
+definePageMeta({})
 
+const { t } = useI18n()
 const api = useApi()
 const auth = useAuthStore()
 const router = useRouter()
@@ -15,10 +16,14 @@ async function submit() {
   loading.value = true
   try {
     const resp = await api.login({ email: email.value, password: password.value })
+    if (resp.user.role !== 'photographer') {
+      error.value = t('photographer.wrongRole')
+      return
+    }
     auth.setSession(resp)
     await router.push('/photographer/dashboard')
   } catch {
-    error.value = 'Неверный email или пароль'
+    error.value = t('photographer.loginError')
   } finally {
     loading.value = false
   }
@@ -27,19 +32,19 @@ async function submit() {
 
 <template>
   <div>
-    <AppPageHeader title="Вход для фотографа" />
+    <AppPageHeader :title="t('photographer.loginTitle')" />
     <div class="page-container max-w-md">
       <form class="space-y-4" @submit.prevent="submit">
         <input v-model="email" type="email" class="input-field" placeholder="Email" required>
-        <input v-model="password" type="password" class="input-field" placeholder="Пароль" required>
+        <input v-model="password" type="password" class="input-field" :placeholder="t('photographer.password')" required>
         <p v-if="error" class="text-sm text-red-600">{{ error }}</p>
         <button type="submit" class="btn-primary-solid w-full" :disabled="loading">
-          {{ loading ? 'Вход...' : 'Войти' }}
+          {{ loading ? t('photographer.loggingIn') : t('photographer.loginBtn') }}
         </button>
       </form>
       <p class="mt-4 text-center text-sm text-gray-500">
-        Нет аккаунта?
-        <NuxtLink to="/photographer/register" class="font-medium text-brand-600">Регистрация</NuxtLink>
+        {{ t('photographer.noAccount') }}
+        <NuxtLink to="/photographer/register" class="font-medium text-brand-600">{{ t('photographer.registerLink') }}</NuxtLink>
       </p>
     </div>
   </div>

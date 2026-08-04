@@ -4,10 +4,17 @@ const slug = route.params.slug as string
 const athleteId = route.query.athlete_id as string | undefined
 const athleteName = route.query.athlete_name as string | undefined
 const api = useApi()
+const auth = useAuthStore()
 const selection = useSelectionStore()
 const favorites = useFavoritesStore()
+const { t } = useI18n()
+const { filtersFromRoute, filtersToQuery, activeFilterCount } = useCategoryFilterOptions()
 
 const tab = ref<'all' | 'favorites'>('all')
+const showFilters = ref(false)
+const filters = ref(filtersFromRoute(route.query))
+
+const filterCount = computed(() => activeFilterCount(filters.value))
 
 const { data: tournament } = await useAsyncData(`tournament-${slug}`, () => api.getTournament(slug))
 
@@ -17,10 +24,15 @@ watchEffect(() => {
   }
 })
 
-const { data: photos, pending } = await useAsyncData(
-  `photos-${slug}-${athleteId}`,
-  () => api.getPhotos(slug, { athlete_id: athleteId, limit: 100 }),
+const { data: photos, pending, refresh } = await useAsyncData(
+  () => `photos-${slug}-${athleteId}-${JSON.stringify(filters.value)}`,
+  () => api.getPhotos(slug, { athlete_id: athleteId, ...filtersToQuery(filters.value), limit: 100 }),
+  { watch: [filters] },
 )
+
+if (import.meta.client && athleteId && auth.isLoggedIn && auth.user?.role === 'client') {
+  api.trackAthlete(athleteId).catch(() => {})
+}
 
 const favoriteCount = computed(() =>
   (photos.value?.data ?? []).filter(p => favorites.has(p.id)).length,
@@ -33,19 +45,34 @@ const displayedPhotos = computed(() => {
   }
   return list
 })
+
+function buyBundle() {
+  if (!athleteId || !athleteName || !tournament.value) return
+  selection.setBundle(athleteId, athleteName, tournament.value.price_bundle)
+}
+
+function onFiltersApply(v: typeof filters.value) {
+  filters.value = v
+  refresh()
+}
 </script>
 
 <template>
   <div class="pb-32">
-    <AppPageHeader title="Фото с турнира">
+    <AppPageHeader :title="t('gallery.title')">
       <template #left>
-        <NuxtLink :to="`/tournaments/${slug}/search`" class="flex h-10 w-10 items-center justify-center rounded-full hover:bg-gray-100">
+        <NuxtLink :to="`/tournaments/${slug}/search`" class="flex h-10 w-10 items-center justify-center rounded-full hover:bg-white/10">
           <AppIcon name="back" class="h-5 w-5" />
         </NuxtLink>
       </template>
       <template #right>
-        <button class="flex h-10 w-10 items-center justify-center rounded-full text-gray-500" aria-label="Фильтр">
+        <button
+          class="flex h-10 items-center gap-1 rounded-full px-3 text-sm font-medium"
+          :class="filterCount ? 'bg-brand-50 text-brand-600' : 'text-gray-500'"
+          @click="showFilters = true"
+        >
           <AppIcon name="filter" class="h-5 w-5" />
+          <span v-if="filterCount" class="hidden sm:inline">{{ t('filters.active', { count: filterCount }) }}</span>
         </button>
       </template>
     </AppPageHeader>
@@ -53,29 +80,42 @@ const displayedPhotos = computed(() => {
     <div class="page-container !pt-0">
       <TournamentCard v-if="tournament" :tournament="tournament" compact class="mb-4" />
 
-      <div v-if="athleteName" class="mb-4 flex items-center justify-between text-sm">
-        <span class="text-gray-600">Результаты для: <strong class="text-gray-900">{{ athleteName }}</strong></span>
-        <NuxtLink :to="`/tournaments/${slug}/search`" class="font-medium text-brand-600">Изменить</NuxtLink>
+      <div v-if="athleteName" class="mb-4 space-y-3">
+        <div class="flex items-center justify-between text-sm">
+          <span class="text-gray-400">{{ t('gallery.resultsFor') }} <strong class="text-white">{{ athleteName }}</strong></span>
+          <NuxtLink :to="`/tournaments/${slug}/search`" class="font-medium text-brand-600">{{ t('gallery.change') }}</NuxtLink>
+        </div>
+        <button
+          v-if="tournament && photos?.pagination?.total"
+          class="w-full rounded-xl bg-brand-50 px-4 py-3 text-left text-sm font-semibold text-brand-700 ring-1 ring-brand-100"
+          @click="buyBundle"
+        >
+          {{ t('gallery.buyBundle', { count: photos.pagination.total, price: tournament.price_bundle }) }}
+        </button>
       </div>
 
-      <div class="mb-4 flex gap-5 border-b border-gray-200">
+      <div class="mb-4 flex gap-5 border-b border-white/10">
         <button
           class="pb-3 text-sm font-semibold"
           :class="tab === 'all' ? 'border-b-2 border-brand-600 text-brand-600' : 'text-gray-500'"
           @click="tab = 'all'"
         >
-          Все фото ({{ photos?.pagination?.total ?? 0 }})
+          {{ t('gallery.tabAll') }} ({{ photos?.pagination?.total ?? 0 }})
         </button>
         <button
           class="pb-3 text-sm font-semibold"
           :class="tab === 'favorites' ? 'border-b-2 border-brand-600 text-brand-600' : 'text-gray-500'"
           @click="tab = 'favorites'"
         >
-          Избранное ({{ favoriteCount }})
+          {{ t('gallery.tabFavorites') }} ({{ favoriteCount }})
         </button>
       </div>
 
       <PhotoGrid :photos="displayedPhotos" :loading="pending" selectable />
+
+      <p v-if="!pending && !displayedPhotos.length" class="py-8 text-center text-sm text-gray-500">
+        {{ tab === 'favorites' ? t('gallery.noFavorites') : t('gallery.noPhotos') }}
+      </p>
     </div>
 
     <div class="fixed inset-x-0 bottom-[calc(62px+env(safe-area-inset-bottom))] z-40 px-4">
@@ -84,11 +124,10 @@ const displayedPhotos = computed(() => {
         :to="`/cart?tournament_id=${tournament?.id}`"
         class="btn-primary-solid block text-center"
       >
-        В корзину ({{ selection.count }}) · ${{ selection.total.toFixed(0) }}
+        {{ t('search.toCart', { count: selection.count, total: selection.total.toFixed(0) }) }}
       </NuxtLink>
-      <button v-else class="btn-primary-solid" disabled>
-        Выберите фото
-      </button>
     </div>
+
+    <CategoryFilterPanel v-model="filters" :open="showFilters" @update:model-value="onFiltersApply" @update:open="showFilters = $event" />
   </div>
 </template>

@@ -1,45 +1,143 @@
 <script setup lang="ts">
+definePageMeta({})
+
+const { t, locale } = useI18n()
 const auth = useAuthStore()
 const api = useApi()
 
-const { data: orders } = await useAsyncData('my-orders', () =>
-  auth.isLoggedIn ? api.getMyOrders() : Promise.resolve(null),
+const beltLabel = useBeltLabel(() => auth.user?.belt)
+
+const { data: stats } = await useAsyncData(
+  'profile-stats',
+  () => (auth.isLoggedIn && auth.user?.role === 'client' ? api.getProfileStats() : Promise.resolve(null)),
+  { watch: [() => auth.isLoggedIn] },
 )
+
+const menuItems = computed(() => [
+  { to: '/profile/photos', label: t('profile.myPhotos'), icon: 'photos' as const, primary: true },
+  { to: '/profile/tournaments', label: t('profile.myTournaments'), icon: 'trophy' as const },
+  { to: '/profile/orders', label: t('profile.myOrders'), icon: 'cart' as const },
+  { to: '/favorites', label: t('nav.favorites'), icon: 'heart' as const },
+  { to: '/profile/selfies', label: t('profile.mySelfies'), icon: 'face' as const },
+  { to: '/profile/settings', label: t('profile.settings'), icon: 'settings' as const },
+])
+
+function formatStat(n?: number) {
+  if (n == null) return '0'
+  return n.toLocaleString(locale.value === 'ru' ? 'ru-RU' : locale.value === 'es' ? 'es-ES' : 'en-US')
+}
 </script>
 
 <template>
   <div>
-    <AppPageHeader title="Профиль" />
-    <div class="page-container">
-      <div class="card space-y-4 p-6 text-center">
-        <div class="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-brand-50 text-brand-600">
-          <AppIcon name="user" class="h-9 w-9" />
-        </div>
-        <div>
-          <h2 class="font-semibold">{{ auth.user?.name || auth.user?.email || 'Гость' }}</h2>
-          <p class="text-sm text-gray-500">{{ auth.user?.role || 'Войдите для покупок и истории' }}</p>
-        </div>
-        <NuxtLink v-if="!auth.isLoggedIn" to="/photographer/login" class="text-sm font-medium text-brand-600">
-          Войти
-        </NuxtLink>
-        <button v-else class="text-sm text-gray-500" @click="auth.logout()">Выйти</button>
-      </div>
+    <AppPageHeader :title="t('profile.title')">
+      <template #right>
+        <button class="relative flex h-10 w-10 items-center justify-center text-gray-500" aria-label="Notifications">
+          <AppIcon name="bell" class="h-5 w-5" />
+        </button>
+      </template>
+    </AppPageHeader>
 
-      <div v-if="auth.isPhotographer" class="card mt-4 p-4">
-        <NuxtLink to="/photographer/dashboard" class="font-medium text-brand-600">Кабинет фотографа →</NuxtLink>
-      </div>
-
-      <div v-if="orders?.data?.length" class="card mt-4 divide-y divide-gray-100">
-        <div v-for="order in orders.data" :key="order.id" class="flex items-center justify-between p-4">
-          <div>
-            <div class="font-medium">Заказ #{{ order.id.slice(0, 8) }}</div>
-            <div class="text-sm text-gray-500">${{ order.total }} · {{ order.status }}</div>
+    <div class="page-container space-y-4">
+      <template v-if="!auth.isLoggedIn">
+        <div class="card space-y-4 p-6 text-center">
+          <div class="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-brand-600/20 text-brand-400">
+            <AppIcon name="user" class="h-9 w-9" />
           </div>
-          <NuxtLink v-if="order.status === 'paid'" :to="`/checkout/success?order_id=${order.id}`" class="text-brand-600">
-            Скачать
+          <div>
+            <h2 class="font-semibold">{{ t('profile.cabinet') }}</h2>
+            <p class="mt-1 text-sm text-gray-500">{{ t('profile.cabinetHint') }}</p>
+          </div>
+          <NuxtLink to="/login?redirect=/profile" class="btn-primary-solid">{{ t('profile.login') }}</NuxtLink>
+          <NuxtLink to="/register?redirect=/profile" class="block text-sm font-medium text-brand-400">
+            {{ t('profile.register') }}
           </NuxtLink>
         </div>
-      </div>
+        <div class="card p-4 text-sm text-gray-400">{{ t('profile.guestHint') }}</div>
+      </template>
+
+      <template v-else-if="auth.isAdmin || auth.isPhotographer">
+        <div class="card space-y-3 p-6 text-center">
+          <h2 class="font-semibold">{{ auth.user?.name || auth.user?.email }}</h2>
+          <p class="text-sm text-gray-500">{{ auth.isAdmin ? t('profile.admin') : t('profile.photographer') }}</p>
+          <NuxtLink v-if="auth.isAdmin" to="/admin" class="btn-primary-solid">{{ t('profile.adminPanel') }}</NuxtLink>
+          <NuxtLink v-if="auth.isPhotographer" to="/photographer/dashboard" class="btn-primary-solid">
+            {{ t('profile.photographerDashboard') }}
+          </NuxtLink>
+          <button class="text-sm text-gray-500" @click="auth.logout()">{{ t('profile.logout') }}</button>
+        </div>
+      </template>
+
+      <template v-else>
+        <div class="card p-5">
+          <div class="flex items-center gap-4">
+            <div class="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-brand-600/20 text-brand-400">
+              <img v-if="auth.user?.avatar_url" :src="auth.user.avatar_url" alt="" class="h-full w-full object-cover">
+              <AppIcon v-else name="user" class="h-8 w-8" />
+            </div>
+            <div class="min-w-0">
+              <h2 class="truncate text-lg font-bold">{{ auth.user?.name || t('profile.athlete') }}</h2>
+              <p class="truncate text-sm text-gray-500">{{ auth.user?.email }}</p>
+              <div
+                v-if="auth.user?.belt"
+                class="mt-1.5 inline-flex items-center gap-1 rounded-full bg-brand-600/20 px-2.5 py-0.5 text-xs font-medium text-brand-400"
+              >
+                <AppIcon name="trophy" class="h-3.5 w-3.5" />
+                {{ beltLabel }}
+              </div>
+            </div>
+          </div>
+
+          <div v-if="stats" class="mt-5 grid grid-cols-3 gap-2 border-t border-white/10 pt-5">
+            <div class="text-center">
+              <div class="text-xl font-bold text-brand-600">{{ formatStat(stats.found_photos) }}</div>
+              <div class="text-[11px] text-gray-500">{{ t('profile.found') }}</div>
+            </div>
+            <div class="text-center">
+              <div class="text-xl font-bold">{{ formatStat(stats.purchased_photos) }}</div>
+              <div class="text-[11px] text-gray-500">{{ t('profile.purchased') }}</div>
+            </div>
+            <div class="text-center">
+              <div class="text-xl font-bold">{{ formatStat(stats.tournaments_count) }}</div>
+              <div class="text-[11px] text-gray-500">{{ t('profile.tournamentsCount') }}</div>
+            </div>
+          </div>
+        </div>
+
+        <nav class="card divide-y divide-white/10 overflow-hidden">
+          <NuxtLink
+            v-for="item in menuItems"
+            :key="item.to"
+            :to="item.to"
+            class="flex items-center gap-3 px-4 py-3.5 transition active:bg-white/5"
+            :class="item.primary ? 'bg-brand-600/10' : ''"
+          >
+            <div
+              class="flex h-9 w-9 items-center justify-center rounded-xl"
+              :class="item.primary ? 'bg-brand-600 text-white' : 'bg-white/10 text-gray-400'"
+            >
+              <AppIcon :name="item.icon" class="h-5 w-5" />
+            </div>
+            <span class="flex-1 font-medium" :class="item.primary ? 'text-brand-400' : ''">{{ item.label }}</span>
+            <AppIcon name="chevron" class="h-5 w-5 text-gray-500" />
+          </NuxtLink>
+        </nav>
+
+        <NuxtLink to="/tournaments" class="card flex items-center gap-4 p-4 transition active:scale-[0.99]">
+          <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-600 text-white">
+            <AppIcon name="face" class="h-6 w-6" />
+          </div>
+          <div class="flex-1">
+            <div class="font-semibold text-brand-400">{{ t('profile.findNewPhotos') }}</div>
+            <div class="text-sm text-gray-500">{{ t('profile.findNewPhotosHint') }}</div>
+          </div>
+          <AppIcon name="chevron" class="h-5 w-5 text-brand-400" />
+        </NuxtLink>
+
+        <button class="w-full py-2 text-center text-sm text-gray-500" @click="auth.logout()">
+          {{ t('profile.logout') }}
+        </button>
+      </template>
     </div>
   </div>
 </template>

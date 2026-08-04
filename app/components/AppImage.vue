@@ -1,4 +1,6 @@
 <script setup lang="ts">
+const { t } = useI18n()
+
 defineProps<{
   src?: string | null
   alt?: string
@@ -26,7 +28,7 @@ const defaults = {
   <img
     v-else
     :src="defaults[aspect || 'photo']"
-    :alt="alt || 'Заглушка'"
+    :alt="alt || t('photographer.placeholderAlt')"
     class="h-full w-full object-cover"
   >
 </template>

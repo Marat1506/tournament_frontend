@@ -1,6 +1,6 @@
 <script setup lang="ts">
 defineProps<{
-  name: 'home' | 'trophy' | 'heart' | 'user' | 'camera' | 'search' | 'upload' | 'face' | 'shirt' | 'bell' | 'help' | 'filter' | 'back' | 'check'
+  name: 'home' | 'trophy' | 'heart' | 'user' | 'camera' | 'search' | 'upload' | 'face' | 'shirt' | 'bell' | 'help' | 'filter' | 'back' | 'check' | 'settings' | 'chevron' | 'cart' | 'photos'
   class?: string
 }>()
 </script>
@@ -57,6 +57,18 @@ defineProps<{
     </template>
     <template v-else-if="name === 'check'">
       <path d="M5 12.5 9.5 17 19 7" />
+    </template>
+    <template v-else-if="name === 'settings'">
+      <circle cx="12" cy="12" r="3" /><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
+    </template>
+    <template v-else-if="name === 'chevron'">
+      <path d="m9 6 6 6-6 6" />
+    </template>
+    <template v-else-if="name === 'cart'">
+      <circle cx="9" cy="20" r="1.5" fill="currentColor" stroke="none" /><circle cx="17" cy="20" r="1.5" fill="currentColor" stroke="none" /><path d="M3 4h2l2.5 11h9L21 7H7" />
+    </template>
+    <template v-else-if="name === 'photos'">
+      <rect x="4" y="5" width="16" height="14" rx="2" /><circle cx="9" cy="10" r="1.5" fill="currentColor" stroke="none" /><path d="m4 16 4.5-4.5 3 3L15 11l5 5" />
     </template>
   </svg>
 </template>
