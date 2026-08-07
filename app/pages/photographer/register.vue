@@ -35,7 +35,7 @@ async function submit() {
     <div class="page-container max-w-md">
       <form class="space-y-4" @submit.prevent="submit">
         <input v-model="form.name" type="text" class="input-field" :placeholder="t('photographer.name')" required>
-        <input v-model="form.email" type="email" class="input-field" placeholder="Email" required>
+        <input v-model="form.email" type="email" class="input-field" :placeholder="t('auth.email')" required>
         <input v-model="form.password" type="password" class="input-field" :placeholder="t('auth.password')" minlength="8" required>
         <p v-if="error" class="text-sm text-red-600">{{ error }}</p>
         <button type="submit" class="btn-primary-solid w-full" :disabled="loading">{{ t('photographer.createAccount') }}</button>

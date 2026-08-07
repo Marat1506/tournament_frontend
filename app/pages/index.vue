@@ -7,8 +7,6 @@ const { data: tournaments } = await useAsyncData('home-tournaments', () => api.g
 const { data: platform } = await useAsyncData('platform-home', () => api.getPlatformHome())
 
 const customHero = computed(() => platform.value?.hero_image_url || '')
-const heroMobile = '/main_background_mobile.png'
-const heroDesktop = '/main_background.png'
 </script>
 
 <template>
@@ -18,14 +16,7 @@ const heroDesktop = '/main_background.png'
         <div v-if="customHero" class="h-full w-full">
           <AppImage :src="customHero" aspect="cover" alt="" />
         </div>
-        <picture v-else class="block h-full w-full">
-          <source media="(min-width: 768px)" :srcset="heroDesktop">
-          <img
-            :src="heroMobile"
-            alt=""
-            class="h-full w-full object-cover object-[72%_28%] md:object-[center_30%]"
-          >
-        </picture>
+        <div v-else class="hero-bg-default" />
         <div class="absolute inset-0 bg-gradient-to-r from-[#0b0f17]/90 via-[#0b0f17]/45 to-transparent" />
         <div class="absolute inset-0 bg-gradient-to-b from-[#0b0f17]/25 via-transparent to-[#0b0f17]" />
       </div>

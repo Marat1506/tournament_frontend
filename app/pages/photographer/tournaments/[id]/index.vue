@@ -180,7 +180,7 @@ onUnmounted(() => {
 
       <section v-if="tournament.status === 'published'" class="card p-4 text-center">
         <h2 class="mb-3 font-semibold">{{ t('photographer.qrTitle') }}</h2>
-        <img v-if="qrBlobUrl" :src="qrBlobUrl" alt="QR code" class="mx-auto h-48 w-48">
+        <img v-if="qrBlobUrl" :src="qrBlobUrl" :alt="t('photographer.qrAlt')" class="mx-auto h-48 w-48">
         <p class="mt-2 text-xs text-gray-500">{{ t('photographer.qrHint') }}</p>
       </section>
 

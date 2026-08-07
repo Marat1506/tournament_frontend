@@ -50,6 +50,14 @@ const tournament = computed(() => tournaments.value?.data?.find(item => item.id 
           <div class="text-2xl font-bold">${{ stats.revenue.toFixed(0) }}</div>
           <div class="text-sm text-gray-500">{{ t('photographer.statRevenue') }}</div>
         </div>
+        <div class="card p-4">
+          <div class="text-2xl font-bold">{{ stats.view_count }}</div>
+          <div class="text-sm text-gray-500">{{ t('photographer.statViews') }}</div>
+        </div>
+        <div class="card p-4">
+          <div class="text-2xl font-bold">{{ stats.conversion.toFixed(1) }}%</div>
+          <div class="text-sm text-gray-500">{{ t('photographer.statConversion') }}</div>
+        </div>
         <div class="card col-span-2 p-4">
           <div class="text-2xl font-bold">{{ stats.photos_sold }}</div>
           <div class="text-sm text-gray-500">{{ t('photographer.statPhotosSold') }}</div>

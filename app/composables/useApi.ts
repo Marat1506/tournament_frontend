@@ -10,6 +10,7 @@ import type {
   LeadRequest,
   ListResponse,
   Order,
+  OrderDownloadPhoto,
   Photo,
   PhotoListResult,
   PlatformHome,
@@ -27,37 +28,81 @@ export function useApi() {
   const auth = useAuthStore()
   const base = import.meta.server ? config.apiBase : config.public.apiBase
 
-  function headers(): Record<string, string> {
-    const h: Record<string, string> = {}
+  let refreshPromise: Promise<boolean> | null = null
+
+  function headers(extra?: Record<string, string>): Record<string, string> {
+    const h: Record<string, string> = { ...extra }
     if (auth.accessToken) {
       h.Authorization = `Bearer ${auth.accessToken}`
     }
     return h
   }
 
+  async function refreshSession(): Promise<boolean> {
+    if (!auth.refreshToken) return false
+    try {
+      const data = await $fetch<AuthResponse>(`${base}/api/v1/auth/refresh`, {
+        method: 'POST',
+        body: { refresh_token: auth.refreshToken },
+      })
+      auth.setSession(data)
+      return true
+    }
+    catch {
+      auth.logout()
+      return false
+    }
+  }
+
+  async function apiFetch<T>(path: string, opts: Parameters<typeof $fetch>[1] = {}): Promise<T> {
+    const url = path.startsWith('http') ? path : `${base}${path}`
+    const reqHeaders = headers(opts.headers as Record<string, string> | undefined)
+    try {
+      return await $fetch<T>(url, { ...opts, headers: reqHeaders })
+    }
+    catch (e: unknown) {
+      const err = e as { statusCode?: number; status?: number }
+      const status = err.statusCode ?? err.status
+      const retried = reqHeaders['X-Retry'] === '1'
+      if (status === 401 && auth.refreshToken && !retried) {
+        if (!refreshPromise) {
+          refreshPromise = refreshSession().finally(() => { refreshPromise = null })
+        }
+        const ok = await refreshPromise
+        if (ok) {
+          return apiFetch<T>(path, {
+            ...opts,
+            headers: { ...(opts.headers as Record<string, string> | undefined), 'X-Retry': '1' },
+          })
+        }
+      }
+      throw e
+    }
+  }
+
   async function get<T>(path: string, query?: Record<string, string | number | undefined>) {
-    return $fetch<T>(`${base}${path}`, { query, headers: headers() })
+    return apiFetch<T>(path, { query, headers: headers() })
   }
 
   async function post<T>(path: string, body?: unknown) {
-    return $fetch<T>(`${base}${path}`, { method: 'POST', body, headers: headers() })
+    return apiFetch<T>(path, { method: 'POST', body, headers: headers() })
   }
 
   async function put<T>(path: string, body?: unknown) {
-    return $fetch<T>(`${base}${path}`, { method: 'PUT', body, headers: headers() })
+    return apiFetch<T>(path, { method: 'PUT', body, headers: headers() })
   }
 
   async function del<T>(path: string) {
-    return $fetch<T>(`${base}${path}`, { method: 'DELETE', headers: headers() })
+    return apiFetch<T>(path, { method: 'DELETE', headers: headers() })
   }
 
   async function patch<T>(path: string, body?: unknown) {
-    return $fetch<T>(`${base}${path}`, { method: 'PATCH', body, headers: headers() })
+    return apiFetch<T>(path, { method: 'PATCH', body, headers: headers() })
   }
 
   return {
-    getTournaments: (search?: string) =>
-      get<ListResponse<Tournament[]>>('/api/v1/tournaments', { search, limit: 20 }),
+    getTournaments: (search?: string, period?: 'active' | 'past') =>
+      get<ListResponse<Tournament[]>>('/api/v1/tournaments', { search, period, limit: 20 }),
 
     getPlatformHome: () => get<PlatformHome>('/api/v1/platform/home'),
 
@@ -70,7 +115,7 @@ export function useApi() {
     searchByFace: async (slug: string, file: File) => {
       const form = new FormData()
       form.append('selfie', file)
-      return $fetch<PhotoListResult>(`${base}/api/v1/tournaments/${slug}/search/face`, {
+      return apiFetch<PhotoListResult>(`/api/v1/tournaments/${slug}/search/face`, {
         method: 'POST',
         body: form,
         headers: headers(),
@@ -104,6 +149,8 @@ export function useApi() {
     login: (data: { email: string; password: string }) =>
       post<AuthResponse>('/api/v1/auth/login', data),
 
+    refreshSession,
+
     verifyEmail: (token: string) =>
       post<{ status: string }>('/api/v1/auth/verify-email', { token }),
 
@@ -121,7 +168,7 @@ export function useApi() {
     uploadTournamentCover: async (tournamentId: string, file: File) => {
       const form = new FormData()
       form.append('cover', file)
-      return $fetch<Tournament>(`${base}/api/v1/photographer/tournaments/${tournamentId}/cover`, {
+      return apiFetch<Tournament>(`/api/v1/photographer/tournaments/${tournamentId}/cover`, {
         method: 'POST',
         body: form,
         headers: headers(),
@@ -139,7 +186,7 @@ export function useApi() {
       for (const file of files) {
         form.append('photos', file)
       }
-      return $fetch<UploadBatch>(`${base}/api/v1/photographer/tournaments/${tournamentId}/photos`, {
+      return apiFetch<UploadBatch>(`/api/v1/photographer/tournaments/${tournamentId}/photos`, {
         method: 'POST',
         body: form,
         headers: headers(),
@@ -213,7 +260,7 @@ export function useApi() {
     uploadAdminHero: async (file: File) => {
       const form = new FormData()
       form.append('hero', file)
-      return $fetch<AdminSettings>(`${base}/api/v1/admin/settings/hero`, {
+      return apiFetch<AdminSettings>('/api/v1/admin/settings/hero', {
         method: 'POST',
         body: form,
         headers: headers(),
@@ -229,7 +276,7 @@ export function useApi() {
     uploadAdminTournamentCover: async (tournamentId: string, file: File) => {
       const form = new FormData()
       form.append('cover', file)
-      return $fetch<Tournament>(`${base}/api/v1/admin/tournaments/${tournamentId}/cover`, {
+      return apiFetch<Tournament>(`/api/v1/admin/tournaments/${tournamentId}/cover`, {
         method: 'POST',
         body: form,
         headers: headers(),

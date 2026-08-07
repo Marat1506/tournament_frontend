@@ -15,6 +15,9 @@ const errorMsg = ref('')
 const results = ref<Photo[] | null>(null)
 
 const { data: tournament } = await useAsyncData(`tournament-${slug}`, () => api.getTournament(slug))
+const { data: platform } = await useAsyncData('platform-home-face', () => api.getPlatformHome())
+
+const faceSearchEnabled = computed(() => platform.value?.face_search_enabled ?? true)
 
 watchEffect(() => {
   if (tournament.value?.id) {
@@ -42,6 +45,10 @@ function pickFile() {
 }
 
 async function search() {
+  if (!faceSearchEnabled.value) {
+    errorMsg.value = t('search.faceDisabled')
+    return
+  }
   if (!selectedFile.value) {
     errorMsg.value = t('search.pickSelfie')
     return
@@ -59,8 +66,13 @@ async function search() {
     }
   }
   catch (e: unknown) {
-    const err = e as { data?: { error?: string } }
-    errorMsg.value = err.data?.error || t('search.searchFailed')
+    const err = e as { data?: { error?: string }; statusCode?: number }
+    if (err.statusCode === 503 || err.data?.error === 'face search is disabled') {
+      errorMsg.value = t('search.faceDisabled')
+    }
+    else {
+      errorMsg.value = err.data?.error || t('search.searchFailed')
+    }
   }
   finally {
     searching.value = false
@@ -89,7 +101,11 @@ onBeforeUnmount(() => {
 
       <TournamentCard v-if="tournament" :tournament="tournament" compact class="mb-5" />
 
-      <div class="card mb-4 p-5">
+      <div v-if="!faceSearchEnabled" class="mb-4 rounded-xl bg-amber-500/10 px-4 py-3 text-sm text-amber-200 ring-1 ring-amber-500/20">
+        {{ t('search.faceDisabledHint') }}
+      </div>
+
+      <div class="card mb-4 p-5" :class="{ 'opacity-60': !faceSearchEnabled }">
         <p class="mb-4 text-sm text-gray-600">
           {{ t('search.faceHint') }}
         </p>
@@ -100,21 +116,22 @@ onBeforeUnmount(() => {
           accept="image/jpeg,image/png,image/webp"
           capture="user"
           class="hidden"
+          :disabled="!faceSearchEnabled"
           @change="onFileChange"
         >
 
         <div v-if="previewUrl" class="mb-4 overflow-hidden rounded-xl bg-white/10">
-          <img :src="previewUrl" alt="Preview" class="mx-auto max-h-64 w-full object-contain">
+          <img :src="previewUrl" :alt="t('search.previewAlt')" class="mx-auto max-h-64 w-full object-contain">
         </div>
 
         <div class="grid grid-cols-2 gap-3">
-          <button type="button" class="btn-secondary" @click="pickFile">
+          <button type="button" class="btn-secondary" :disabled="!faceSearchEnabled" @click="pickFile">
             {{ previewUrl ? t('search.anotherPhoto') : t('search.choosePhoto') }}
           </button>
           <button
             type="button"
             class="btn-primary-solid"
-            :disabled="!selectedFile || searching"
+            :disabled="!faceSearchEnabled || !selectedFile || searching"
             @click="search"
           >
             {{ searching ? t('search.searching') : t('search.findPhotos') }}

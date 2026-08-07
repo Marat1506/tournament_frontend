@@ -58,6 +58,12 @@ export interface AuthResponse {
   user: User
 }
 
+export interface OrderDownloadPhoto {
+  photo_id: string
+  original_filename?: string
+  item_type?: string
+}
+
 export interface Order {
   id: string
   total: number
@@ -67,6 +73,7 @@ export interface Order {
   paid_at?: string
   created_at?: string
   items?: OrderItem[]
+  download_photos?: OrderDownloadPhoto[]
 }
 
 export interface OrderItem {
@@ -154,6 +161,8 @@ export interface TournamentStats {
   orders_count: number
   revenue: number
   photos_sold: number
+  view_count: number
+  conversion: number
 }
 
 export interface AdminStats {
@@ -169,6 +178,7 @@ export interface PlatformHome {
   hero_image_url?: string
   default_price_single: number
   default_price_bundle: number
+  face_search_enabled?: boolean
 }
 
 export interface AdminSettings extends PlatformHome {}

@@ -47,7 +47,5 @@ export const useAuthStore = defineStore('auth', () => {
   const isPhotographer = computed(() => user.value?.role === 'photographer')
   const isAdmin = computed(() => user.value?.role === 'admin')
 
-  hydrate()
-
   return { user, accessToken, refreshToken, setSession, setUser, logout, isLoggedIn, isPhotographer, isAdmin, hydrate }
 })

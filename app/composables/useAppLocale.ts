@@ -1,4 +1,4 @@
-export type AppLocale = 'ru' | 'en' | 'es'
+import { LOCALES, type AppLocale } from '~/i18n/messages'
 
 export function useAppLocale() {
   const { locale, setLocale } = useI18n()
@@ -12,7 +12,8 @@ export function useAppLocale() {
   ]
 
   async function applyLocale(code: AppLocale, persist = true) {
-    await setLocale(code)
+    if (!LOCALES.includes(code)) return
+    setLocale(code)
     if (persist && auth.isLoggedIn) {
       try {
         const user = await api.updateProfile({ locale: code })

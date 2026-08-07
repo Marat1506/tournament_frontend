@@ -1,11 +1,6 @@
 <script setup lang="ts">
-onMounted(() => {
-  document.body.classList.add('theme-dark')
-  document.body.classList.remove('theme-light')
-})
-
-onUnmounted(() => {
-  document.body.classList.remove('theme-dark', 'theme-light')
+useHead({
+  htmlAttrs: { class: 'theme-dark' },
 })
 </script>
 

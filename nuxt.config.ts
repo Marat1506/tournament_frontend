@@ -1,29 +1,10 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
-  devtools: { enabled: true },
+  devtools: { enabled: process.env.NODE_ENV !== 'production' },
   css: ['~/assets/css/main.css'],
 
-  modules: ['@nuxtjs/tailwindcss', '@pinia/nuxt', '@nuxtjs/i18n'],
-
-  i18n: {
-    locales: [
-      { code: 'ru', name: 'Русский' },
-      { code: 'en', name: 'English' },
-      { code: 'es', name: 'Español' },
-    ],
-    defaultLocale: 'ru',
-    strategy: 'no_prefix',
-    vueI18n: './i18n.config.ts',
-    bundle: {
-      optimizeTranslationDirective: false,
-    },
-    detectBrowserLanguage: {
-      useCookie: true,
-      cookieKey: 'bjj_locale',
-      fallbackLocale: 'ru',
-    },
-  },
+  modules: ['@nuxtjs/tailwindcss', '@pinia/nuxt'],
 
   app: {
     head: {

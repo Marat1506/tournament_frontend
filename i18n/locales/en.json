@@ -62,6 +62,7 @@
     "loginHint": "Sign in to sync favorites and order history",
     "registerHint": "An account syncs favorites and orders. Guest checkout is also available.",
     "password": "Password (min. 8)",
+    "email": "Email",
     "loginBtn": "Sign in",
     "loggingIn": "Signing in…",
     "registerBtn": "Create account",
@@ -81,6 +82,8 @@
     "title": "Tournaments",
     "searchPlaceholder": "Search tournaments...",
     "notFound": "No tournaments found",
+    "tabActive": "Active",
+    "tabPast": "Past",
     "notFoundOne": "Tournament not found",
     "findMyPhotos": "Find my photos",
     "chooseSearch": "Choose a search method",
@@ -150,6 +153,7 @@
     "orderSummary": "Order #{id} · ${total}",
     "downloadPhotos": "Download photos",
     "photo": "Photo {id}",
+    "bundlePhoto": "Bundle photo · {id}",
     "download": "Download",
     "home": "Back to home"
   },
@@ -212,6 +216,9 @@
     "searching": "Searching…",
     "findPhotos": "Find photos",
     "faceNotFound": "No photos with your face found",
+    "faceDisabled": "Face search is temporarily unavailable",
+    "faceDisabledHint": "Face search is disabled on this server. Use name search or contact the organizer.",
+    "previewAlt": "Preview",
     "searchFailed": "Search failed",
     "foundCount": "Found: {count}",
     "changeMethod": "Change method",
@@ -225,7 +232,9 @@
     "tabAll": "All",
     "tabFavorites": "Favorites",
     "noPhotos": "No photos found",
-    "noFavorites": "No favorites in this list"
+    "noFavorites": "No favorites in this list",
+    "loadMore": "Load more ({count})",
+    "loadingMore": "Loading…"
   },
   "photos": {
     "notFound": "Photo not found",
@@ -329,6 +338,9 @@
     "statAthletes": "Athletes",
     "statOrders": "Orders",
     "statPhotosSold": "Photos sold (individual)",
+    "statViews": "Page views",
+    "statConversion": "Order conversion",
+    "qrAlt": "Tournament QR code",
     "placeholderAlt": "Placeholder"
   },
   "admin": {
@@ -434,5 +446,12 @@
     "submit": "Send request",
     "submitting": "Sending…",
     "submitFailed": "Could not send request"
+  },
+  "errors": {
+    "notFoundTitle": "Page not found",
+    "notFoundHint": "The link may be outdated or the page was removed.",
+    "genericTitle": "Something went wrong",
+    "genericHint": "Try refreshing the page or go back to home.",
+    "home": "Home"
   }
 }

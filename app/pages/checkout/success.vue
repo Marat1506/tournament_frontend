@@ -12,9 +12,13 @@ const { data: order } = await useAsyncData(`order-${orderId}`, () =>
   orderId ? api.getOrder(orderId, guestEmail) : Promise.resolve(null),
 )
 
-const paidPhotos = computed(() =>
-  order.value?.items?.filter(i => i.item_type === 'single' && i.photo_id) ?? [],
-)
+const downloadPhotos = computed(() => order.value?.download_photos ?? [])
+
+function photoLabel(item: { photo_id: string; original_filename?: string; item_type?: string }) {
+  if (item.original_filename) return item.original_filename
+  if (item.item_type === 'bundle') return t('checkout.bundlePhoto', { id: item.photo_id.slice(0, 8) })
+  return t('checkout.photo', { id: item.photo_id.slice(0, 8) })
+}
 </script>
 
 <template>
@@ -31,17 +35,17 @@ const paidPhotos = computed(() =>
         {{ t('checkout.orderSummary', { id: order.id.slice(0, 8), total: order.total }) }}
       </p>
 
-      <div v-if="paidPhotos.length" class="mt-8 space-y-3 text-left">
+      <div v-if="downloadPhotos.length" class="mt-8 space-y-3 text-left">
         <h2 class="font-semibold">{{ t('checkout.downloadPhotos') }}</h2>
         <a
-          v-for="item in paidPhotos"
-          :key="item.id"
-          :href="api.downloadUrl(item.photo_id!, orderId, guestEmail)"
+          v-for="item in downloadPhotos"
+          :key="item.photo_id"
+          :href="api.downloadUrl(item.photo_id, orderId, guestEmail)"
           class="card flex items-center justify-between p-4"
           target="_blank"
         >
-          <span>{{ t('checkout.photo', { id: item.photo_id?.slice(0, 8) }) }}</span>
-          <span class="text-brand-600 font-medium">{{ t('checkout.download') }}</span>
+          <span class="truncate pr-3">{{ photoLabel(item) }}</span>
+          <span class="shrink-0 font-medium text-brand-600">{{ t('checkout.download') }}</span>
         </a>
       </div>
 

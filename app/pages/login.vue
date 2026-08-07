@@ -1,7 +1,8 @@
 <script setup lang="ts">
 definePageMeta({})
 
-const { t, setLocale } = useI18n()
+const { t } = useI18n()
+const { applyLocale } = useAppLocale()
 const api = useApi()
 const auth = useAuthStore()
 const router = useRouter()
@@ -18,7 +19,7 @@ async function submit() {
   try {
     const resp = await api.login({ email: email.value, password: password.value })
     if (resp.user.locale && ['ru', 'en', 'es'].includes(resp.user.locale)) {
-      await setLocale(resp.user.locale as 'ru' | 'en' | 'es')
+      await applyLocale(resp.user.locale as 'ru' | 'en' | 'es', false)
     }
     if (resp.user.role === 'photographer') {
       auth.setSession(resp)
@@ -53,7 +54,7 @@ async function submit() {
     <div class="page-container max-w-md">
       <p class="mb-4 text-sm text-gray-400">{{ t('auth.loginHint') }}</p>
       <form class="space-y-4" @submit.prevent="submit">
-        <input v-model="email" type="email" class="input-field" placeholder="Email" required>
+        <input v-model="email" type="email" class="input-field" :placeholder="t('auth.email')" required>
         <input v-model="password" type="password" class="input-field" :placeholder="t('auth.password')" required>
         <p v-if="error" class="text-sm text-red-400">{{ error }}</p>
         <button type="submit" class="btn-primary-solid w-full" :disabled="loading">

@@ -1,14 +1,17 @@
 export default defineNuxtPlugin(() => {
   const auth = useAuthStore()
   const { setLocale, locale } = useI18n()
+  const localeCookie = useCookie<'ru' | 'en' | 'es'>('bjj_locale')
 
-  watch(
-    () => auth.user?.locale,
-    (userLocale) => {
-      if (userLocale && userLocale !== locale.value && ['ru', 'en', 'es'].includes(userLocale)) {
+  onNuxtReady(() => {
+    watch(
+      () => auth.user?.locale,
+      (userLocale) => {
+        if (!userLocale || !['ru', 'en', 'es'].includes(userLocale)) return
+        if (userLocale === locale.value) return
         setLocale(userLocale as 'ru' | 'en' | 'es')
-      }
-    },
-    { immediate: true },
-  )
+        localeCookie.value = userLocale as 'ru' | 'en' | 'es'
+      },
+    )
+  })
 })

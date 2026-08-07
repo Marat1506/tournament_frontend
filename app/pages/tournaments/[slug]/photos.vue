@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import type { Photo } from '~/types'
+
 const route = useRoute()
 const slug = route.params.slug as string
 const athleteId = route.query.athlete_id as string | undefined
@@ -13,6 +15,11 @@ const { filtersFromRoute, filtersToQuery, activeFilterCount } = useCategoryFilte
 const tab = ref<'all' | 'favorites'>('all')
 const showFilters = ref(false)
 const filters = ref(filtersFromRoute(route.query))
+const page = ref(1)
+const pageSize = 30
+const allPhotos = ref<Photo[]>([])
+const totalPhotos = ref(0)
+const loadingMore = ref(false)
 
 const filterCount = computed(() => activeFilterCount(filters.value))
 
@@ -24,9 +31,15 @@ watchEffect(() => {
   }
 })
 
-const { data: photos, pending, refresh } = await useAsyncData(
+const { pending, refresh } = await useAsyncData(
   () => `photos-${slug}-${athleteId}-${JSON.stringify(filters.value)}`,
-  () => api.getPhotos(slug, { athlete_id: athleteId, ...filtersToQuery(filters.value), limit: 100 }),
+  async () => {
+    page.value = 1
+    const response = await api.getPhotos(slug, { athlete_id: athleteId, ...filtersToQuery(filters.value), page: 1, limit: pageSize })
+    allPhotos.value = response.data ?? []
+    totalPhotos.value = response.pagination?.total ?? allPhotos.value.length
+    return response
+  },
   { watch: [filters] },
 )
 
@@ -34,17 +47,38 @@ if (import.meta.client && athleteId && auth.isLoggedIn && auth.user?.role === 'c
   api.trackAthlete(athleteId).catch(() => {})
 }
 
+const hasMore = computed(() => allPhotos.value.length < totalPhotos.value)
+
 const favoriteCount = computed(() =>
-  (photos.value?.data ?? []).filter(p => favorites.has(p.id)).length,
+  allPhotos.value.filter(p => favorites.has(p.id)).length,
 )
 
 const displayedPhotos = computed(() => {
-  const list = photos.value?.data ?? []
   if (tab.value === 'favorites') {
-    return list.filter(p => favorites.has(p.id))
+    return allPhotos.value.filter(p => favorites.has(p.id))
   }
-  return list
+  return allPhotos.value
 })
+
+async function loadMore() {
+  if (loadingMore.value || !hasMore.value) return
+  loadingMore.value = true
+  try {
+    const nextPage = page.value + 1
+    const response = await api.getPhotos(slug, {
+      athlete_id: athleteId,
+      ...filtersToQuery(filters.value),
+      page: nextPage,
+      limit: pageSize,
+    })
+    allPhotos.value = [...allPhotos.value, ...(response.data ?? [])]
+    page.value = nextPage
+    totalPhotos.value = response.pagination?.total ?? totalPhotos.value
+  }
+  finally {
+    loadingMore.value = false
+  }
+}
 
 function buyBundle() {
   if (!athleteId || !athleteName || !tournament.value) return
@@ -86,11 +120,11 @@ function onFiltersApply(v: typeof filters.value) {
           <NuxtLink :to="`/tournaments/${slug}/search`" class="font-medium text-brand-600">{{ t('gallery.change') }}</NuxtLink>
         </div>
         <button
-          v-if="tournament && photos?.pagination?.total"
+          v-if="tournament && totalPhotos"
           class="w-full rounded-xl bg-brand-50 px-4 py-3 text-left text-sm font-semibold text-brand-700 ring-1 ring-brand-100"
           @click="buyBundle"
         >
-          {{ t('gallery.buyBundle', { count: photos.pagination.total, price: tournament.price_bundle }) }}
+          {{ t('gallery.buyBundle', { count: totalPhotos, price: tournament.price_bundle }) }}
         </button>
       </div>
 
@@ -100,7 +134,7 @@ function onFiltersApply(v: typeof filters.value) {
           :class="tab === 'all' ? 'border-b-2 border-brand-600 text-brand-600' : 'text-gray-500'"
           @click="tab = 'all'"
         >
-          {{ t('gallery.tabAll') }} ({{ photos?.pagination?.total ?? 0 }})
+          {{ t('gallery.tabAll') }} ({{ totalPhotos }})
         </button>
         <button
           class="pb-3 text-sm font-semibold"
@@ -112,6 +146,12 @@ function onFiltersApply(v: typeof filters.value) {
       </div>
 
       <PhotoGrid :photos="displayedPhotos" :loading="pending" selectable />
+
+      <div v-if="hasMore && tab === 'all'" class="mt-6 text-center">
+        <button class="btn-secondary" :disabled="loadingMore" @click="loadMore">
+          {{ loadingMore ? t('gallery.loadingMore') : t('gallery.loadMore', { count: totalPhotos - allPhotos.length }) }}
+        </button>
+      </div>
 
       <p v-if="!pending && !displayedPhotos.length" class="py-8 text-center text-sm text-gray-500">
         {{ tab === 'favorites' ? t('gallery.noFavorites') : t('gallery.noPhotos') }}

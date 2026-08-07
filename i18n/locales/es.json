@@ -62,6 +62,7 @@
     "loginHint": "Inicia sesión para sincronizar favoritos e historial de pedidos",
     "registerHint": "La cuenta sincroniza favoritos y pedidos. También puedes comprar como invitado.",
     "password": "Contraseña (mín. 8)",
+    "email": "Correo electrónico",
     "loginBtn": "Entrar",
     "loggingIn": "Entrando…",
     "registerBtn": "Crear cuenta",
@@ -81,6 +82,8 @@
     "title": "Torneos",
     "searchPlaceholder": "Buscar torneo...",
     "notFound": "No se encontraron torneos",
+    "tabActive": "Activos",
+    "tabPast": "Pasados",
     "notFoundOne": "Torneo no encontrado",
     "findMyPhotos": "Buscar mis fotos",
     "chooseSearch": "Elige un método de búsqueda",
@@ -150,6 +153,7 @@
     "orderSummary": "Pedido #{id} · ${total}",
     "downloadPhotos": "Descargar fotos",
     "photo": "Foto {id}",
+    "bundlePhoto": "Foto del paquete · {id}",
     "download": "Descargar",
     "home": "Ir al inicio"
   },
@@ -212,6 +216,9 @@
     "searching": "Buscando…",
     "findPhotos": "Buscar fotos",
     "faceNotFound": "No se encontraron fotos con tu rostro",
+    "faceDisabled": "La búsqueda por rostro no está disponible",
+    "faceDisabledHint": "La búsqueda por rostro está desactivada en este servidor. Use la búsqueda por nombre o contacte al organizador.",
+    "previewAlt": "Vista previa",
     "searchFailed": "Error en la búsqueda",
     "foundCount": "Encontradas: {count}",
     "changeMethod": "Cambiar método",
@@ -225,7 +232,9 @@
     "tabAll": "Todas",
     "tabFavorites": "Favoritos",
     "noPhotos": "No se encontraron fotos",
-    "noFavorites": "No hay favoritos en esta lista"
+    "noFavorites": "No hay favoritos en esta lista",
+    "loadMore": "Cargar más ({count})",
+    "loadingMore": "Cargando…"
   },
   "photos": {
     "notFound": "Foto no encontrada",
@@ -329,6 +338,9 @@
     "statAthletes": "Atletas",
     "statOrders": "Pedidos",
     "statPhotosSold": "Fotos vendidas (individual)",
+    "statViews": "Visitas a la página",
+    "statConversion": "Conversión a pedidos",
+    "qrAlt": "Código QR del torneo",
     "placeholderAlt": "Marcador de posición"
   },
   "admin": {
@@ -434,5 +446,12 @@
     "submit": "Enviar solicitud",
     "submitting": "Enviando…",
     "submitFailed": "No se pudo enviar la solicitud"
+  },
+  "errors": {
+    "notFoundTitle": "Página no encontrada",
+    "notFoundHint": "El enlace puede estar desactualizado o la página fue eliminada.",
+    "genericTitle": "Algo salió mal",
+    "genericHint": "Intente actualizar la página o volver al inicio.",
+    "home": "Inicio"
   }
 }

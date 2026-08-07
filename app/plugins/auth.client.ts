@@ -1,12 +1,14 @@
-export default defineNuxtPlugin(async () => {
+export default defineNuxtPlugin(() => {
   const auth = useAuthStore()
-  const api = useApi()
+  auth.hydrate()
 
-  if (!auth.accessToken) return
-
-  try {
-    auth.setUser(await api.me())
-  } catch {
-    auth.logout()
-  }
+  onNuxtReady(async () => {
+    if (!auth.accessToken) return
+    const api = useApi()
+    try {
+      auth.setUser(await api.me())
+    } catch {
+      auth.logout()
+    }
+  })
 })

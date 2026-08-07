@@ -83,7 +83,5 @@ export const useFavoritesStore = defineStore('favorites', () => {
     return ids.value.includes(id)
   }
 
-  load()
-
   return { ids, synced, toggle, has, load, syncFromServer, setIds }
 })

@@ -62,6 +62,19 @@
     @apply flex h-14 w-14 items-center justify-center rounded-full bg-white/5 text-white ring-1 ring-white/15;
   }
 
+  .hero-bg-default {
+    @apply h-full w-full bg-cover bg-no-repeat;
+    background-image: url('/main_background_mobile.png');
+    background-position: 72% 28%;
+  }
+
+  @media (min-width: 768px) {
+    .hero-bg-default {
+      background-image: url('/main_background.png');
+      background-position: center 30%;
+    }
+  }
+
   .search-card {
     @apply card flex min-h-[148px] flex-col items-center justify-center gap-3 p-4 text-center transition active:scale-[0.99];
   }
