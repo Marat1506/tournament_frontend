@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import type { ProfilePhoto } from '~/types'
-
 definePageMeta({ middleware: 'client-auth' })
 
 const { t } = useI18n()
@@ -31,14 +29,10 @@ const chips = computed(() => [
 ])
 
 const photos = computed(() => data.value?.data ?? [])
-
-function asPhotos(list: ProfilePhoto[]) {
-  return list as ProfilePhoto[]
-}
 </script>
 
 <template>
-  <div class="pb-28">
+  <div class="page-with-floating-cta">
     <AppPageHeader :title="t('profilePhotos.title')">
       <template #left>
         <button class="flex h-10 w-10 items-center justify-center" :aria-label="t('common.back')" @click="router.back()">
@@ -68,18 +62,28 @@ function asPhotos(list: ProfilePhoto[]) {
       <div class="flex flex-wrap gap-2">
         <select v-model="tournamentId" class="input-field w-auto min-w-[140px] py-2.5 text-sm">
           <option value="">{{ t('profilePhotos.tournament') }}</option>
-          <option v-for="t in tournamentOptions?.data" :key="t.id" :value="t.id">{{ t.name }}</option>
+          <option v-for="tour in tournamentOptions?.data" :key="tour.id" :value="tour.id">{{ tour.name }}</option>
         </select>
       </div>
 
-      <PhotoGrid :photos="asPhotos(photos)" :loading="pending" />
+      <div v-if="pending" class="grid grid-cols-3 gap-1.5">
+        <div v-for="n in 9" :key="n" class="aspect-[2/3] animate-pulse rounded-xl bg-white/10" />
+      </div>
 
-      <p v-if="!pending && !photos.length" class="text-center text-sm text-gray-500">
+      <p v-else-if="!photos.length" class="text-center text-sm text-gray-500">
         {{ t('profilePhotos.empty') }}
       </p>
+
+      <div v-else class="grid grid-cols-3 gap-1.5 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
+        <ProfilePhotoCard
+          v-for="photo in photos"
+          :key="photo.id"
+          :photo="photo"
+        />
+      </div>
     </div>
 
-    <div class="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] left-0 right-0 z-30 px-4">
+    <div class="floating-above-nav">
       <div class="mx-auto max-w-lg">
         <NuxtLink to="/tournaments" class="btn-primary-solid shadow-lg">
           {{ t('profilePhotos.findNew') }}

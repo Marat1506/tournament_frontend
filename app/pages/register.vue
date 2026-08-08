@@ -4,8 +4,8 @@ definePageMeta({})
 const { t } = useI18n()
 const { applyLocale } = useAppLocale()
 const api = useApi()
-const auth = useAuthStore()
 const router = useRouter()
+const { afterClientSession } = useClientAuthRedirect()
 
 const form = reactive({
   name: '',
@@ -23,8 +23,7 @@ async function submit() {
     if (resp.user.locale && ['ru', 'en', 'es'].includes(resp.user.locale)) {
       await applyLocale(resp.user.locale as 'ru' | 'en' | 'es', false)
     }
-    auth.setSession(resp)
-    await router.push('/profile')
+    await afterClientSession(resp)
   } catch {
     error.value = t('auth.registerError')
   } finally {

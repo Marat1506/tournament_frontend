@@ -100,6 +100,30 @@ export function useApi() {
     return apiFetch<T>(path, { method: 'PATCH', body, headers: headers() })
   }
 
+  function downloadPath(photoId: string, orderId?: string, guestEmail?: string) {
+    const params = new URLSearchParams()
+    if (orderId) params.set('order_id', orderId)
+    if (guestEmail) params.set('guest_email', guestEmail)
+    const qs = params.toString()
+    return `/api/v1/photos/${photoId}/download${qs ? `?${qs}` : ''}`
+  }
+
+  async function downloadPhoto(photoId: string, filename?: string, orderId?: string, guestEmail?: string) {
+    const path = downloadPath(photoId, orderId, guestEmail)
+    const url = `${base}${path}`
+    const res = await fetch(url, { headers: headers(), redirect: 'follow' })
+    if (!res.ok) {
+      throw new Error('download failed')
+    }
+    const blob = await res.blob()
+    const objectUrl = URL.createObjectURL(blob)
+    const anchor = document.createElement('a')
+    anchor.href = objectUrl
+    anchor.download = filename || `${photoId.slice(0, 8)}.jpg`
+    anchor.click()
+    URL.revokeObjectURL(objectUrl)
+  }
+
   return {
     getTournaments: (search?: string, period?: 'active' | 'past') =>
       get<ListResponse<Tournament[]>>('/api/v1/tournaments', { search, period, limit: 20 }),
@@ -151,11 +175,17 @@ export function useApi() {
 
     refreshSession,
 
-    verifyEmail: (token: string) =>
-      post<{ status: string }>('/api/v1/auth/verify-email', { token }),
+    verifyEmail: (code: string) =>
+      post<{ status: string }>('/api/v1/auth/verify-email', { code }),
 
     resendVerification: () =>
       post<{ status: string }>('/api/v1/auth/resend-verification'),
+
+    verifyRegistration: (email: string, code: string) =>
+      post<AuthResponse>('/api/v1/auth/verify-registration', { email, code }),
+
+    resendRegistrationCode: (email: string) =>
+      post<{ status: string }>('/api/v1/auth/resend-registration-code', { email }),
 
     me: () => get<User>('/api/v1/auth/me'),
 
@@ -283,8 +313,15 @@ export function useApi() {
       })
     },
 
-    getAdminUsers: (page?: number) =>
-      get<{ data: AdminUser[]; pagination: Pagination }>('/api/v1/admin/users', { page: page ?? 1 }),
+    getAdminUsers: (params?: { role?: string; status?: string; page?: number }) =>
+      get<{ data: AdminUser[]; pagination: Pagination }>('/api/v1/admin/users', {
+        role: params?.role,
+        status: params?.status,
+        page: params?.page ?? 1,
+      }),
+
+    updateAdminUserStatus: (id: string, status: string) =>
+      patch<AdminUser>(`/api/v1/admin/users/${id}`, { status }),
 
     getAdminOrders: (page?: number) =>
       get<{ data: AdminOrder[]; pagination: Pagination }>('/api/v1/admin/orders', { page: page ?? 1 }),
@@ -308,12 +345,9 @@ export function useApi() {
     getMyOrders: () =>
       get<ListResponse<Order[]>>('/api/v1/orders/my'),
 
-    downloadUrl: (photoId: string, orderId?: string, guestEmail?: string) => {
-      const params = new URLSearchParams()
-      if (orderId) params.set('order_id', orderId)
-      if (guestEmail) params.set('guest_email', guestEmail)
-      const qs = params.toString()
-      return `${base}/api/v1/photos/${photoId}/download${qs ? `?${qs}` : ''}`
-    },
+    downloadUrl: (photoId: string, orderId?: string, guestEmail?: string) =>
+      `${base}${downloadPath(photoId, orderId, guestEmail)}`,
+
+    downloadPhoto,
   }
 }

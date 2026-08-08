@@ -6,6 +6,7 @@
   html {
     @apply antialiased;
     -webkit-tap-highlight-color: transparent;
+    scroll-padding-bottom: calc(5rem + env(safe-area-inset-bottom));
   }
 
   body {
@@ -19,7 +20,17 @@
 
 @layer components {
   .page-container {
-    @apply mx-auto w-full max-w-lg px-4 pb-28 pt-2;
+    @apply mx-auto w-full max-w-lg px-4 pt-2;
+    padding-bottom: calc(5.5rem + env(safe-area-inset-bottom));
+  }
+
+  .page-with-floating-cta {
+    padding-bottom: calc(9rem + env(safe-area-inset-bottom));
+  }
+
+  .floating-above-nav {
+    @apply fixed inset-x-0 z-40 px-4;
+    bottom: calc(4.75rem + env(safe-area-inset-bottom));
   }
 
   .page-dark {

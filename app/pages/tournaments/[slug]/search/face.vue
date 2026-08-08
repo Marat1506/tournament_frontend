@@ -5,6 +5,7 @@ const route = useRoute()
 const slug = route.params.slug as string
 const api = useApi()
 const selection = useSelectionStore()
+const faceSearch = useFaceSearchStore()
 const { t } = useI18n()
 
 const fileInput = ref<HTMLInputElement | null>(null)
@@ -12,7 +13,8 @@ const previewUrl = ref<string | null>(null)
 const selectedFile = ref<File | null>(null)
 const searching = ref(false)
 const errorMsg = ref('')
-const results = ref<Photo[] | null>(null)
+const restoredResults = faceSearch.getResults(slug)
+const results = ref<Photo[] | null>(restoredResults.length ? restoredResults : null)
 
 const { data: tournament } = await useAsyncData(`tournament-${slug}`, () => api.getTournament(slug))
 const { data: platform } = await useAsyncData('platform-home-face', () => api.getPlatformHome())
@@ -32,6 +34,7 @@ function onFileChange(event: Event) {
 
   errorMsg.value = ''
   results.value = null
+  faceSearch.clear()
   selectedFile.value = file
 
   if (previewUrl.value) {
@@ -61,6 +64,7 @@ async function search() {
   try {
     const response = await api.searchByFace(slug, selectedFile.value)
     results.value = response.data
+    faceSearch.setResults(slug, response.data)
     if (!response.data.length) {
       errorMsg.value = t('search.faceNotFound')
     }
@@ -87,7 +91,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="pb-32">
+  <div class="page-with-floating-cta">
     <AppPageHeader :title="t('search.byFace')">
       <template #left>
         <NuxtLink :to="`/tournaments/${slug}`" class="flex h-10 w-10 items-center justify-center rounded-full hover:bg-white/10">
@@ -152,7 +156,7 @@ onBeforeUnmount(() => {
       </div>
     </div>
 
-    <div v-if="results?.length" class="fixed inset-x-0 bottom-[calc(62px+env(safe-area-inset-bottom))] z-40 px-4">
+    <div v-if="results?.length" class="floating-above-nav">
       <NuxtLink
         v-if="selection.count"
         :to="`/cart?tournament_id=${tournament?.id}`"

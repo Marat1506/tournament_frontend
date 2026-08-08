@@ -36,7 +36,6 @@ async function checkout() {
       items,
     })
     const result = await api.checkout(order.id, auth.isLoggedIn ? undefined : guestEmail.value)
-    selection.clear()
     if (result.dev_mode) {
       await navigateTo(result.url)
     } else {

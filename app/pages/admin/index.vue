@@ -16,15 +16,23 @@ if (!auth.isLoggedIn) {
 
 type Tab = 'overview' | 'settings' | 'tournaments' | 'leads' | 'orders' | 'users'
 const tab = ref<Tab>('overview')
+const statusFilter = ref('')
+const typeFilter = ref('')
+const userStatusFilter = ref('')
 
 const { data: stats, refresh: refreshStats } = await useAsyncData('admin-stats', () => api.getAdminStats())
 const { data: settings, refresh: refreshSettings } = await useAsyncData('admin-settings', () => api.getAdminSettings())
 const { data: tournaments, refresh: refreshTournaments } = await useAsyncData('admin-tournaments', () => api.getAdminTournaments())
-const { data: users } = await useAsyncData('admin-users', () => api.getAdminUsers())
+const { data: users, refresh: refreshUsers } = await useAsyncData(
+  () => `admin-users-${userStatusFilter.value}`,
+  () => api.getAdminUsers({
+    role: userStatusFilter.value === 'photographers_pending' ? 'photographer' : undefined,
+    status: userStatusFilter.value === 'photographers_pending' ? 'pending' : userStatusFilter.value || undefined,
+  }),
+  { watch: [userStatusFilter] },
+)
 const { data: orders } = await useAsyncData('admin-orders', () => api.getAdminOrders())
 
-const statusFilter = ref('')
-const typeFilter = ref('')
 const { data: leads, refresh: refreshLeads, pending: leadsPending } = await useAsyncData(
   () => `admin-leads-${statusFilter.value}-${typeFilter.value}`,
   () => api.getAdminLeads({ status: statusFilter.value || undefined, type: typeFilter.value || undefined }),
@@ -63,6 +71,12 @@ const statusLabels = computed<Record<string, string>>(() => ({
   pending: t('admin.orderStatusPending'),
   failed: t('admin.orderStatusFailed'),
   cancelled: t('admin.orderStatusCancelled'),
+}))
+
+const userStatusLabels = computed<Record<string, string>>(() => ({
+  pending: t('admin.userStatusPending'),
+  approved: t('admin.userStatusApproved'),
+  rejected: t('admin.userStatusRejected'),
 }))
 
 const typeLabels = computed<Record<string, string>>(() => ({
@@ -161,6 +175,12 @@ async function setLeadStatus(id: string, status: string) {
   await refreshLeads()
   await refreshStats()
 }
+
+async function setUserStatus(id: string, status: string) {
+  await api.updateAdminUserStatus(id, status)
+  await refreshUsers()
+  await refreshStats()
+}
 </script>
 
 <template>
@@ -205,6 +225,10 @@ async function setLeadStatus(id: string, status: string) {
         <div class="card p-4 text-center">
           <div class="text-2xl font-bold">{{ stats.orders }}</div>
           <div class="text-xs text-gray-500">{{ t('admin.statOrders') }}</div>
+        </div>
+        <div class="card p-4 text-center">
+          <div class="text-2xl font-bold text-amber-600">{{ stats.photographers_pending ?? 0 }}</div>
+          <div class="text-xs text-gray-500">{{ t('admin.statPhotographersPending') }}</div>
         </div>
         <div class="card p-4 text-center">
           <div class="text-2xl font-bold">{{ stats.leads_total }}</div>
@@ -320,7 +344,7 @@ async function setLeadStatus(id: string, status: string) {
             <div v-if="lead.message" class="text-sm text-gray-400">{{ lead.message }}</div>
             <div class="flex gap-2">
               <button
-                v-if="lead.status !== 'contacted'"
+                v-if="lead.status === 'new'"
                 class="rounded-lg bg-blue-500/20 px-3 py-1.5 text-xs font-medium text-blue-400"
                 @click="setLeadStatus(lead.id, 'contacted')"
               >
@@ -360,15 +384,59 @@ async function setLeadStatus(id: string, status: string) {
 
       <!-- Users -->
       <div v-if="tab === 'users'" class="space-y-3">
+        <div class="flex flex-wrap gap-2">
+          <button
+            type="button"
+            class="rounded-full px-3 py-1 text-sm"
+            :class="!userStatusFilter ? 'bg-brand-50 text-brand-600' : 'bg-white/10 text-gray-500'"
+            @click="userStatusFilter = ''"
+          >
+            {{ t('admin.userFilterAll') }}
+          </button>
+          <button
+            type="button"
+            class="rounded-full px-3 py-1 text-sm"
+            :class="userStatusFilter === 'photographers_pending' ? 'bg-amber-500/15 text-amber-700' : 'bg-white/10 text-gray-500'"
+            @click="userStatusFilter = 'photographers_pending'"
+          >
+            {{ t('admin.userFilterPendingPhotographers') }}
+          </button>
+        </div>
         <p class="text-sm text-gray-500">{{ t('admin.usersHint') }}</p>
-        <div v-for="user in users?.data" :key="user.id" class="card flex items-center justify-between p-4">
+        <div v-for="user in users?.data" :key="user.id" class="card flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <div class="font-medium">{{ user.name || user.email }}</div>
             <div class="text-sm text-gray-500">{{ user.email }}</div>
           </div>
-          <div class="text-right">
-            <div class="text-sm font-medium">{{ roleLabels[user.role] || user.role }}</div>
-            <div class="text-xs text-gray-400">{{ formatDate(user.created_at) }}</div>
+          <div class="flex flex-wrap items-center gap-2 sm:justify-end">
+            <div class="text-right sm:mr-2">
+              <div class="text-sm font-medium">{{ roleLabels[user.role] || user.role }}</div>
+              <div v-if="user.role === 'photographer'" class="space-y-0.5 text-xs">
+                <div :class="user.status === 'pending' ? 'text-amber-600' : user.status === 'rejected' ? 'text-red-500' : 'text-green-600'">
+                  {{ userStatusLabels[user.status] || user.status }}
+                </div>
+                <div :class="user.email_verified ? 'text-green-600' : 'text-amber-600'">
+                  {{ user.email_verified ? t('admin.emailVerified') : t('admin.emailNotVerified') }}
+                </div>
+              </div>
+              <div v-else class="text-xs text-gray-400">{{ formatDate(user.created_at) }}</div>
+            </div>
+            <template v-if="user.role === 'photographer' && user.status === 'pending' && user.email_verified">
+              <button type="button" class="btn-primary-solid px-3 py-1.5 text-sm" @click="setUserStatus(user.id, 'approved')">
+                {{ t('admin.approvePhotographer') }}
+              </button>
+              <button type="button" class="btn-secondary px-3 py-1.5 text-sm" @click="setUserStatus(user.id, 'rejected')">
+                {{ t('admin.rejectPhotographer') }}
+              </button>
+            </template>
+            <button
+              v-else-if="user.role === 'photographer' && user.status === 'rejected' && user.email_verified"
+              type="button"
+              class="btn-secondary px-3 py-1.5 text-sm"
+              @click="setUserStatus(user.id, 'approved')"
+            >
+              {{ t('admin.approvePhotographer') }}
+            </button>
           </div>
         </div>
         <p v-if="!users?.data?.length" class="text-center text-gray-500">{{ t('admin.noUsers') }}</p>

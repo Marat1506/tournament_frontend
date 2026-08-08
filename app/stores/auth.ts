@@ -15,16 +15,22 @@ export const useAuthStore = defineStore('auth', () => {
     refreshToken.value = localStorage.getItem(REFRESH_KEY) || ''
   }
 
-  function setSession(tokens: { access_token: string; refresh_token: string; user: User }) {
+  function setSession(tokens: { access_token?: string; refresh_token?: string; user: User }) {
+    if (!tokens.access_token || !tokens.refresh_token) {
+      return
+    }
     accessToken.value = tokens.access_token
     refreshToken.value = tokens.refresh_token
     user.value = tokens.user
     if (import.meta.client) {
       localStorage.setItem(ACCESS_KEY, tokens.access_token)
       localStorage.setItem(REFRESH_KEY, tokens.refresh_token)
-      const favorites = useFavoritesStore()
-      favorites.synced = false
-      favorites.syncFromServer()
+      const skipSync = tokens.user.role === 'client' && !tokens.user.email_verified
+      if (!skipSync) {
+        const favorites = useFavoritesStore()
+        favorites.synced = false
+        favorites.syncFromServer()
+      }
     }
   }
 
@@ -46,6 +52,10 @@ export const useAuthStore = defineStore('auth', () => {
   const isLoggedIn = computed(() => !!accessToken.value)
   const isPhotographer = computed(() => user.value?.role === 'photographer')
   const isAdmin = computed(() => user.value?.role === 'admin')
+  const isEmailVerified = computed(() => !!user.value?.email_verified)
 
-  return { user, accessToken, refreshToken, setSession, setUser, logout, isLoggedIn, isPhotographer, isAdmin, hydrate }
+  return {
+    user, accessToken, refreshToken, setSession, setUser, logout,
+    isLoggedIn, isPhotographer, isAdmin, isEmailVerified, hydrate,
+  }
 })

@@ -31,17 +31,20 @@ watchEffect(() => {
   }
 })
 
-const { pending, refresh } = await useAsyncData(
+const { data: photosResponse, pending, refresh } = await useAsyncData(
   () => `photos-${slug}-${athleteId}-${JSON.stringify(filters.value)}`,
   async () => {
-    page.value = 1
-    const response = await api.getPhotos(slug, { athlete_id: athleteId, ...filtersToQuery(filters.value), page: 1, limit: pageSize })
-    allPhotos.value = response.data ?? []
-    totalPhotos.value = response.pagination?.total ?? allPhotos.value.length
-    return response
+    return api.getPhotos(slug, { athlete_id: athleteId, ...filtersToQuery(filters.value), page: 1, limit: pageSize })
   },
   { watch: [filters] },
 )
+
+watch(photosResponse, (response) => {
+  if (!response) return
+  page.value = 1
+  allPhotos.value = response.data ?? []
+  totalPhotos.value = response.pagination?.total ?? allPhotos.value.length
+}, { immediate: true })
 
 if (import.meta.client && athleteId && auth.isLoggedIn && auth.user?.role === 'client') {
   api.trackAthlete(athleteId).catch(() => {})
@@ -92,7 +95,7 @@ function onFiltersApply(v: typeof filters.value) {
 </script>
 
 <template>
-  <div class="pb-32">
+  <div class="page-with-floating-cta">
     <AppPageHeader :title="t('gallery.title')">
       <template #left>
         <NuxtLink :to="`/tournaments/${slug}/search`" class="flex h-10 w-10 items-center justify-center rounded-full hover:bg-white/10">
@@ -158,7 +161,7 @@ function onFiltersApply(v: typeof filters.value) {
       </p>
     </div>
 
-    <div class="fixed inset-x-0 bottom-[calc(62px+env(safe-area-inset-bottom))] z-40 px-4">
+    <div v-if="selection.count" class="floating-above-nav">
       <NuxtLink
         v-if="selection.count"
         :to="`/cart?tournament_id=${tournament?.id}`"

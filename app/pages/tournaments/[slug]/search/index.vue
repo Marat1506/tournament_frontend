@@ -44,7 +44,7 @@ function onFiltersApply(v: typeof filters.value) {
 </script>
 
 <template>
-  <div>
+  <div class="page-with-floating-cta">
     <AppPageHeader :title="pageTitle">
       <template #left>
         <NuxtLink :to="`/tournaments/${slug}`" class="flex h-10 w-10 items-center justify-center rounded-full hover:bg-white/10">

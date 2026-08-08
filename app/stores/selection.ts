@@ -1,10 +1,50 @@
 import { defineStore } from 'pinia'
 import type { Photo } from '~/types'
 
+const STORAGE_KEY = 'bjj_selection'
+
+type StoredSelection = {
+  items: Photo[]
+  bundle: { athleteId: string; athleteName: string; price: number } | null
+  tournamentId: string
+}
+
+function readStorage(): StoredSelection | null {
+  if (!import.meta.client) return null
+  try {
+    const raw = sessionStorage.getItem(STORAGE_KEY)
+    if (!raw) return null
+    return JSON.parse(raw) as StoredSelection
+  }
+  catch {
+    return null
+  }
+}
+
+function writeStorage(state: StoredSelection) {
+  if (!import.meta.client) return
+  if (!state.items.length && !state.bundle && !state.tournamentId) {
+    sessionStorage.removeItem(STORAGE_KEY)
+    return
+  }
+  sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+}
+
 export const useSelectionStore = defineStore('selection', () => {
-  const items = ref<Photo[]>([])
-  const bundle = ref<{ athleteId: string; athleteName: string; price: number } | null>(null)
-  const tournamentId = ref<string>('')
+  const stored = readStorage()
+  const items = ref<Photo[]>(stored?.items ?? [])
+  const bundle = ref<{ athleteId: string; athleteName: string; price: number } | null>(stored?.bundle ?? null)
+  const tournamentId = ref<string>(stored?.tournamentId ?? '')
+
+  function persist() {
+    writeStorage({
+      items: items.value,
+      bundle: bundle.value,
+      tournamentId: tournamentId.value,
+    })
+  }
+
+  watch([items, bundle, tournamentId], persist, { deep: true })
 
   function toggle(photo: Photo) {
     bundle.value = null
@@ -36,6 +76,9 @@ export const useSelectionStore = defineStore('selection', () => {
   function clear() {
     items.value = []
     bundle.value = null
+    if (import.meta.client) {
+      sessionStorage.removeItem(STORAGE_KEY)
+    }
   }
 
   const count = computed(() => items.value.length + (bundle.value ? 1 : 0))

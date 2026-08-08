@@ -14,6 +14,13 @@ if (!auth.isLoggedIn) {
 const { data: tournaments, refresh: refreshList } = await useAsyncData('my-tournaments-detail', () => api.getMyTournaments())
 const tournament = computed(() => tournaments.value?.data?.find(t => t.id === id))
 
+const statusLabel = computed(() => {
+  const status = tournament.value?.status
+  if (status === 'published') return t('photographer.statusPublished')
+  if (status === 'draft') return t('photographer.statusDraft')
+  return status || ''
+})
+
 const files = ref<File[]>([])
 const uploading = ref(false)
 const batch = ref<{ processed_files: number; total_files: number; status: string } | null>(null)
@@ -145,7 +152,7 @@ onUnmounted(() => {
       <div class="card p-4">
         <div class="text-sm text-gray-500">{{ t('photographer.slugLabel') }}</div>
         <div class="font-mono text-sm">/t/{{ tournament.slug }}</div>
-        <div class="mt-2 text-sm">{{ t('photographer.statusLabel') }}: <strong>{{ tournament.status }}</strong> · {{ tournament.photo_count }} {{ t('common.photos') }}</div>
+        <div class="mt-2 text-sm">{{ t('photographer.statusLabel') }}: <strong>{{ statusLabel }}</strong> · {{ tournament.photo_count }} {{ t('common.photos') }}</div>
       </div>
 
       <section class="card p-4 space-y-3">

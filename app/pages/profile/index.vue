@@ -4,13 +4,18 @@ definePageMeta({})
 const { t, locale } = useI18n()
 const auth = useAuthStore()
 const api = useApi()
+const router = useRouter()
 
 const beltLabel = useBeltLabel(() => auth.user?.belt)
 
+const canLoadStats = computed(() =>
+  auth.isLoggedIn && auth.user?.role === 'client' && !!auth.user?.email_verified,
+)
+
 const { data: stats } = await useAsyncData(
   'profile-stats',
-  () => (auth.isLoggedIn && auth.user?.role === 'client' ? api.getProfileStats() : Promise.resolve(null)),
-  { watch: [() => auth.isLoggedIn] },
+  () => (canLoadStats.value ? api.getProfileStats() : Promise.resolve(null)),
+  { watch: [canLoadStats] },
 )
 
 const menuItems = computed(() => [
@@ -26,6 +31,12 @@ function formatStat(n?: number) {
   if (n == null) return '0'
   return n.toLocaleString(locale.value === 'ru' ? 'ru-RU' : locale.value === 'es' ? 'es-ES' : 'en-US')
 }
+
+onMounted(async () => {
+  if (auth.isLoggedIn && auth.user?.role === 'client' && !auth.user?.email_verified) {
+    await navigateTo('/confirm-email')
+  }
+})
 </script>
 
 <template>
@@ -69,6 +80,8 @@ function formatStat(n?: number) {
       </template>
 
       <template v-else>
+        <EmailVerificationBanner />
+
         <div class="card p-5">
           <div class="flex items-center gap-4">
             <div class="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-brand-600/20 text-brand-400">

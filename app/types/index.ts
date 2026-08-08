@@ -3,6 +3,7 @@ export interface User {
   email: string
   name?: string
   role: string
+  status?: string
   avatar_url?: string
   belt?: string
   locale?: string
@@ -52,10 +53,11 @@ export interface ClientSearchSession {
 }
 
 export interface AuthResponse {
-  access_token: string
-  refresh_token: string
-  expires_in: number
+  access_token?: string
+  refresh_token?: string
+  expires_in?: number
   user: User
+  pending_approval?: boolean
 }
 
 export interface OrderDownloadPhoto {
@@ -172,6 +174,7 @@ export interface AdminStats {
   orders: number
   leads_new: number
   leads_total: number
+  photographers_pending?: number
 }
 
 export interface PlatformHome {
@@ -188,6 +191,8 @@ export interface AdminUser {
   email: string
   name?: string
   role: string
+  status: string
+  email_verified?: boolean
   created_at: string
 }
 

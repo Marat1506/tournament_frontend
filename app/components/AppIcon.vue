@@ -1,6 +1,6 @@
 <script setup lang="ts">
 defineProps<{
-  name: 'home' | 'trophy' | 'heart' | 'user' | 'camera' | 'search' | 'upload' | 'face' | 'shirt' | 'bell' | 'help' | 'filter' | 'back' | 'check' | 'settings' | 'chevron' | 'cart' | 'photos'
+  name: 'home' | 'trophy' | 'heart' | 'user' | 'camera' | 'search' | 'upload' | 'face' | 'shirt' | 'bell' | 'help' | 'filter' | 'back' | 'check' | 'settings' | 'chevron' | 'cart' | 'photos' | 'mail' | 'download'
   class?: string
 }>()
 </script>
@@ -86,6 +86,14 @@ defineProps<{
         <rect x="4" y="5" width="16" height="14" rx="2" />
         <circle cx="9" cy="10" r="1.5" fill="currentColor" stroke="none" />
         <path d="m4 16 4.5-4.5 3 3L15 11l5 5" />
+      </template>
+      <template v-else-if="name === 'mail'">
+        <rect x="4" y="6" width="16" height="12" rx="2" />
+        <path d="m4 8 8 6 8 6 8 6 20 8" />
+      </template>
+      <template v-else-if="name === 'download'">
+        <path d="M12 4v10M8 10l4 4 4-4" />
+        <path d="M4 18h16" />
       </template>
     </svg>
     <template #fallback>

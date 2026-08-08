@@ -22,8 +22,22 @@ function lookup(obj: Record<string, unknown>, key: string): string | undefined {
   return typeof value === 'string' ? value : undefined
 }
 
-export function translate(locale: AppLocale, key: string): string {
-  return lookup(messages[locale], key)
+export function translate(
+  locale: AppLocale,
+  key: string,
+  params?: Record<string, string | number>,
+): string {
+  let text = lookup(messages[locale], key)
     ?? lookup(messages.ru, key)
     ?? key
+
+  if (params) {
+    for (const [name, value] of Object.entries(params)) {
+      const str = String(value)
+      text = text.split(`{${name}}`).join(str)
+      text = text.split(`\${${name}}`).join(str)
+    }
+  }
+
+  return text
 }

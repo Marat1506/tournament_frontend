@@ -5,8 +5,8 @@ export type { AppLocale }
 export function useI18n() {
   const locale = useState<AppLocale>('app-locale', () => 'ru')
 
-  function t(key: string): string {
-    return translate(locale.value, key)
+  function t(key: string, params?: Record<string, string | number>): string {
+    return translate(locale.value, key, params)
   }
 
   function setLocale(code: AppLocale) {

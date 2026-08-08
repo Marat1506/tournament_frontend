@@ -7,6 +7,7 @@ const api = useApi()
 const auth = useAuthStore()
 const router = useRouter()
 const route = useRoute()
+const { afterClientSession } = useClientAuthRedirect()
 
 const email = ref('')
 const password = ref('')
@@ -31,10 +32,18 @@ async function submit() {
       await router.push('/admin')
       return
     }
-    auth.setSession(resp)
-    const redirect = (route.query.redirect as string) || '/profile'
-    await router.push(redirect)
-  } catch {
+    await afterClientSession(resp, (route.query.redirect as string) || '/profile')
+  }
+  catch (e: unknown) {
+    const err = e as { data?: { error?: string } }
+    const msg = err.data?.error
+    if (msg === 'email not verified') {
+      if (import.meta.client) {
+        sessionStorage.setItem('bjj_pending_verify_email', email.value.trim())
+      }
+      await router.push('/confirm-email')
+      return
+    }
     error.value = t('auth.loginError')
   } finally {
     loading.value = false

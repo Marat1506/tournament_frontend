@@ -6,8 +6,8 @@ const api = useApi()
 const auth = useAuthStore()
 const router = useRouter()
 
-const email = ref('photographer@bjjphotos.local')
-const password = ref('password123')
+const email = ref('')
+const password = ref('')
 const error = ref('')
 const loading = ref(false)
 
@@ -20,11 +20,44 @@ async function submit() {
       error.value = t('photographer.wrongRole')
       return
     }
-    auth.setSession(resp)
+    auth.setSession({
+      access_token: resp.access_token!,
+      refresh_token: resp.refresh_token!,
+      user: resp.user,
+    })
+    if (resp.user.status === 'pending') {
+      auth.logout()
+      error.value = t('photographer.pendingApproval')
+      return
+    }
+    if (resp.user.status === 'rejected') {
+      auth.logout()
+      error.value = t('photographer.rejected')
+      return
+    }
     await router.push('/photographer/dashboard')
-  } catch {
-    error.value = t('photographer.loginError')
-  } finally {
+  }
+  catch (e: unknown) {
+    const err = e as { data?: { error?: string } }
+    const msg = err.data?.error
+    if (msg === 'email not verified') {
+      if (import.meta.client) {
+        sessionStorage.setItem('bjj_pending_verify_email', email.value.trim())
+      }
+      await router.push('/confirm-email?role=photographer')
+      return
+    }
+    if (msg === 'photographer account pending approval') {
+      error.value = t('photographer.pendingApproval')
+    }
+    else if (msg === 'photographer account rejected') {
+      error.value = t('photographer.rejected')
+    }
+    else {
+      error.value = t('photographer.loginError')
+    }
+  }
+  finally {
     loading.value = false
   }
 }

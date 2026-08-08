@@ -65,7 +65,7 @@ async function submit() {
         </div>
         <h2 class="text-lg font-semibold">{{ t('shop.successTitle') }}</h2>
         <p class="mt-2 text-sm text-gray-600">{{ t('shop.successHint') }}</p>
-        <NuxtLink to="/" class="btn-primary-solid mt-6 inline-block">{{ t('shop.home') }}</NuxtLink>
+        <NuxtLink to="/" class="btn-primary-solid mt-6">{{ t('shop.home') }}</NuxtLink>
       </div>
 
       <form v-else class="card space-y-4 p-5" @submit.prevent="submit">
