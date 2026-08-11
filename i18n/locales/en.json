@@ -494,5 +494,11 @@
     "genericTitle": "Something went wrong",
     "genericHint": "Try refreshing the page or go back to home.",
     "home": "Home"
+  },
+  "legal": {
+    "support": "Support",
+    "privacy": "Privacy",
+    "terms": "Terms",
+    "updated": "Last updated: {date}"
   }
 }

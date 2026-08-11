@@ -151,6 +151,8 @@ onMounted(async () => {
           {{ t('profile.logout') }}
         </button>
       </template>
+
+      <AppSiteFooter />
     </div>
   </div>
 </template>

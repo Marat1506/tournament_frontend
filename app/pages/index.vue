@@ -105,5 +105,7 @@ const customHero = computed(() => platform.value?.hero_image_url || '')
         </div>
       </section>
     </div>
+
+    <AppSiteFooter class="mx-auto max-w-lg px-4 pb-8" />
   </div>
 </template>

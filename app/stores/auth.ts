@@ -46,6 +46,14 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   function setUser(u: User) {
+    if (user.value) {
+      user.value = {
+        ...user.value,
+        ...u,
+        email_verified: u.email_verified || user.value.email_verified,
+      }
+      return
+    }
     user.value = u
   }
 

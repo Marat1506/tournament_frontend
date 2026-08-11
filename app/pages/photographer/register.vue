@@ -1,10 +1,11 @@
 <script setup lang="ts">
 definePageMeta({})
 
-const PENDING_EMAIL_KEY = 'bjj_pending_verify_email'
+import { CODE_SENT_KEY, PENDING_EMAIL_KEY } from '~/composables/useEmailVerification'
 
 const { t } = useI18n()
 const api = useApi()
+const auth = useAuthStore()
 const router = useRouter()
 
 const form = reactive({
@@ -20,8 +21,10 @@ async function submit() {
   loading.value = true
   try {
     const resp = await api.register({ ...form, role: 'photographer' })
+    auth.logout()
     if (import.meta.client) {
       sessionStorage.setItem(PENDING_EMAIL_KEY, resp.user.email)
+      sessionStorage.setItem(CODE_SENT_KEY, '1')
     }
     await router.push('/confirm-email?role=photographer')
   }

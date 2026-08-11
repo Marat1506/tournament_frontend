@@ -1,14 +1,14 @@
 <script setup lang="ts">
 definePageMeta({})
 
-const PENDING_EMAIL_KEY = 'bjj_pending_verify_email'
+import { CODE_SENT_KEY, PENDING_EMAIL_KEY } from '~/composables/useEmailVerification'
 
 const { t } = useI18n()
 const route = useRoute()
 const auth = useAuthStore()
 const api = useApi()
 const router = useRouter()
-const { resend, sending, sent, error: resendError, cooldown } = useResendVerification()
+const { resend, sending, sent, error: resendError, cooldown, markCodeSent } = useResendVerification()
 
 const isPhotographer = computed(() => route.query.role === 'photographer')
 
@@ -48,6 +48,13 @@ onMounted(async () => {
     else {
       await router.replace('/profile')
     }
+    return
+  }
+
+  const alreadySent = import.meta.client && sessionStorage.getItem(CODE_SENT_KEY) === '1'
+  if (alreadySent) {
+    sessionStorage.removeItem(CODE_SENT_KEY)
+    markCodeSent()
     return
   }
 

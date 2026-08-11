@@ -1,6 +1,7 @@
 import type { AuthResponse } from '~/types'
 
-const PENDING_EMAIL_KEY = 'bjj_pending_verify_email'
+export const PENDING_EMAIL_KEY = 'bjj_pending_verify_email'
+export const CODE_SENT_KEY = 'bjj_verify_code_sent'
 
 export function useClientAuthRedirect() {
   const router = useRouter()
@@ -13,8 +14,10 @@ export function useClientAuthRedirect() {
 
   async function afterClientSession(resp: AuthResponse, fallback = '/profile') {
     if (!resp.access_token) {
+      auth.logout()
       if (import.meta.client && resp.user.email) {
         sessionStorage.setItem(PENDING_EMAIL_KEY, resp.user.email)
+        sessionStorage.setItem(CODE_SENT_KEY, '1')
       }
       await router.push('/confirm-email')
       return
@@ -63,6 +66,11 @@ export function useResendVerification() {
     if (timer) clearInterval(timer)
   })
 
+  function markCodeSent() {
+    sent.value = true
+    startCooldown()
+  }
+
   async function resend(email?: string) {
     if (sending.value || cooldown.value > 0) return
     sending.value = true
@@ -89,5 +97,5 @@ export function useResendVerification() {
     }
   }
 
-  return { sending, sent, error, cooldown, resend }
+  return { sending, sent, error, cooldown, resend, markCodeSent }
 }

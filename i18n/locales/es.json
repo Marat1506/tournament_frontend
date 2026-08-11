@@ -494,5 +494,11 @@
     "genericTitle": "Algo salió mal",
     "genericHint": "Intente actualizar la página o volver al inicio.",
     "home": "Inicio"
+  },
+  "legal": {
+    "support": "Soporte",
+    "privacy": "Privacidad",
+    "terms": "Términos",
+    "updated": "Última actualización: {date}"
   }
 }
