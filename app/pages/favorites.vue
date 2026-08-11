@@ -10,15 +10,14 @@ const photoMap = ref<Record<string, Photo>>({})
 const loading = ref(false)
 
 async function loadFavoritePhotos() {
+  if (loading.value) return
   loading.value = true
   try {
     if (auth.isLoggedIn) {
-      if (!favorites.synced) {
-        await favorites.syncFromServer()
-      }
-      const resp = await api.getFavorites()
-      photoMap.value = Object.fromEntries(resp.data.map(p => [p.id, p]))
-      favorites.setIds(resp.data.map(p => p.id))
+      const photos = favorites.synced
+        ? (await api.getFavorites()).data
+        : await favorites.syncFromServer()
+      photoMap.value = Object.fromEntries(photos.map(p => [p.id, p]))
       return
     }
 
@@ -48,8 +47,15 @@ async function loadFavoritePhotos() {
 }
 
 onMounted(loadFavoritePhotos)
-watch(() => [...favorites.ids], loadFavoritePhotos)
 watch(() => auth.isLoggedIn, loadFavoritePhotos)
+watch(
+  () => favorites.ids.join(','),
+  (next, prev) => {
+    if (prev !== undefined && next !== prev) {
+      loadFavoritePhotos()
+    }
+  },
+)
 
 const photos = computed(() => Object.values(photoMap.value))
 </script>

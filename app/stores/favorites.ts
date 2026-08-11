@@ -23,28 +23,32 @@ export const useFavoritesStore = defineStore('favorites', () => {
   }
 
   function setIds(next: string[]) {
+    if (
+      next.length === ids.value.length
+      && next.every((id, i) => id === ids.value[i])
+    ) {
+      return
+    }
     ids.value = next
     persistLocal()
   }
 
-  async function syncFromServer() {
+  async function syncFromServer(): Promise<Photo[]> {
     const auth = useAuthStore()
-    if (!auth.isLoggedIn) return
+    if (!auth.isLoggedIn) return []
 
     const api = useApi()
     const localIds = [...ids.value]
 
     try {
-      if (localIds.length) {
-        const resp = await api.syncFavorites(localIds)
-        setIds(resp.data.map(p => p.id))
-      } else {
-        const resp = await api.getFavorites()
-        setIds(resp.data.map(p => p.id))
-      }
+      const resp = localIds.length
+        ? await api.syncFavorites(localIds)
+        : await api.getFavorites()
+      setIds(resp.data.map(p => p.id))
       synced.value = true
+      return resp.data
     } catch {
-      // keep local state on failure
+      return []
     }
   }
 
