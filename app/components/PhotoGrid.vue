@@ -6,6 +6,7 @@ defineProps<{
   loading?: boolean
   selectable?: boolean
   athleteId?: string
+  fromFaceSearch?: boolean
 }>()
 
 const { t } = useI18n()
@@ -27,6 +28,7 @@ const { t } = useI18n()
       :photo="photo"
       :selectable="selectable"
       :athlete-id="athleteId"
+      :from-face-search="fromFaceSearch"
     />
   </div>
 </template>

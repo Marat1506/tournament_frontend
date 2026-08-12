@@ -156,7 +156,7 @@ onBeforeUnmount(() => {
           <span class="text-gray-400">{{ t('search.foundCount', { count: results.length }) }}</span>
           <NuxtLink :to="`/tournaments/${slug}`" class="font-medium text-brand-600">{{ t('search.changeMethod') }}</NuxtLink>
         </div>
-        <PhotoGrid :photos="results" selectable />
+        <PhotoGrid :photos="results" selectable from-face-search />
       </div>
     </div>
 

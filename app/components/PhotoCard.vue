@@ -5,6 +5,7 @@ const props = defineProps<{
   photo: Photo
   selectable?: boolean
   athleteId?: string
+  fromFaceSearch?: boolean
 }>()
 
 const favorites = useFavoritesStore()
@@ -12,9 +13,16 @@ const selection = useSelectionStore()
 const { t } = useI18n()
 
 const photoLink = computed(() => {
-  const athleteId = props.athleteId || props.photo.athlete_id
-  if (!athleteId) return `/photos/${props.photo.id}`
-  return `/photos/${props.photo.id}?athlete_id=${athleteId}`
+  const params = new URLSearchParams()
+  if (props.fromFaceSearch) {
+    params.set('from', 'face_search')
+  }
+  else {
+    const athleteId = props.athleteId || props.photo.athlete_id
+    if (athleteId) params.set('athlete_id', athleteId)
+  }
+  const qs = params.toString()
+  return qs ? `/photos/${props.photo.id}?${qs}` : `/photos/${props.photo.id}`
 })
 
 function onHeart(e: Event) {

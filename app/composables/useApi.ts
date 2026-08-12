@@ -164,8 +164,8 @@ export function useApi() {
         limit: params?.limit ?? 50,
       }),
 
-    getPhoto: (id: string) =>
-      get<Photo>(`/api/v1/photos/${id}`),
+    getPhoto: (id: string, params?: { from?: string }) =>
+      get<Photo>(`/api/v1/photos/${id}`, params),
 
     register: (data: { email: string; password: string; name?: string; role?: string }) =>
       post<AuthResponse>('/api/v1/auth/register', data),

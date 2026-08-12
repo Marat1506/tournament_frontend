@@ -6,7 +6,18 @@ const api = useApi()
 const favorites = useFavoritesStore()
 const selection = useSelectionStore()
 
-const { data: photo, error } = await useAsyncData(`photo-${id}`, () => api.getPhoto(id))
+const faceSearch = useFaceSearchStore()
+
+const fromFaceSearch = computed(() => route.query.from === 'face_search')
+
+const { data: photo, error } = await useAsyncData(`photo-${id}`, async () => {
+  try {
+    return await api.getPhoto(id, fromFaceSearch.value ? { from: 'face_search' } : undefined)
+  }
+  catch {
+    return faceSearch.findPhoto(id)
+  }
+})
 
 if (error.value || !photo.value) {
   throw createError({ statusCode: 404, statusMessage: t('photos.notFound') })
