@@ -27,11 +27,14 @@ const customHero = computed(() => platform.value?.hero_image_url || '')
             <div class="flex h-9 w-9 items-center justify-center rounded-full bg-brand-600 text-white">
               <AppIcon name="camera" class="h-5 w-5" />
             </div>
-            <span class="text-base font-bold tracking-[0.12em]">BJJ PHOTOS</span>
+            <span class="text-base font-bold tracking-[0.08em]">PixMomento</span>
           </div>
-          <NuxtLink to="/profile" class="flex h-10 w-10 items-center justify-center text-gray-300" :aria-label="t('nav.profile')">
+          <div class="flex items-center gap-2">
+            <AppLocaleSwitcher />
+            <NuxtLink to="/profile" class="flex h-10 w-10 items-center justify-center text-gray-300" :aria-label="t('nav.profile')">
             <AppIcon name="bell" class="h-5 w-5" />
           </NuxtLink>
+          </div>
         </header>
 
         <div class="mt-10 max-w-[290px]">

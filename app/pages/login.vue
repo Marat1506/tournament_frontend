@@ -24,6 +24,15 @@ async function submit() {
     }
     if (resp.user.role === 'photographer') {
       auth.setSession(resp)
+      if (resp.user.status === 'pending') {
+        await router.push('/photographer/pending')
+        return
+      }
+      if (resp.user.status === 'rejected') {
+        auth.logout()
+        error.value = t('photographer.rejected')
+        return
+      }
       await router.push('/photographer/dashboard')
       return
     }

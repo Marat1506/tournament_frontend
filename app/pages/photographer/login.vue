@@ -6,10 +6,18 @@ const api = useApi()
 const auth = useAuthStore()
 const router = useRouter()
 
+const route = useRoute()
+
 const email = ref('')
 const password = ref('')
 const error = ref('')
 const loading = ref(false)
+
+onMounted(() => {
+  if (route.query.rejected === '1') {
+    error.value = t('photographer.rejected')
+  }
+})
 
 async function submit() {
   error.value = ''
@@ -26,8 +34,7 @@ async function submit() {
       user: resp.user,
     })
     if (resp.user.status === 'pending') {
-      auth.logout()
-      error.value = t('photographer.pendingApproval')
+      await router.push('/photographer/pending')
       return
     }
     if (resp.user.status === 'rejected') {

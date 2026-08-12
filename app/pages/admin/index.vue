@@ -7,6 +7,7 @@ const { t } = useI18n()
 const auth = useAuthStore()
 const api = useApi()
 const router = useRouter()
+const toast = useToast()
 
 if (!auth.isLoggedIn) {
   await navigateTo('/login?redirect=/admin')
@@ -102,6 +103,10 @@ function formatDate(iso: string) {
   return new Date(iso).toLocaleString('ru-RU')
 }
 
+function adminErrorMessage(e: unknown) {
+  return getApiErrorMessage(e) || t('admin.saveFailed')
+}
+
 async function saveSettings() {
   settingsSaving.value = true
   try {
@@ -110,6 +115,9 @@ async function saveSettings() {
       default_price_bundle: priceBundle.value,
     })
     await refreshSettings()
+    toast.success(t('admin.savedOk'))
+  } catch (e: unknown) {
+    toast.error(adminErrorMessage(e))
   } finally {
     settingsSaving.value = false
   }
@@ -123,6 +131,9 @@ async function onHeroSelected(e: Event) {
     await api.uploadAdminHero(file)
     await refreshSettings()
     await refreshNuxtData('platform-home')
+    toast.success(t('admin.heroUploaded'))
+  } catch (err: unknown) {
+    toast.error(adminErrorMessage(err))
   } finally {
     heroUploading.value = false
     if (heroInput.value) heroInput.value.value = ''
@@ -148,6 +159,9 @@ async function saveTournament() {
     editingTournament.value = null
     await refreshTournaments()
     await refreshStats()
+    toast.success(t('admin.savedOk'))
+  } catch (e: unknown) {
+    toast.error(adminErrorMessage(e))
   } finally {
     tournamentSaving.value = false
   }
@@ -164,6 +178,9 @@ async function onCoverSelected(e: Event) {
   try {
     await api.uploadAdminTournamentCover(coverTargetId.value, file)
     await refreshTournaments()
+    toast.success(t('admin.savedOk'))
+  } catch (err: unknown) {
+    toast.error(adminErrorMessage(err))
   } finally {
     coverTargetId.value = null
     if (coverInput.value) coverInput.value.value = ''
@@ -171,15 +188,24 @@ async function onCoverSelected(e: Event) {
 }
 
 async function setLeadStatus(id: string, status: string) {
-  await api.updateLeadStatus(id, status)
-  await refreshLeads()
-  await refreshStats()
+  try {
+    await api.updateLeadStatus(id, status)
+    await refreshLeads()
+    await refreshStats()
+  } catch (e: unknown) {
+    toast.error(adminErrorMessage(e))
+  }
 }
 
 async function setUserStatus(id: string, status: string) {
-  await api.updateAdminUserStatus(id, status)
-  await refreshUsers()
-  await refreshStats()
+  try {
+    await api.updateAdminUserStatus(id, status)
+    await refreshUsers()
+    await refreshStats()
+    toast.success(t('admin.savedOk'))
+  } catch (e: unknown) {
+    toast.error(adminErrorMessage(e))
+  }
 }
 </script>
 

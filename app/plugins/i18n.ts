@@ -6,7 +6,7 @@ export default defineNuxtPlugin(() => {
 
   const code = cookie.value && LOCALES.includes(cookie.value as AppLocale)
     ? (cookie.value as AppLocale)
-    : 'ru'
+    : 'en'
 
   locale.value = code
 })

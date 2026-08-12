@@ -1,14 +1,12 @@
 <script setup lang="ts">
-definePageMeta({})
+definePageMeta({ middleware: 'photographer-auth' })
 
 const { t } = useI18n()
-const auth = useAuthStore()
 const api = useApi()
 const router = useRouter()
+const toast = useToast()
 
-if (!auth.isLoggedIn) {
-  await navigateTo('/photographer/login')
-}
+const { data: platform } = await useAsyncData('platform-defaults-new', () => api.getPlatformHome())
 
 const form = reactive({
   name: '',
@@ -18,6 +16,12 @@ const form = reactive({
   price_single: 20,
   price_bundle: 50,
 })
+
+watch(platform, (p) => {
+  if (!p) return
+  form.price_single = p.default_price_single
+  form.price_bundle = p.default_price_bundle
+}, { immediate: true })
 
 const coverFile = ref<File | null>(null)
 const coverPreview = ref<string | null>(null)
@@ -41,14 +45,32 @@ function pickCover() {
 async function submit() {
   loading.value = true
   error.value = ''
+  let tournamentId = ''
   try {
     const tournament = await api.createTournament({ ...form })
+    tournamentId = tournament.id
     if (coverFile.value) {
-      await api.uploadTournamentCover(tournament.id, coverFile.value)
+      try {
+        await api.uploadTournamentCover(tournament.id, coverFile.value)
+      } catch {
+        toast.error(t('photographer.createCoverFailed'))
+        await router.push(`/photographer/tournaments/${tournament.id}`)
+        return
+      }
     }
+    toast.success(t('photographer.tournamentCreated'))
     await router.push(`/photographer/tournaments/${tournament.id}`)
-  } catch {
-    error.value = t('photographer.createFailed')
+  } catch (e: unknown) {
+    if (tournamentId) {
+      error.value = t('photographer.createCoverFailed')
+    } else {
+      const key = mapApiError(e, [
+        { match: 'name is required', key: 'photographer.errNameRequired' },
+        { match: 'unsupported', key: 'photographer.errUnsupportedImage' },
+      ], 'photographer.createFailed')
+      error.value = t(key)
+    }
+    toast.error(error.value)
   } finally {
     loading.value = false
   }

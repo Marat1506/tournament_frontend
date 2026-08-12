@@ -9,6 +9,7 @@ export interface User {
   locale?: string
   email_verified?: boolean
   email_verified_at?: string
+  photos_public?: boolean
 }
 
 export interface ProfileStats {

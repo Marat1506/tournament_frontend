@@ -8,10 +8,10 @@ export default defineNuxtConfig({
 
   app: {
     head: {
-      title: 'BJJ Photos',
+      title: 'PixMomento',
       meta: [
         { name: 'viewport', content: 'width=device-width, initial-scale=1, viewport-fit=cover' },
-        { name: 'description', content: 'Найдите и скачайте свои фото с турниров' },
+        { name: 'description', content: 'Find and download your tournament photos' },
       ],
     },
   },

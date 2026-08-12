@@ -1,17 +1,12 @@
 <script setup lang="ts">
-definePageMeta({})
+definePageMeta({ middleware: 'photographer-auth' })
 
 const { t } = useI18n()
-const auth = useAuthStore()
 const route = useRoute()
 const api = useApi()
 const id = route.params.id as string
 
-if (!auth.isLoggedIn) {
-  await navigateTo('/photographer/login')
-}
-
-const { data: stats, pending } = await useAsyncData(`stats-${id}`, () => api.getTournamentStats(id))
+const { data: stats, pending, error: statsError, refresh } = await useAsyncData(`stats-${id}`, () => api.getTournamentStats(id))
 const { data: tournaments } = await useAsyncData('stats-tournament', () => api.getMyTournaments())
 const tournament = computed(() => tournaments.value?.data?.find(item => item.id === id))
 </script>
@@ -31,6 +26,11 @@ const tournament = computed(() => tournaments.value?.data?.find(item => item.id 
 
       <div v-if="pending" class="grid grid-cols-2 gap-3">
         <div v-for="n in 4" :key="n" class="card h-24 animate-pulse bg-white/10" />
+      </div>
+
+      <div v-else-if="statsError" class="card space-y-3 p-6 text-center">
+        <AppAlert type="error" :message="t('photographer.statsLoadFailed')" />
+        <button class="btn-primary-solid" @click="refresh()">{{ t('common.retry') }}</button>
       </div>
 
       <div v-else-if="stats" class="grid grid-cols-2 gap-3">

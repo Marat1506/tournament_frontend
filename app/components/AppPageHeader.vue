@@ -13,13 +13,16 @@ const { t } = useI18n()
       <slot name="left" />
       <h1 class="truncate text-lg font-bold">{{ title }}</h1>
     </div>
-    <button
-      v-if="showHelp"
-      class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-gray-400"
-      :aria-label="t('common.help')"
-    >
-      <AppIcon name="help" class="h-5 w-5" />
-    </button>
-    <slot v-else name="right" />
+    <div class="flex shrink-0 items-center gap-2">
+      <AppLocaleSwitcher />
+      <button
+        v-if="showHelp"
+        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-gray-400"
+        :aria-label="t('common.help')"
+      >
+        <AppIcon name="help" class="h-5 w-5" />
+      </button>
+      <slot name="right" />
+    </div>
   </header>
 </template>

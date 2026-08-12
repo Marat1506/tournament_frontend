@@ -195,6 +195,16 @@ export function useApi() {
     createTournament: (data: Record<string, unknown>) =>
       post<Tournament>('/api/v1/photographer/tournaments', data),
 
+    updateTournament: (id: string, data: {
+      name: string
+      date?: string
+      location?: string
+      organizer?: string
+      price_single: number
+      price_bundle: number
+    }) =>
+      put<Tournament>(`/api/v1/photographer/tournaments/${id}`, data),
+
     uploadTournamentCover: async (tournamentId: string, file: File) => {
       const form = new FormData()
       form.append('cover', file)
@@ -274,8 +284,11 @@ export function useApi() {
     getProfileSelfies: () =>
       get<{ data: ClientSearchSession[] }>('/api/v1/profile/selfies'),
 
-    updateProfile: (data: { name?: string; belt?: string; locale?: string }) =>
+    updateProfile: (data: { name?: string; belt?: string; locale?: string; photos_public?: boolean }) =>
       patch<User>('/api/v1/profile', data),
+
+    claimAthlete: (athleteId: string) =>
+      post<{ status: string }>('/api/v1/profile/claim-athlete', { athlete_id: athleteId }),
 
     trackAthlete: (athleteId: string) =>
       post<{ status: string }>('/api/v1/profile/track/athlete', { athlete_id: athleteId }),

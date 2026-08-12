@@ -1,16 +1,17 @@
 <script setup lang="ts">
-definePageMeta({})
+definePageMeta({ middleware: 'photographer-auth' })
 
 const { t } = useI18n()
 const auth = useAuthStore()
 const api = useApi()
 const router = useRouter()
+const toast = useToast()
 
 if (!auth.isLoggedIn) {
   await navigateTo('/photographer/login')
 }
 
-const { data, refresh, pending } = await useAsyncData('my-tournaments', () => api.getMyTournaments())
+const { data, refresh, pending, error: loadError } = await useAsyncData('my-tournaments', () => api.getMyTournaments())
 
 async function logout() {
   auth.logout()
@@ -36,6 +37,11 @@ async function logout() {
 
       <div v-if="pending" class="space-y-3">
         <div v-for="n in 3" :key="n" class="card h-24 animate-pulse bg-white/10" />
+      </div>
+
+      <div v-else-if="loadError" class="card space-y-3 p-6 text-center">
+        <AppAlert type="error" :message="t('photographer.loadListFailed')" />
+        <button class="btn-primary-solid" @click="refresh()">{{ t('common.retry') }}</button>
       </div>
 
       <div v-else-if="data?.data?.length" class="space-y-3">

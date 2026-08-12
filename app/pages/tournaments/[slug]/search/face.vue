@@ -63,9 +63,10 @@ async function search() {
 
   try {
     const response = await api.searchByFace(slug, selectedFile.value)
-    results.value = response.data
-    faceSearch.setResults(slug, response.data)
-    if (!response.data.length) {
+    const data = response.data ?? []
+    results.value = data
+    faceSearch.setResults(slug, data)
+    if (!data.length) {
       errorMsg.value = t('search.faceNotFound')
     }
   }
@@ -73,6 +74,9 @@ async function search() {
     const err = e as { data?: { error?: string }; statusCode?: number }
     if (err.statusCode === 503 || err.data?.error === 'face search is disabled') {
       errorMsg.value = t('search.faceDisabled')
+    }
+    else if (err.data?.error === 'no face detected in image') {
+      errorMsg.value = t('search.faceNotFound')
     }
     else {
       errorMsg.value = err.data?.error || t('search.searchFailed')

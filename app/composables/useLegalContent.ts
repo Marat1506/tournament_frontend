@@ -17,7 +17,7 @@ export function useLegalContent() {
       return {
         title: 'Customer support',
         updated: 'August 11, 2026',
-        intro: 'PixMomento (BJJ Photos) helps athletes find and purchase tournament photos. If you have questions about an order, download, or using the site — contact us.',
+        intro: 'PixMomento helps athletes find and purchase tournament photos. If you have questions about an order, download, or using the site — contact us.',
         sections: [
           {
             title: 'Contact',
@@ -62,7 +62,7 @@ export function useLegalContent() {
     return {
       title: 'Поддержка',
       updated: UPDATED,
-      intro: 'PixMomento (BJJ Photos) помогает спортсменам находить и покупать фотографии с турниров. Если у вас вопрос по заказу, скачиванию или работе сайта — напишите нам.',
+      intro: 'PixMomento помогает спортсменам находить и покупать фотографии с турниров. Если у вас вопрос по заказу, скачиванию или работе сайта — напишите нам.',
       sections: [
         {
           title: 'Контакты',
@@ -109,12 +109,12 @@ export function useLegalContent() {
       return {
         title: 'Privacy policy',
         updated: 'August 11, 2026',
-        intro: 'This policy describes how PixMomento (“we”, “BJJ Photos”, pixmomento.com) collects, uses, and protects personal information when you use our website and services.',
+        intro: 'This policy describes how PixMomento (“we”, pixmomento.com) collects, uses, and protects personal information when you use our website and services.',
         sections: [
           {
             title: '1. Data controller',
             paragraphs: [
-              'PixMomento operates the BJJ Photos platform at pixmomento.com.',
+              'PixMomento operates the platform at pixmomento.com.',
               `For privacy inquiries contact: ${SUPPORT_EMAIL}`,
             ],
           },
@@ -144,7 +144,15 @@ export function useLegalContent() {
             ],
           },
           {
-            title: '4. Face search & biometric data',
+            title: '4. Photo visibility & consent',
+            paragraphs: [
+              'Tournament photos linked to your name or face are private by default. Other users cannot find or preview them through name search, face search, or the public gallery unless you opt in.',
+              'In account Settings you can enable “Allow others to find and view my photos”. When enabled, photos associated with your claimed athlete profile become discoverable to other users of the platform.',
+              'You always retain access to photos associated with your account in your personal dashboard, regardless of this setting. Purchased photos remain available to the buyer.',
+            ],
+          },
+          {
+            title: '5. Face search & biometric data',
             paragraphs: [
               'When you use face search, you upload a photo containing your face. The image is transmitted securely to our servers, analyzed in memory, and compared against indexed faces from the selected tournament.',
               'We do not persistently store your selfie. AWS Rekognition compares faces without retaining the uploaded selfie for future use.',
@@ -153,7 +161,7 @@ export function useLegalContent() {
             ],
           },
           {
-            title: '5. Sharing & processors',
+            title: '6. Sharing & processors',
             paragraphs: ['We share data only as needed to operate the service:'],
             list: [
               'Stripe — payment processing (card data is handled directly by Stripe)',
@@ -164,7 +172,7 @@ export function useLegalContent() {
             ],
           },
           {
-            title: '6. Retention',
+            title: '7. Retention',
             paragraphs: [],
             list: [
               'Account and order records — while your account exists and as required for tax/accounting laws',
@@ -174,26 +182,26 @@ export function useLegalContent() {
             ],
           },
           {
-            title: '7. Your rights',
+            title: '8. Your rights',
             paragraphs: [
               'Depending on your jurisdiction you may request access, correction, deletion, or restriction of your personal data.',
               `Contact ${SUPPORT_EMAIL} to exercise these rights. We may ask you to verify your identity.`,
             ],
           },
           {
-            title: '8. Security',
+            title: '9. Security',
             paragraphs: [
               'We use HTTPS, access controls, hashed passwords, and industry-standard practices to protect data. No method of transmission over the Internet is 100% secure.',
             ],
           },
           {
-            title: '9. Children',
+            title: '10. Children',
             paragraphs: [
               'Photos may include minors at sporting events. Accounts are intended for users 16+ or with parental consent. Parents may contact us regarding a child’s data.',
             ],
           },
           {
-            title: '10. Changes',
+            title: '11. Changes',
             paragraphs: [
               'We may update this policy. The “last updated” date at the top will change. Continued use of the site after changes constitutes acceptance.',
             ],
@@ -205,12 +213,12 @@ export function useLegalContent() {
     return {
       title: 'Политика конфиденциальности',
       updated: UPDATED,
-      intro: 'Настоящая политика описывает, как PixMomento («мы», сервис BJJ Photos, pixmomento.com) собирает, использует и защищает персональные данные при использовании сайта и сервисов.',
+      intro: 'Настоящая политика описывает, как PixMomento («мы», pixmomento.com) собирает, использует и защищает персональные данные при использовании сайта и сервисов.',
       sections: [
         {
           title: '1. Оператор данных',
           paragraphs: [
-            'PixMomento управляет платформой BJJ Photos на домене pixmomento.com.',
+            'PixMomento управляет платформой на домене pixmomento.com.',
             `По вопросам конфиденциальности: ${SUPPORT_EMAIL}`,
           ],
         },
@@ -240,7 +248,15 @@ export function useLegalContent() {
           ],
         },
         {
-          title: '4. Поиск по лицу и биометрические данные',
+          title: '4. Видимость фото и согласие',
+          paragraphs: [
+            'Фото с турниров, связанные с вашим именем или лицом, по умолчанию скрыты. Другие пользователи не могут найти или просмотреть их через поиск по имени, поиск по лицу или публичную галерею, пока вы не дадите согласие.',
+            'В настройках аккаунта можно включить «Разрешить другим находить и просматривать мои фото». После включения фото, связанные с вашим профилем спортсмена, становятся доступны для поиска другими пользователями.',
+            'Вы всегда видите свои фото в личном кабинете независимо от этой настройки. Купленные фото остаются доступны покупателю.',
+          ],
+        },
+        {
+          title: '5. Поиск по лицу и биометрические данные',
           paragraphs: [
             'При поиске по лицу вы загружаете фото с вашим лицом. Изображение передаётся на наши серверы по защищённому соединению, анализируется в памяти и сравнивается с проиндексированными лицами на выбранном турнире.',
             'Мы не храним селфи после завершения запроса. AWS Rekognition выполняет сравнение без сохранения загруженного селфи для дальнейшего использования.',
@@ -249,7 +265,7 @@ export function useLegalContent() {
           ],
         },
         {
-          title: '5. Передача данных третьим лицам',
+          title: '6. Передача данных третьим лицам',
           paragraphs: ['Мы передаём данные только для работы сервиса:'],
           list: [
             'Stripe — обработка платежей (данные карты обрабатываются напрямую Stripe)',
@@ -260,7 +276,7 @@ export function useLegalContent() {
           ],
         },
         {
-          title: '6. Срок хранения',
+          title: '7. Срок хранения',
           paragraphs: [],
           list: [
             'Данные аккаунта и заказов — пока существует аккаунт и в сроки, требуемые законом',
@@ -270,26 +286,26 @@ export function useLegalContent() {
           ],
         },
         {
-          title: '7. Ваши права',
+          title: '8. Ваши права',
           paragraphs: [
             'Вы можете запросить доступ, исправление, удаление или ограничение обработки персональных данных в пределах применимого законодательства.',
             `Напишите на ${SUPPORT_EMAIL}. Мы можем попросить подтвердить личность.`,
           ],
         },
         {
-          title: '8. Безопасность',
+          title: '9. Безопасность',
           paragraphs: [
             'Мы используем HTTPS, контроль доступа, хеширование паролей и общепринятые меры защиты. Абсолютной безопасности передачи данных в интернете не существует.',
           ],
         },
         {
-          title: '9. Дети',
+          title: '10. Дети',
           paragraphs: [
             'На фото могут быть несовершеннолетние участники турниров. Аккаунты предназначены для пользователей от 16 лет или с согласия родителей. Родители могут обратиться к нам по данным ребёнка.',
           ],
         },
         {
-          title: '10. Изменения политики',
+          title: '11. Изменения политики',
           paragraphs: [
             'Мы можем обновлять политику. Дата «последнего обновления» указана в начале документа. Продолжение использования сайта означает согласие с актуальной версией.',
           ],
@@ -303,7 +319,7 @@ export function useLegalContent() {
       return {
         title: 'Terms of service',
         updated: 'August 11, 2026',
-        intro: 'These terms govern your use of PixMomento (BJJ Photos) at pixmomento.com. By using the site or purchasing photos you agree to these terms.',
+        intro: 'These terms govern your use of PixMomento at pixmomento.com. By using the site or purchasing photos you agree to these terms.',
         sections: [
           {
             title: '1. Service',
@@ -376,7 +392,7 @@ export function useLegalContent() {
     return {
       title: 'Условия использования',
       updated: UPDATED,
-      intro: 'Настоящие условия регулируют использование PixMomento (BJJ Photos) на pixmomento.com. Используя сайт или покупая фото, вы соглашаетесь с этими условиями.',
+      intro: 'Настоящие условия регулируют использование PixMomento на pixmomento.com. Используя сайт или покупая фото, вы соглашаетесь с этими условиями.',
       sections: [
         {
           title: '1. Описание сервиса',

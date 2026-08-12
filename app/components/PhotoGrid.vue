@@ -5,6 +5,7 @@ defineProps<{
   photos: Photo[]
   loading?: boolean
   selectable?: boolean
+  athleteId?: string
 }>()
 
 const { t } = useI18n()
@@ -25,6 +26,7 @@ const { t } = useI18n()
       :key="photo.id"
       :photo="photo"
       :selectable="selectable"
+      :athlete-id="athleteId"
     />
   </div>
 </template>

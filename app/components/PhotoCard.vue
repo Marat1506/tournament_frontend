@@ -4,11 +4,18 @@ import type { Photo } from '~/types'
 const props = defineProps<{
   photo: Photo
   selectable?: boolean
+  athleteId?: string
 }>()
 
 const favorites = useFavoritesStore()
 const selection = useSelectionStore()
 const { t } = useI18n()
+
+const photoLink = computed(() => {
+  const athleteId = props.athleteId || props.photo.athlete_id
+  if (!athleteId) return `/photos/${props.photo.id}`
+  return `/photos/${props.photo.id}?athlete_id=${athleteId}`
+})
 
 function onHeart(e: Event) {
   e.preventDefault()
@@ -26,7 +33,7 @@ function onSelect(e: Event) {
 
 <template>
   <NuxtLink
-    :to="`/photos/${photo.id}`"
+    :to="photoLink"
     class="group relative block overflow-hidden rounded-xl bg-white/10"
   >
     <div class="aspect-[2/3] w-full">

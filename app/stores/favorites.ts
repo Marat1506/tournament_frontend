@@ -44,9 +44,9 @@ export const useFavoritesStore = defineStore('favorites', () => {
       const resp = localIds.length
         ? await api.syncFavorites(localIds)
         : await api.getFavorites()
-      setIds(resp.data.map(p => p.id))
+      setIds((resp.data ?? []).map(p => p.id))
       synced.value = true
-      return resp.data
+      return resp.data ?? []
     } catch {
       return []
     }

@@ -51,6 +51,7 @@ export const useAuthStore = defineStore('auth', () => {
         ...user.value,
         ...u,
         email_verified: u.email_verified || user.value.email_verified,
+        photos_public: u.photos_public ?? user.value.photos_public,
       }
       return
     }
@@ -59,11 +60,14 @@ export const useAuthStore = defineStore('auth', () => {
 
   const isLoggedIn = computed(() => !!accessToken.value)
   const isPhotographer = computed(() => user.value?.role === 'photographer')
+  const isApprovedPhotographer = computed(() =>
+    isPhotographer.value && user.value?.status === 'approved',
+  )
   const isAdmin = computed(() => user.value?.role === 'admin')
   const isEmailVerified = computed(() => !!user.value?.email_verified)
 
   return {
     user, accessToken, refreshToken, setSession, setUser, logout,
-    isLoggedIn, isPhotographer, isAdmin, isEmailVerified, hydrate,
+    isLoggedIn, isPhotographer, isApprovedPhotographer, isAdmin, isEmailVerified, hydrate,
   }
 })

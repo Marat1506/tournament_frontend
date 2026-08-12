@@ -48,6 +48,10 @@ export const useFaceSearchStore = defineStore('faceSearch', () => {
     return slug.value === tournamentSlug ? results.value : []
   }
 
+  function findPhoto(photoId: string) {
+    return results.value.find(p => p.id === photoId) ?? null
+  }
+
   function clear() {
     slug.value = ''
     results.value = []
@@ -56,5 +60,5 @@ export const useFaceSearchStore = defineStore('faceSearch', () => {
     }
   }
 
-  return { slug, results, setResults, getResults, clear }
+  return { slug, results, setResults, getResults, findPhoto, clear }
 })

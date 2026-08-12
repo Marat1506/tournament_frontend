@@ -1,25 +1,54 @@
 <script setup lang="ts">
 import type { Photo } from '~/types'
 
-definePageMeta({})
+definePageMeta({ middleware: 'photographer-auth' })
 
 const { t } = useI18n()
-const auth = useAuthStore()
 const route = useRoute()
 const api = useApi()
+const toast = useToast()
 const id = route.params.id as string
 const { genderOptions, beltOptions, ageGroupOptions, weightClassOptions } = useCategoryFilterOptions()
 
-if (!auth.isLoggedIn) {
-  await navigateTo('/photographer/login')
-}
-
 const filter = ref<'untagged' | 'tagged' | 'all'>('untagged')
-const { data: photos, pending, refresh } = await useAsyncData(
+const page = ref(1)
+const pageSize = 30
+const allPhotos = ref<Photo[]>([])
+const totalPhotos = ref(0)
+const loadingMore = ref(false)
+
+const { data: photosResponse, pending, refresh } = await useAsyncData(
   () => `photographer-photos-${id}-${filter.value}`,
-  () => api.getPhotographerPhotos(id, { tagged: filter.value, limit: 100 }),
+  () => api.getPhotographerPhotos(id, { tagged: filter.value, page: 1, limit: pageSize }),
   { watch: [filter] },
 )
+
+watch(photosResponse, (response) => {
+  if (!response) return
+  page.value = 1
+  allPhotos.value = response.data ?? []
+  totalPhotos.value = response.pagination?.total ?? allPhotos.value.length
+}, { immediate: true })
+
+const hasMore = computed(() => allPhotos.value.length < totalPhotos.value)
+
+async function loadMore() {
+  if (loadingMore.value || !hasMore.value) return
+  loadingMore.value = true
+  try {
+    const nextPage = page.value + 1
+    const response = await api.getPhotographerPhotos(id, {
+      tagged: filter.value,
+      page: nextPage,
+      limit: pageSize,
+    })
+    allPhotos.value = [...allPhotos.value, ...(response.data ?? [])]
+    page.value = nextPage
+    totalPhotos.value = response.pagination?.total ?? totalPhotos.value
+  } finally {
+    loadingMore.value = false
+  }
+}
 
 const tagging = ref<Photo | null>(null)
 const tagForm = reactive({ name: '', category: '', gender: '', belt: '', age_group: '', weight_class: '' })
@@ -67,10 +96,12 @@ async function saveTag() {
       weight_class: tagForm.weight_class || undefined,
     })
     tagSuccess.value = t('photographer.saved')
+    toast.success(t('photographer.saved'))
     await refresh()
     setTimeout(closeTag, 400)
-  } catch {
-    tagError.value = t('photographer.saveFailed')
+  } catch (e: unknown) {
+    tagError.value = getApiErrorMessage(e) || t('photographer.saveFailed')
+    toast.error(tagError.value)
   } finally {
     tagLoading.value = false
   }
@@ -84,8 +115,10 @@ async function deletePhoto() {
     await api.deletePhoto(tagging.value.id)
     await refresh()
     closeTag()
-  } catch {
-    tagError.value = t('photographer.deleteFailed')
+    toast.success(t('photographer.photoDeleted'))
+  } catch (e: unknown) {
+    tagError.value = getApiErrorMessage(e) || t('photographer.deleteFailed')
+    toast.error(tagError.value)
   } finally {
     deleteLoading.value = false
   }
@@ -115,28 +148,47 @@ async function deletePhoto() {
         </button>
       </div>
 
+      <p v-if="!pending && totalPhotos > 0" class="text-sm text-gray-500">
+        {{ t('photographer.photosShown', { shown: allPhotos.length, total: totalPhotos }) }}
+      </p>
+
       <div v-if="pending" class="grid grid-cols-3 gap-2">
         <div v-for="n in 6" :key="n" class="aspect-square animate-pulse rounded-xl bg-white/10" />
       </div>
 
-      <div v-else-if="photos?.data?.length" class="grid grid-cols-3 gap-2">
-        <button
-          v-for="photo in photos.data"
-          :key="photo.id"
-          class="group relative aspect-square overflow-hidden rounded-xl bg-white/10"
-          @click="openTag(photo)"
-        >
-          <img
-            v-if="photo.thumbnail_url || photo.preview_url"
-            :src="photo.thumbnail_url || photo.preview_url"
-            :alt="photo.original_filename || 'Photo'"
-            class="h-full w-full object-cover"
+      <div v-else-if="allPhotos.length" class="space-y-4">
+        <div class="grid grid-cols-3 gap-2">
+          <button
+            v-for="photo in allPhotos"
+            :key="photo.id"
+            class="group relative aspect-square overflow-hidden rounded-xl bg-white/10"
+            @click="openTag(photo)"
           >
-          <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-2 text-left">
-            <div v-if="photo.athlete_name" class="truncate text-xs font-medium text-white">{{ photo.athlete_name }}</div>
-            <div v-else class="text-xs text-white/80">{{ t('photographer.noTag') }}</div>
-          </div>
+            <img
+              v-if="photo.thumbnail_url || photo.preview_url"
+              :src="photo.thumbnail_url || photo.preview_url"
+              :alt="photo.original_filename || t('common.photo')"
+              class="h-full w-full object-cover"
+            >
+            <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-2 text-left">
+              <div v-if="photo.athlete_name" class="truncate text-xs font-medium text-white">{{ photo.athlete_name }}</div>
+              <div v-else class="text-xs text-white/80">{{ t('photographer.noTag') }}</div>
+            </div>
+          </button>
+        </div>
+
+        <button
+          v-if="hasMore"
+          class="btn-secondary w-full"
+          :disabled="loadingMore"
+          @click="loadMore"
+        >
+          {{ loadingMore ? t('common.loading') : t('photographer.loadMorePhotos') }}
         </button>
+      </div>
+
+      <div v-else class="card p-8 text-center text-gray-500">
+        {{ t('photographer.noPhotosInFilter') }}
       </div>
 
       <div v-if="tagging" class="fixed inset-0 z-50 flex items-end bg-black/60" @click.self="closeTag">

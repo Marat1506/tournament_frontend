@@ -148,7 +148,7 @@ function onFiltersApply(v: typeof filters.value) {
         </button>
       </div>
 
-      <PhotoGrid :photos="displayedPhotos" :loading="pending" selectable />
+      <PhotoGrid :photos="displayedPhotos" :loading="pending" selectable :athlete-id="athleteId" />
 
       <div v-if="hasMore && tab === 'all'" class="mt-6 text-center">
         <button class="btn-secondary" :disabled="loadingMore" @click="loadMore">

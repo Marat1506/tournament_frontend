@@ -15,7 +15,7 @@ async function loadFavoritePhotos() {
   try {
     if (auth.isLoggedIn) {
       const photos = favorites.synced
-        ? (await api.getFavorites()).data
+        ? ((await api.getFavorites()).data ?? [])
         : await favorites.syncFromServer()
       photoMap.value = Object.fromEntries(photos.map(p => [p.id, p]))
       return

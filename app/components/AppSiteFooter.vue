@@ -21,7 +21,7 @@ const links = [
       </NuxtLink>
     </nav>
     <p class="mt-3 text-xs text-gray-600">
-      © {{ new Date().getFullYear() }} PixMomento (BJJ Photos)
+      © {{ new Date().getFullYear() }} PixMomento
     </p>
   </footer>
 </template>

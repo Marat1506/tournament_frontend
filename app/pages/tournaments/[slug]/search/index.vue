@@ -80,9 +80,9 @@ function onFiltersApply(v: typeof filters.value) {
         <div v-for="n in 4" :key="n" class="card h-16 animate-pulse bg-white/10" />
       </div>
 
-      <div v-else-if="athletes?.data?.length" class="space-y-2">
+      <div v-else-if="(athletes?.data ?? []).length" class="space-y-2">
         <button
-          v-for="athlete in athletes.data"
+          v-for="athlete in athletes?.data ?? []"
           :key="athlete.id"
           class="card flex w-full items-center justify-between p-4 text-left transition active:scale-[0.99]"
           @click="selectAthlete(athlete.id, athlete.name)"

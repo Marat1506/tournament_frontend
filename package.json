@@ -18,6 +18,7 @@
     "vue-router": "^5.2.0"
   },
   "devDependencies": {
-    "@vue/compiler-sfc": "^3.5.40"
+    "@vue/compiler-sfc": "^3.5.40",
+    "vite": "^8.2.0"
   }
 }

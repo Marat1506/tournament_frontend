@@ -41,8 +41,16 @@ async function checkout() {
     } else {
       window.location.href = result.url
     }
-  } catch {
-    error.value = t('cart.errorCheckout')
+  } catch (e: unknown) {
+    const key = mapApiError(e, [
+      { match: 'cart is empty', key: 'cart.errorEmpty' },
+      { match: 'guest_email', key: 'cart.errorEmail' },
+      { match: 'photo not found', key: 'cart.errorPhotoUnavailable' },
+      { match: 'not available', key: 'cart.errorPhotoUnavailable' },
+      { match: 'bundle requires', key: 'cart.errorBundleMin' },
+      { match: 'payment method', key: 'cart.errorPayment' },
+    ], 'cart.errorCheckout')
+    error.value = t(key)
   } finally {
     loading.value = false
   }
