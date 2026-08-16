@@ -1,6 +1,9 @@
 export default defineNuxtRouteMiddleware(async (to) => {
+  if (import.meta.server) return
+
   const auth = useAuthStore()
   const api = useApi()
+  auth.hydrate()
 
   if (!auth.isLoggedIn) {
     return navigateTo(`/photographer/login?redirect=${encodeURIComponent(to.fullPath)}`)
@@ -9,7 +12,8 @@ export default defineNuxtRouteMiddleware(async (to) => {
   if (!auth.user) {
     try {
       auth.setUser(await api.me())
-    } catch {
+    }
+    catch {
       auth.logout()
       return navigateTo(`/photographer/login?redirect=${encodeURIComponent(to.fullPath)}`)
     }

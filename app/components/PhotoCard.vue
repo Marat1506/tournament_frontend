@@ -10,6 +10,7 @@ const props = defineProps<{
 
 const favorites = useFavoritesStore()
 const selection = useSelectionStore()
+const faceSearch = useFaceSearchStore()
 const { t } = useI18n()
 
 const photoLink = computed(() => {
@@ -46,7 +47,7 @@ function onSelect(e: Event) {
   >
     <div class="aspect-[2/3] w-full">
       <AppImage
-        :src="photo.thumbnail_url || photo.preview_url"
+        :src="faceSearch.mediaUrl(photo.thumbnail_url || photo.preview_url)"
         :alt="photo.original_filename || 'Photo'"
         aspect="photo"
       />

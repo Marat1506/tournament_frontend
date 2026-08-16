@@ -11,8 +11,12 @@ const faceSearch = useFaceSearchStore()
 const fromFaceSearch = computed(() => route.query.from === 'face_search')
 
 const { data: photo, error } = await useAsyncData(`photo-${id}`, async () => {
+  const guestToken = fromFaceSearch.value ? faceSearch.getGuestToken() : undefined
   try {
-    return await api.getPhoto(id, fromFaceSearch.value ? { from: 'face_search' } : undefined)
+    return await api.getPhoto(id, {
+      from: fromFaceSearch.value ? 'face_search' : undefined,
+      guestToken: guestToken || undefined,
+    })
   }
   catch {
     return faceSearch.findPhoto(id)
@@ -46,7 +50,7 @@ if (error.value || !photo.value) {
 
     <div class="mx-auto max-h-[72vh] max-w-lg">
       <AppImage
-        :src="photo.preview_url"
+        :src="faceSearch.mediaUrl(photo.preview_url)"
         :alt="photo.original_filename || 'Photo'"
         aspect="photo"
       />

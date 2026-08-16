@@ -6,6 +6,7 @@ import type {
   Athlete,
   AuthResponse,
   CheckoutResult,
+  ConsentSummary,
   ClientSearchSession,
   LeadRequest,
   ListResponse,
@@ -21,6 +22,7 @@ import type {
   TournamentStats,
   UploadBatch,
   User,
+  UserNotification,
 } from '~/types'
 
 export function useApi() {
@@ -108,20 +110,62 @@ export function useApi() {
     return `/api/v1/photos/${photoId}/download${qs ? `?${qs}` : ''}`
   }
 
+  function startNativeDownload(href: string, name?: string) {
+    const isBlob = href.startsWith('blob:')
+    const sameOrigin = href.startsWith('/') || href.startsWith(window.location.origin)
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
+
+    // Cross-origin S3 URL: fetch/blob is blocked by CORS on iOS Safari.
+    // Navigate so the browser applies Content-Disposition: attachment.
+    if (!isBlob && !sameOrigin && isIOS) {
+      window.location.assign(href)
+      return
+    }
+
+    if (!isBlob && !sameOrigin) {
+      const frame = document.createElement('iframe')
+      frame.style.display = 'none'
+      frame.src = href
+      document.body.appendChild(frame)
+      setTimeout(() => frame.remove(), 60_000)
+      return
+    }
+
+    const anchor = document.createElement('a')
+    anchor.href = href
+    if (name) anchor.download = name
+    anchor.rel = 'noopener'
+    if (!isBlob && !sameOrigin) {
+      anchor.target = '_blank'
+    }
+    document.body.appendChild(anchor)
+    anchor.click()
+    anchor.remove()
+  }
+
   async function downloadPhoto(photoId: string, filename?: string, orderId?: string, guestEmail?: string) {
     const path = downloadPath(photoId, orderId, guestEmail)
     const url = `${base}${path}`
-    const res = await fetch(url, { headers: headers(), redirect: 'follow' })
+    const fallbackName = filename || `${photoId.slice(0, 8)}.jpg`
+    const res = await fetch(url, {
+      headers: { ...headers(), Accept: 'application/json' },
+    })
     if (!res.ok) {
       throw new Error('download failed')
     }
+    const contentType = res.headers.get('content-type') || ''
+    if (contentType.includes('application/json')) {
+      const data = await res.json() as { url?: string, filename?: string }
+      if (!data.url) {
+        throw new Error('download failed')
+      }
+      startNativeDownload(data.url, data.filename || fallbackName)
+      return
+    }
     const blob = await res.blob()
     const objectUrl = URL.createObjectURL(blob)
-    const anchor = document.createElement('a')
-    anchor.href = objectUrl
-    anchor.download = filename || `${photoId.slice(0, 8)}.jpg`
-    anchor.click()
-    URL.revokeObjectURL(objectUrl)
+    startNativeDownload(objectUrl, fallbackName)
+    setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000)
   }
 
   return {
@@ -136,17 +180,22 @@ export function useApi() {
     searchAthletes: (slug: string, q: string, params?: { gender?: string; belt?: string; age_group?: string; weight_class?: string }) =>
       get<ListResponse<Athlete[]>>(`/api/v1/tournaments/${slug}/athletes`, { q, limit: 20, ...params }),
 
-    searchByFace: async (slug: string, file: File) => {
+    searchByFace: async (slug: string, file: File, consentPersonal: boolean, guestToken?: string) => {
       const form = new FormData()
       form.append('selfie', file)
+      form.append('consent_personal', consentPersonal ? 'true' : 'false')
+      const extra: Record<string, string> = {}
+      if (guestToken) {
+        extra['X-Guest-Consent'] = guestToken
+      }
       return apiFetch<PhotoListResult>(`/api/v1/tournaments/${slug}/search/face`, {
         method: 'POST',
         body: form,
-        headers: headers(),
+        headers: headers(extra),
       })
     },
 
-    getPhotos: (slug: string, params?: { athlete_id?: string; gender?: string; belt?: string; age_group?: string; weight_class?: string; page?: number; limit?: number }) =>
+    getPhotos: (slug: string, params?: { athlete_id?: string; gender?: string; belt?: string; age_group?: string; weight_class?: string; page?: number; limit?: number; published?: boolean }) =>
       get<PhotoListResult>(`/api/v1/tournaments/${slug}/photos`, {
         athlete_id: params?.athlete_id,
         gender: params?.gender,
@@ -155,6 +204,7 @@ export function useApi() {
         weight_class: params?.weight_class,
         page: params?.page ?? 1,
         limit: params?.limit ?? 30,
+        published: params?.published ? '1' : undefined,
       }),
 
     getPhotographerPhotos: (tournamentId: string, params?: { tagged?: string; page?: number; limit?: number }) =>
@@ -164,8 +214,16 @@ export function useApi() {
         limit: params?.limit ?? 50,
       }),
 
-    getPhoto: (id: string, params?: { from?: string }) =>
-      get<Photo>(`/api/v1/photos/${id}`, params),
+    getPhoto: (id: string, params?: { from?: string; guestToken?: string }) => {
+      const extra: Record<string, string> = {}
+      if (params?.guestToken) {
+        extra['X-Guest-Consent'] = params.guestToken
+      }
+      return apiFetch<Photo>(`/api/v1/photos/${id}`, {
+        query: params?.from ? { from: params.from } : undefined,
+        headers: headers(extra),
+      })
+    },
 
     register: (data: { email: string; password: string; name?: string; role?: string }) =>
       post<AuthResponse>('/api/v1/auth/register', data),
@@ -186,6 +244,12 @@ export function useApi() {
 
     resendRegistrationCode: (email: string) =>
       post<{ status: string }>('/api/v1/auth/resend-registration-code', { email }),
+
+    forgotPassword: (email: string) =>
+      post<{ status: string }>('/api/v1/auth/forgot-password', { email }),
+
+    resetPassword: (email: string, code: string, password: string) =>
+      post<{ status: string }>('/api/v1/auth/reset-password', { email, code, password }),
 
     me: () => get<User>('/api/v1/auth/me'),
 
@@ -221,17 +285,52 @@ export function useApi() {
     getUploadStatus: (id: string) =>
       get<UploadBatch>(`/api/v1/photographer/tournaments/${id}/upload-status`),
 
-    uploadPhotos: async (tournamentId: string, files: File[]) => {
+    uploadPhotos: (tournamentId: string, files: File[], onProgress?: (loaded: number, total: number) => void) => {
       const form = new FormData()
       for (const file of files) {
         form.append('photos', file)
       }
-      return apiFetch<UploadBatch>(`/api/v1/photographer/tournaments/${tournamentId}/photos`, {
-        method: 'POST',
-        body: form,
-        headers: headers(),
+      return new Promise<UploadBatch>((resolve, reject) => {
+        const xhr = new XMLHttpRequest()
+        xhr.open('POST', `${base}/api/v1/photographer/tournaments/${tournamentId}/photos`)
+        const token = auth.accessToken
+        if (token) {
+          xhr.setRequestHeader('Authorization', `Bearer ${token}`)
+        }
+        xhr.upload.onprogress = (event) => {
+          if (event.lengthComputable) {
+            onProgress?.(event.loaded, event.total)
+          }
+        }
+        xhr.onload = () => {
+          try {
+            const data = xhr.responseText ? JSON.parse(xhr.responseText) as UploadBatch & { error?: string } : null
+            if (xhr.status >= 200 && xhr.status < 300 && data && !data.error) {
+              resolve(data)
+              return
+            }
+            reject(Object.assign(new Error(data?.error || 'upload failed'), {
+              statusCode: xhr.status,
+              data,
+            }))
+          }
+          catch {
+            reject(new Error('upload failed'))
+          }
+        }
+        xhr.onerror = () => reject(new Error('upload failed'))
+        xhr.send(form)
       })
     },
+
+    getPhotographerAgreementStatus: () =>
+      get<{ agreed: boolean; terms_version: string }>('/api/v1/photographer/agreement/status'),
+
+    recordPhotographerAgreement: (rightsShoot: boolean, rightsDistribute: boolean) =>
+      post<{ status: string }>('/api/v1/photographer/agreement', {
+        rights_shoot: rightsShoot,
+        rights_distribute: rightsDistribute,
+      }),
 
     getTournamentStats: (id: string) =>
       get<TournamentStats>(`/api/v1/photographer/tournaments/${id}/stats`),
@@ -286,6 +385,23 @@ export function useApi() {
 
     updateProfile: (data: { name?: string; belt?: string; locale?: string; photos_public?: boolean }) =>
       patch<User>('/api/v1/profile', data),
+
+    getConsentSummary: (tournamentId?: string) =>
+      get<ConsentSummary>('/api/v1/consent/summary', { tournament_id: tournamentId }),
+
+    unpublishCatalog: () => post<{ status: string }>('/api/v1/consent/unpublish'),
+
+    revokeConsent: () => post<{ status: string }>('/api/v1/consent/revoke'),
+
+    claimFromFace: (photoIds: string[]) =>
+      post<{ status: string; claimed: number }>('/api/v1/consent/claim-from-face', { photo_ids: photoIds }),
+
+    getNotifications: () => get<{ data: UserNotification[] }>('/api/v1/notifications'),
+
+    getUnreadNotificationCount: () => get<{ count: number }>('/api/v1/notifications/unread-count'),
+
+    markNotificationRead: (id: string) =>
+      patch<{ status: string }>(`/api/v1/notifications/${id}/read`),
 
     claimAthlete: (athleteId: string) =>
       post<{ status: string }>('/api/v1/profile/claim-athlete', { athlete_id: athleteId }),

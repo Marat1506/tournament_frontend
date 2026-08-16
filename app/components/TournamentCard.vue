@@ -31,7 +31,7 @@ function formatDate(date?: string) {
     </div>
     <h3 class="mt-2 line-clamp-2 min-h-[2.5rem] text-sm font-semibold leading-snug">{{ tournament.name }}</h3>
     <p v-if="tournament.location" class="line-clamp-1 text-xs text-gray-500">{{ tournament.location }}</p>
-    <p class="mt-1 text-xs font-medium text-brand-600">{{ tournament.photo_count }} {{ t('common.photos') }}</p>
+    <p class="mt-1 text-xs font-medium text-brand-600">{{ t('tournaments.uploadedCount', { count: tournament.photo_count }) }}</p>
   </NuxtLink>
 
   <NuxtLink
@@ -46,7 +46,7 @@ function formatDate(date?: string) {
       <h3 class="line-clamp-2 min-h-[2.5rem] font-semibold leading-snug">{{ tournament.name }}</h3>
       <p class="mt-1 line-clamp-1 text-sm text-gray-500">{{ formatDate(tournament.date) || ' ' }}</p>
       <p class="line-clamp-1 text-sm text-gray-500">{{ tournament.location || ' ' }}</p>
-      <p class="mt-auto pt-1 text-xs font-medium text-brand-600">{{ tournament.photo_count }} {{ t('common.photos') }}</p>
+      <p class="mt-auto pt-1 text-xs font-medium text-brand-600">{{ t('tournaments.uploadedCount', { count: tournament.photo_count }) }}</p>
     </div>
   </NuxtLink>
 
@@ -58,6 +58,7 @@ function formatDate(date?: string) {
       <h3 class="line-clamp-2 min-h-[2.5rem] font-semibold leading-snug">{{ tournament.name }}</h3>
       <p class="mt-1 line-clamp-1 text-sm text-gray-500">{{ formatDate(tournament.date) || ' ' }}</p>
       <p class="line-clamp-1 text-sm text-gray-500">{{ tournament.location || ' ' }}</p>
+      <p class="mt-auto pt-1 text-xs text-gray-500">{{ t('tournaments.uploadedCount', { count: tournament.photo_count }) }}</p>
     </div>
   </div>
 </template>

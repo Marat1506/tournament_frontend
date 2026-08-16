@@ -31,7 +31,7 @@ const customHero = computed(() => platform.value?.hero_image_url || '')
           </div>
           <div class="flex items-center gap-2">
             <AppLocaleSwitcher />
-            <NuxtLink to="/profile" class="flex h-10 w-10 items-center justify-center text-gray-300" :aria-label="t('nav.profile')">
+            <NuxtLink to="/profile/notifications" class="flex h-10 w-10 items-center justify-center text-gray-300" :aria-label="t('notifications.title')">
             <AppIcon name="bell" class="h-5 w-5" />
           </NuxtLink>
           </div>
@@ -69,43 +69,22 @@ const customHero = computed(() => platform.value?.hero_image_url || '')
         </div>
       </NuxtLink>
 
-      <div class="grid grid-cols-4 gap-3 pt-3">
-        <NuxtLink to="/tournaments" class="flex flex-col items-center gap-2 text-center">
-          <div class="quick-icon"><AppIcon name="trophy" class="h-5 w-5" /></div>
-          <span class="text-[10px] leading-tight text-gray-300">{{ t('home.quickTournament') }}</span>
-        </NuxtLink>
-        <NuxtLink to="/tournaments" class="flex flex-col items-center gap-2 text-center">
-          <div class="quick-icon"><AppIcon name="user" class="h-5 w-5" /></div>
-          <span class="text-[10px] leading-tight text-gray-300">{{ t('home.quickName') }}</span>
-        </NuxtLink>
-        <NuxtLink to="/tournaments" class="flex flex-col items-center gap-2 text-center">
-          <div class="quick-icon"><AppIcon name="face" class="h-5 w-5" /></div>
-          <span class="text-[10px] leading-tight text-gray-300">{{ t('home.quickFace') }}</span>
-        </NuxtLink>
-        <NuxtLink to="/shop/tshirts" class="flex flex-col items-center gap-2 text-center">
-          <div class="quick-icon"><AppIcon name="shirt" class="h-5 w-5" /></div>
-          <span class="text-[10px] leading-tight text-gray-300">{{ t('home.quickShirts') }}</span>
-        </NuxtLink>
+      <div class="flex justify-center gap-6 pt-2 text-sm">
+        <NuxtLink to="/shop/tshirts" class="font-medium text-brand-400">{{ t('home.quickShirts') }}</NuxtLink>
+        <NuxtLink to="/order-photographer" class="font-medium text-brand-400">{{ t('home.hirePhotographerShort') }}</NuxtLink>
       </div>
-
-      <NuxtLink to="/order-photographer" class="mt-3 block text-center text-sm font-medium text-brand-400">
-        {{ t('home.hirePhotographer') }}
-      </NuxtLink>
 
       <section v-if="tournaments?.data?.length" class="space-y-3 pt-4">
         <div class="flex items-center justify-between">
           <h2 class="text-base font-bold">{{ t('home.recentTournaments') }}</h2>
           <NuxtLink to="/tournaments" class="text-sm font-medium text-brand-400">{{ t('home.viewAll') }}</NuxtLink>
         </div>
-        <div class="-mx-1 flex items-stretch gap-3 overflow-x-auto pb-2">
-          <div
-            v-for="tournament in tournaments.data.slice(0, 3)"
-            :key="tournament.id"
-            class="flex w-[132px] shrink-0"
-          >
-            <TournamentCard :tournament="tournament" layout="tile" class="w-full" />
-          </div>
-        </div>
+        <p class="text-sm text-gray-500">{{ t('home.recentHint') }}</p>
+        <TournamentCard
+          v-for="tournament in tournaments.data.slice(0, 5)"
+          :key="tournament.id"
+          :tournament="tournament"
+        />
       </section>
     </div>
 

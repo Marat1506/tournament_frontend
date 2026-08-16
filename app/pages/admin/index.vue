@@ -9,10 +9,23 @@ const api = useApi()
 const router = useRouter()
 const toast = useToast()
 
-if (!auth.isLoggedIn) {
-  await navigateTo('/login?redirect=/admin')
-} else if (auth.user?.role !== 'admin') {
-  await navigateTo('/')
+if (import.meta.client) {
+  auth.hydrate()
+  if (!auth.isLoggedIn) {
+    await navigateTo('/login?redirect=/admin')
+  }
+  else if (!auth.user) {
+    try {
+      auth.setUser(await api.me())
+    }
+    catch {
+      auth.logout()
+      await navigateTo('/login?redirect=/admin')
+    }
+  }
+  if (auth.isLoggedIn && auth.user?.role !== 'admin') {
+    await navigateTo('/')
+  }
 }
 
 type Tab = 'overview' | 'settings' | 'tournaments' | 'leads' | 'orders' | 'users'
@@ -334,6 +347,7 @@ async function setUserStatus(id: string, status: string) {
 
       <!-- Leads -->
       <div v-if="tab === 'leads'" class="space-y-4">
+        <p class="text-sm text-gray-500">{{ t('admin.leadsHint') }}</p>
         <div class="flex flex-wrap gap-2">
           <select v-model="typeFilter" class="input-field w-auto min-w-[140px]">
             <option value="">{{ t('admin.allTypes') }}</option>
@@ -366,7 +380,22 @@ async function setUserStatus(id: string, status: string) {
                 {{ statusLabels[lead.status] || lead.status }}
               </span>
             </div>
-            <div v-if="lead.phone" class="text-sm">📞 {{ lead.phone }}</div>
+            <div v-if="lead.phone" class="text-sm">
+              <a :href="`tel:${lead.phone}`" class="text-brand-400">{{ lead.phone }}</a>
+            </div>
+            <div class="text-sm">
+              <a :href="`mailto:${lead.email}`" class="text-brand-400">{{ lead.email }}</a>
+            </div>
+            <div v-if="lead.shirt_size" class="text-sm text-gray-400">{{ t('admin.leadShirtSize') }}: {{ lead.shirt_size }}</div>
+            <div v-if="lead.event_date" class="text-sm text-gray-400">{{ t('admin.leadEventDate') }}: {{ lead.event_date }}</div>
+            <div v-if="lead.event_location" class="text-sm text-gray-400">{{ t('admin.leadEventLocation') }}: {{ lead.event_location }}</div>
+            <NuxtLink
+              v-if="lead.photo_id"
+              :to="`/photos/${lead.photo_id}`"
+              class="text-sm font-medium text-brand-400"
+            >
+              {{ t('admin.leadPhoto') }}
+            </NuxtLink>
             <div v-if="lead.message" class="text-sm text-gray-400">{{ lead.message }}</div>
             <div class="flex gap-2">
               <button

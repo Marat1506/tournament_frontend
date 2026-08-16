@@ -6,7 +6,6 @@ const slug = route.params.slug as string
 const athleteId = route.query.athlete_id as string | undefined
 const athleteName = route.query.athlete_name as string | undefined
 const api = useApi()
-const auth = useAuthStore()
 const selection = useSelectionStore()
 const favorites = useFavoritesStore()
 const { t } = useI18n()
@@ -45,10 +44,6 @@ watch(photosResponse, (response) => {
   allPhotos.value = response.data ?? []
   totalPhotos.value = response.pagination?.total ?? allPhotos.value.length
 }, { immediate: true })
-
-if (import.meta.client && athleteId && auth.isLoggedIn && auth.user?.role === 'client') {
-  api.trackAthlete(athleteId).catch(() => {})
-}
 
 const hasMore = computed(() => allPhotos.value.length < totalPhotos.value)
 
@@ -102,7 +97,7 @@ function onFiltersApply(v: typeof filters.value) {
           <AppIcon name="back" class="h-5 w-5" />
         </NuxtLink>
       </template>
-      <template #right>
+      <template v-if="!athleteId" #right>
         <button
           class="flex h-10 items-center gap-1 rounded-full px-3 text-sm font-medium"
           :class="filterCount ? 'bg-brand-50 text-brand-600' : 'text-gray-500'"
@@ -115,6 +110,8 @@ function onFiltersApply(v: typeof filters.value) {
     </AppPageHeader>
 
     <div class="page-container !pt-0">
+      <SearchStepper :current="3" tournament-to="/tournaments" />
+      <p class="mb-2 text-xs font-medium uppercase tracking-wide text-gray-500">{{ t('tournaments.selectedLabel') }}</p>
       <TournamentCard v-if="tournament" :tournament="tournament" compact class="mb-4" />
 
       <div v-if="athleteName" class="mb-4 space-y-3">

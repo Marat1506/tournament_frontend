@@ -1,6 +1,8 @@
 <script setup lang="ts">
 const route = useRoute()
 const { t } = useI18n()
+const auth = useAuthStore()
+const { unreadCount, canLoad } = useNotificationBadge()
 
 const items = computed(() => [
   { to: '/', label: t('nav.home'), icon: 'home' as const, match: (p: string) => p === '/' },
@@ -22,7 +24,15 @@ const items = computed(() => [
           ? 'font-semibold text-brand-400'
           : 'text-gray-400'"
       >
-        <AppIcon :name="item.icon" class="h-5 w-5" />
+        <span class="relative">
+          <AppIcon :name="item.icon" class="h-5 w-5" />
+          <span
+            v-if="item.to === '/profile' && canLoad && unreadCount > 0"
+            class="absolute -right-1.5 -top-1 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-brand-600 px-0.5 text-[9px] font-bold text-white"
+          >
+            {{ unreadCount > 9 ? '9+' : unreadCount }}
+          </span>
+        </span>
         <span>{{ item.label }}</span>
       </NuxtLink>
     </div>

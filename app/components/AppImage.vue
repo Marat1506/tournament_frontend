@@ -1,7 +1,7 @@
 <script setup lang="ts">
 const { t } = useI18n()
 
-defineProps<{
+const props = defineProps<{
   src?: string | null
   alt?: string
   aspect?: 'photo' | 'cover' | 'square'
@@ -14,6 +14,10 @@ const defaults = {
   cover: '/placeholder-hero.svg',
   square: '/placeholder-tournament.svg',
 }
+
+watch(() => props.src, () => {
+  failed.value = false
+})
 </script>
 
 <template>
@@ -32,3 +36,4 @@ const defaults = {
     class="h-full w-full object-cover"
   >
 </template>
+

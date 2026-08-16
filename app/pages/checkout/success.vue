@@ -4,12 +4,13 @@ definePageMeta({})
 const { t } = useI18n()
 const route = useRoute()
 const api = useApi()
+const auth = useAuthStore()
 const selection = useSelectionStore()
 
 const orderId = route.query.order_id as string
 const guestEmail = route.query.guest_email as string | undefined
 
-const { data: order } = await useAsyncData(`order-${orderId}`, () =>
+const { data: order, refresh } = await useAsyncData(`order-${orderId}`, () =>
   orderId ? api.getOrder(orderId, guestEmail) : Promise.resolve(null),
 )
 
@@ -20,10 +21,31 @@ watch(order, (o) => {
 }, { immediate: true })
 
 const downloadPhotos = computed(() => order.value?.download_photos ?? [])
+const isPaid = computed(() => order.value?.status === 'paid')
+const confirming = ref(false)
 const effectiveGuestEmail = computed(() => guestEmail || order.value?.guest_email || undefined)
 
 const downloadingId = ref<string | null>(null)
 const downloadError = ref('')
+
+onMounted(async () => {
+  if (!orderId) return
+  if (isPaid.value && downloadPhotos.value.length) return
+
+  confirming.value = true
+  for (let i = 0; i < 15; i++) {
+    await new Promise(resolve => setTimeout(resolve, 2000))
+    try {
+      await refresh()
+    }
+    catch {
+      // webhook may still be in flight
+    }
+    if (isPaid.value && downloadPhotos.value.length) break
+    if (isPaid.value) break
+  }
+  confirming.value = false
+})
 
 async function downloadItem(item: { photo_id: string; original_filename?: string }) {
   if (downloadingId.value) return
@@ -66,25 +88,43 @@ function photoLabel(item: { photo_id: string; original_filename?: string; item_t
         {{ t('checkout.orderSummary', { id: order.id.slice(0, 8), total: order.total }) }}
       </p>
 
-      <div v-if="downloadPhotos.length" class="mt-8 space-y-3 text-left">
+      <p v-if="confirming && !downloadPhotos.length" class="mt-4 text-sm text-gray-400">
+        {{ t('checkout.confirmingPayment') }}
+      </p>
+      <p v-else-if="!isPaid" class="mt-4 text-sm text-amber-300">
+        {{ t('checkout.paymentPending') }}
+      </p>
+      <p v-else-if="downloadPhotos.length" class="mt-4 text-sm text-gray-300">
+        {{ t('checkout.downloadHint') }}
+      </p>
+
+      <div v-if="downloadPhotos.length" class="mt-6 space-y-3 text-left">
         <h2 class="font-semibold">{{ t('checkout.downloadPhotos') }}</h2>
         <button
           v-for="item in downloadPhotos"
           :key="item.photo_id"
           type="button"
-          class="card flex w-full items-center justify-between p-4 text-left transition active:scale-[0.99] disabled:opacity-60"
+          class="btn-primary-solid flex w-full items-center justify-between px-4"
           :disabled="downloadingId === item.photo_id"
           @click="downloadItem(item)"
         >
-          <span class="truncate pr-3">{{ photoLabel(item) }}</span>
-          <span class="shrink-0 font-medium text-brand-600">
+          <span class="truncate pr-3 text-left">{{ photoLabel(item) }}</span>
+          <span class="shrink-0">
             {{ downloadingId === item.photo_id ? t('checkout.downloading') : t('checkout.download') }}
           </span>
         </button>
         <p v-if="downloadError" class="text-sm text-red-500">{{ downloadError }}</p>
       </div>
 
-      <NuxtLink to="/" class="btn-primary-solid mt-8 w-full">{{ t('checkout.home') }}</NuxtLink>
+      <NuxtLink
+        v-if="auth.isLoggedIn"
+        to="/profile/orders"
+        class="mt-6 inline-block text-sm font-medium text-brand-500"
+      >
+        {{ t('checkout.myPurchases') }}
+      </NuxtLink>
+
+      <NuxtLink to="/" class="btn-secondary mt-6 w-full">{{ t('checkout.home') }}</NuxtLink>
     </div>
   </div>
 </template>

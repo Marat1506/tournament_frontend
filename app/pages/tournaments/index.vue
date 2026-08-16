@@ -2,11 +2,10 @@
 const { t } = useI18n()
 const api = useApi()
 const search = ref('')
-const period = ref<'active' | 'past'>('active')
 
 const { data, pending, refresh } = await useAsyncData(
-  () => `tournaments-${period.value}-${search.value}`,
-  () => api.getTournaments(search.value || undefined, period.value),
+  () => `tournaments-${search.value}`,
+  () => api.getTournaments(search.value || undefined),
 )
 
 let searchTimer: ReturnType<typeof setTimeout>
@@ -14,8 +13,6 @@ watch(search, () => {
   clearTimeout(searchTimer)
   searchTimer = setTimeout(() => refresh(), 300)
 })
-
-watch(period, () => refresh())
 </script>
 
 <template>
@@ -23,23 +20,7 @@ watch(period, () => refresh())
     <AppPageHeader :title="t('tournaments.title')" />
 
     <div class="page-container">
-      <div class="mb-4 flex gap-2">
-        <button
-          class="rounded-full px-4 py-2 text-sm font-semibold"
-          :class="period === 'active' ? 'bg-brand-600 text-white' : 'bg-white/10 text-gray-400'"
-          @click="period = 'active'"
-        >
-          {{ t('tournaments.tabActive') }}
-        </button>
-        <button
-          class="rounded-full px-4 py-2 text-sm font-semibold"
-          :class="period === 'past' ? 'bg-brand-600 text-white' : 'bg-white/10 text-gray-400'"
-          @click="period = 'past'"
-        >
-          {{ t('tournaments.tabPast') }}
-        </button>
-      </div>
-
+      <p class="mb-3 text-sm text-gray-400">{{ t('tournaments.listHint') }}</p>
       <input
         v-model="search"
         type="search"

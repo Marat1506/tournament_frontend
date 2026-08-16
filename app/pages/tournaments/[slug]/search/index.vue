@@ -64,17 +64,19 @@ function onFiltersApply(v: typeof filters.value) {
     </AppPageHeader>
 
     <div class="page-container">
-      <SearchStepper :current="2" />
+      <SearchStepper :current="2" tournament-to="/tournaments" />
 
+      <p class="mb-2 text-xs font-medium uppercase tracking-wide text-gray-500">{{ t('tournaments.selectedLabel') }}</p>
       <TournamentCard v-if="tournament" :tournament="tournament" compact class="mb-4" />
 
       <input
         v-model="query"
         type="search"
         :placeholder="t('search.namePlaceholder')"
-        class="input-field mb-4"
+        class="input-field mb-2"
         autofocus
       >
+      <p class="mb-4 text-xs text-gray-500">{{ t('search.nameHint') }}</p>
 
       <div v-if="pending" class="space-y-2">
         <div v-for="n in 4" :key="n" class="card h-16 animate-pulse bg-white/10" />
@@ -96,17 +98,20 @@ function onFiltersApply(v: typeof filters.value) {
               <div v-if="athlete.category" class="text-sm text-gray-500">{{ athlete.category }}</div>
             </div>
           </div>
-          <div class="text-sm font-semibold text-brand-600">{{ athlete.photo_count }}</div>
+          <div class="text-sm font-semibold text-brand-600">{{ t('tournaments.uploadedCount', { count: athlete.photo_count }) }}</div>
         </button>
       </div>
 
-      <div v-else-if="query.length >= 1" class="card p-10 text-center text-gray-500">
+      <div v-else-if="query.length >= 1 || filterCount" class="card p-10 text-center text-gray-500">
         {{ t('search.notFound') }}
       </div>
 
-      <p v-else class="text-center text-sm text-gray-500">
-        {{ filterCount || filters.gender ? t('search.pickAthlete') : t('search.startTyping') }}
-      </p>
+      <div v-else class="card space-y-3 p-6 text-center">
+        <p class="text-sm text-gray-400">{{ t('search.noNamesYet') }}</p>
+        <NuxtLink :to="`/tournaments/${slug}/search/face`" class="font-medium text-brand-400">
+          {{ t('tournaments.searchByFace') }} →
+        </NuxtLink>
+      </div>
     </div>
 
     <CategoryFilterPanel v-model="filters" :open="showFilters" @update:model-value="onFiltersApply" @update:open="showFilters = $event" />

@@ -146,9 +146,10 @@ export function useLegalContent() {
           {
             title: '4. Photo visibility & consent',
             paragraphs: [
-              'Tournament photos linked to your name or face are private by default. Other users cannot find or preview them through name search, face search, or the public gallery unless you opt in.',
-              'In account Settings you can enable “Allow others to find and view my photos”. When enabled, photos associated with your claimed athlete profile become discoverable to other users of the platform.',
-              'You always retain access to photos associated with your account in your personal dashboard, regardless of this setting. Purchased photos remain available to the buyer.',
+              'Tournament photos are stored on our servers but are not shown on the public site until you give explicit consent through face search.',
+              'When you use face search, you must check a consent box confirming you are searching for your own photos. Only then will matching previews (with watermarks) be shown to you.',
+              'After you purchase and download an original, watermarked previews of those photos may remain visible in the tournament catalog for other buyers. Original files are never available without payment.',
+              'You may hide your photos from the public catalog or revoke consent entirely in account Settings. Revocation does not delete files from our servers but removes your access and public visibility.',
             ],
           },
           {
@@ -247,14 +248,15 @@ export function useLegalContent() {
             'Безопасность платформы, предотвращение мошенничества, исполнение законных обязанностей',
           ],
         },
-        {
-          title: '4. Видимость фото и согласие',
-          paragraphs: [
-            'Фото с турниров, связанные с вашим именем или лицом, по умолчанию скрыты. Другие пользователи не могут найти или просмотреть их через поиск по имени, поиск по лицу или публичную галерею, пока вы не дадите согласие.',
-            'В настройках аккаунта можно включить «Разрешить другим находить и просматривать мои фото». После включения фото, связанные с вашим профилем спортсмена, становятся доступны для поиска другими пользователями.',
-            'Вы всегда видите свои фото в личном кабинете независимо от этой настройки. Купленные фото остаются доступны покупателю.',
-          ],
-        },
+          {
+            title: '4. Видимость фото и согласие',
+            paragraphs: [
+              'Фото с турниров хранятся на наших серверах, но не показываются на сайте, пока вы явно не дадите согласие через поиск по лицу.',
+              'При поиске по лицу необходимо отметить галочку согласия — только после этого вам будут показаны совпадения (превью с водяным знаком).',
+              'После покупки и скачивания оригинала превью с водяным знаком могут оставаться в каталоге турнира для других покупателей. Оригинал без оплаты недоступен.',
+              'В настройках аккаунта можно скрыть фото из публичного каталога или полностью отозвать согласие. Отзыв не удаляет файлы с сервера, но убирает доступ и публичную видимость.',
+            ],
+          },
         {
           title: '5. Поиск по лицу и биометрические данные',
           paragraphs: [
@@ -367,19 +369,27 @@ export function useLegalContent() {
             ],
           },
           {
-            title: '7. Merchandise requests',
+            title: '7. Photographers',
+            paragraphs: [
+              'Photographers must confirm they have the legal right to shoot at the event and to distribute uploaded photos through PixMomento.',
+              'By uploading, you represent that you hold necessary rights and accept responsibility for your content. PixMomento may moderate or remove content but does not verify each upload.',
+              'You agree to indemnify PixMomento against claims arising from your uploads to the extent permitted by law.',
+            ],
+          },
+          {
+            title: '8. Merchandise requests',
             paragraphs: [
               'T-shirt and print orders submitted through the site are processed manually. Separate confirmation, pricing, and delivery terms will be communicated by email.',
             ],
           },
           {
-            title: '8. Disclaimer',
+            title: '9. Disclaimer',
             paragraphs: [
               'The service is provided “as is”. We do not guarantee uninterrupted availability. To the maximum extent permitted by law, PixMomento is not liable for indirect or consequential damages.',
             ],
           },
           {
-            title: '9. Changes & contact',
+            title: '10. Changes & contact',
             paragraphs: [
               'We may update these terms. Material changes will be reflected on this page.',
               `Support: ${SUPPORT_EMAIL} · ${SITE}/support`,
@@ -440,19 +450,27 @@ export function useLegalContent() {
           ],
         },
         {
-          title: '7. Заказ мерча',
+          title: '7. Фотографы',
+          paragraphs: [
+            'Перед загрузкой фотограф подтверждает право снимать на мероприятии и право распространять материалы через PixMomento.',
+            'Загружая контент, вы заявляете о наличии необходимых прав и несёте ответственность за материалы. PixMomento может модерировать или удалять контент, но не проверяет каждую загрузку.',
+            'Вы соглашаетесь возмещать претензии, связанные с вашими загрузками, в пределах, допустимых законом.',
+          ],
+        },
+        {
+          title: '8. Заказ мерча',
           paragraphs: [
             'Заявки на футболки и принты обрабатываются вручную. Условия, цена и доставка согласуются отдельно по email.',
           ],
         },
         {
-          title: '8. Ограничение ответственности',
+          title: '9. Ограничение ответственности',
           paragraphs: [
             'Сервис предоставляется «как есть». Мы не гарантируем бесперебойную работу. В пределах, допустимых законом, PixMomento не несёт ответственности за косвенные убытки.',
           ],
         },
         {
-          title: '9. Изменения и контакты',
+          title: '10. Изменения и контакты',
           paragraphs: [
             'Мы можем обновлять условия. Актуальная версия публикуется на этой странице.',
             `Поддержка: ${SUPPORT_EMAIL} · ${SITE}/support`,

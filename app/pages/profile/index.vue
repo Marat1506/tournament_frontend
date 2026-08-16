@@ -5,6 +5,7 @@ const { t, locale } = useI18n()
 const auth = useAuthStore()
 const api = useApi()
 const router = useRouter()
+const { unreadCount, canLoad: canLoadNotifications } = useNotificationBadge()
 
 const beltLabel = useBeltLabel(() => auth.user?.belt)
 
@@ -22,6 +23,7 @@ const menuItems = computed(() => [
   { to: '/profile/photos', label: t('profile.myPhotos'), icon: 'photos' as const, primary: true },
   { to: '/profile/tournaments', label: t('profile.myTournaments'), icon: 'trophy' as const },
   { to: '/profile/orders', label: t('profile.myOrders'), icon: 'cart' as const },
+  { to: '/profile/notifications', label: t('notifications.title'), icon: 'bell' as const },
   { to: '/favorites', label: t('nav.favorites'), icon: 'heart' as const },
   { to: '/profile/selfies', label: t('profile.mySelfies'), icon: 'face' as const },
   { to: '/profile/settings', label: t('profile.settings'), icon: 'settings' as const },
@@ -43,9 +45,20 @@ onMounted(async () => {
   <div>
     <AppPageHeader :title="t('profile.title')">
       <template #right>
-        <button class="relative flex h-10 w-10 items-center justify-center text-gray-500" aria-label="Notifications">
+        <NuxtLink
+          v-if="auth.isLoggedIn && auth.user?.role === 'client'"
+          to="/profile/notifications"
+          class="relative flex h-10 w-10 items-center justify-center text-gray-500"
+          :aria-label="t('notifications.title')"
+        >
           <AppIcon name="bell" class="h-5 w-5" />
-        </button>
+          <span
+            v-if="canLoadNotifications && unreadCount > 0"
+            class="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-brand-600 px-1 text-[10px] font-bold text-white"
+          >
+            {{ unreadCount > 9 ? '9+' : unreadCount }}
+          </span>
+        </NuxtLink>
       </template>
     </AppPageHeader>
 
@@ -71,11 +84,12 @@ onMounted(async () => {
         <div class="card space-y-3 p-6 text-center">
           <h2 class="font-semibold">{{ auth.user?.name || auth.user?.email }}</h2>
           <p class="text-sm text-gray-500">{{ auth.isAdmin ? t('profile.admin') : t('profile.photographer') }}</p>
+          <p class="text-sm text-gray-400">{{ t('profile.wrongWorldHint') }}</p>
           <NuxtLink v-if="auth.isAdmin" to="/admin" class="btn-primary-solid">{{ t('profile.adminPanel') }}</NuxtLink>
           <NuxtLink v-if="auth.isPhotographer" to="/photographer/dashboard" class="btn-primary-solid">
             {{ t('profile.photographerDashboard') }}
           </NuxtLink>
-          <button class="text-sm text-gray-500" @click="auth.logout()">{{ t('profile.logout') }}</button>
+          <button class="text-sm text-gray-500" @click="auth.logout()">{{ t('profile.logoutToAthlete') }}</button>
         </div>
       </template>
 

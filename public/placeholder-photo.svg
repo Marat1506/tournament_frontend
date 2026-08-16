@@ -3,5 +3,4 @@
   <rect x="140" y="240" width="120" height="90" rx="8" fill="#D1D5DB"/>
   <circle cx="200" cy="270" r="18" fill="#9CA3AF"/>
   <path d="M155 315 L200 285 L245 315 L245 330 L155 330 Z" fill="#9CA3AF"/>
-  <text x="200" y="370" text-anchor="middle" fill="#6B7280" font-family="system-ui,sans-serif" font-size="16">$>B></text>
 </svg>

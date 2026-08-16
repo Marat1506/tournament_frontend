@@ -12,10 +12,12 @@ const { afterClientSession } = useClientAuthRedirect()
 const email = ref('')
 const password = ref('')
 const error = ref('')
+const showPhotographerLink = ref(false)
 const loading = ref(false)
 
 async function submit() {
   error.value = ''
+  showPhotographerLink.value = false
   loading.value = true
   try {
     const resp = await api.login({ email: email.value, password: password.value })
@@ -23,17 +25,8 @@ async function submit() {
       await applyLocale(resp.user.locale as 'ru' | 'en' | 'es', false)
     }
     if (resp.user.role === 'photographer') {
-      auth.setSession(resp)
-      if (resp.user.status === 'pending') {
-        await router.push('/photographer/pending')
-        return
-      }
-      if (resp.user.status === 'rejected') {
-        auth.logout()
-        error.value = t('photographer.rejected')
-        return
-      }
-      await router.push('/photographer/dashboard')
+      error.value = t('auth.loginAsPhotographer')
+      showPhotographerLink.value = true
       return
     }
     if (resp.user.role === 'admin') {
@@ -70,18 +63,32 @@ async function submit() {
       </template>
     </AppPageHeader>
     <div class="page-container max-w-md">
+      <AuthSessionNotice world="client" />
       <p class="mb-4 text-sm text-gray-400">{{ t('auth.loginHint') }}</p>
       <form class="space-y-4" @submit.prevent="submit">
         <input v-model="email" type="email" class="input-field" :placeholder="t('auth.email')" required>
         <input v-model="password" type="password" class="input-field" :placeholder="t('auth.password')" required>
         <p v-if="error" class="text-sm text-red-400">{{ error }}</p>
+        <NuxtLink
+          v-if="showPhotographerLink"
+          to="/photographer/login"
+          class="block text-sm font-medium text-brand-400"
+        >
+          {{ t('auth.goPhotographerLogin') }}
+        </NuxtLink>
         <button type="submit" class="btn-primary-solid w-full" :disabled="loading">
           {{ loading ? t('auth.loggingIn') : t('auth.loginBtn') }}
         </button>
       </form>
+      <p class="mt-3 text-center text-sm">
+        <NuxtLink to="/forgot-password" class="font-medium text-brand-400">{{ t('auth.forgotPassword') }}</NuxtLink>
+      </p>
       <p class="mt-4 text-center text-sm text-gray-500">
         {{ t('auth.noAccount') }}
         <NuxtLink to="/register" class="font-medium text-brand-400">{{ t('auth.registerTitle') }}</NuxtLink>
+      </p>
+      <p class="mt-6 text-center text-sm text-gray-500">
+        <NuxtLink to="/photographer/login" class="font-medium text-brand-400">{{ t('auth.iAmPhotographer') }}</NuxtLink>
       </p>
     </div>
   </div>

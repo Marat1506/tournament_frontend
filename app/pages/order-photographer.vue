@@ -60,7 +60,8 @@ async function submit() {
       </div>
 
       <form v-else class="card space-y-4 p-5" @submit.prevent="submit">
-        <p class="text-sm text-gray-600">{{ t('orderPhotographer.intro') }}</p>
+        <p class="text-sm text-gray-400">{{ t('orderPhotographer.intro') }}</p>
+        <p class="text-xs text-gray-500">{{ t('orderPhotographer.adminHint') }}</p>
 
         <input v-model="form.name" type="text" required :placeholder="t('orderPhotographer.name')" class="input-field">
         <input v-model="form.email" type="email" required placeholder="Email *" class="input-field">

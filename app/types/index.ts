@@ -156,6 +156,7 @@ export interface ListResponse<T> {
 export interface PhotoListResult {
   data: Photo[]
   pagination: Pagination
+  guest_consent_token?: string
 }
 
 export interface TournamentStats {
@@ -223,4 +224,25 @@ export interface LeadRequest {
 export interface CheckoutResult {
   url: string
   dev_mode?: boolean
+}
+
+export interface ConsentSummary {
+  has_personal_consent: boolean
+  has_consent_for_tournament?: boolean
+  has_published_photos: boolean
+  last_consent_at?: string
+  last_tournament_name?: string
+  claimed_athletes: number
+  claimed_athlete_ids?: string[]
+}
+
+export interface UserNotification {
+  id: string
+  user_id: string
+  type: string
+  title: string
+  body?: string
+  link?: string
+  read_at?: string
+  created_at: string
 }

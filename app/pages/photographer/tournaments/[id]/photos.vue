@@ -170,6 +170,12 @@ async function deletePhoto() {
               :alt="photo.original_filename || t('common.photo')"
               class="h-full w-full object-cover"
             >
+            <div
+              v-else
+              class="flex h-full items-center justify-center p-2 text-center text-[11px] leading-snug text-white/45"
+            >
+              {{ photo.original_filename || t('common.photo') }}
+            </div>
             <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-2 text-left">
               <div v-if="photo.athlete_name" class="truncate text-xs font-medium text-white">{{ photo.athlete_name }}</div>
               <div v-else class="text-xs text-white/80">{{ t('photographer.noTag') }}</div>
