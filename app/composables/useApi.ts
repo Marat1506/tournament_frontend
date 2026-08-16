@@ -102,6 +102,54 @@ export function useApi() {
     return apiFetch<T>(path, { method: 'PATCH', body, headers: headers() })
   }
 
+  function uploadPhotosChunk(
+    tournamentId: string,
+    files: File[],
+    onProgress?: (loaded: number) => void,
+  ) {
+    const form = new FormData()
+    for (const file of files) {
+      form.append('photos', file)
+    }
+    return new Promise<UploadBatch>((resolve, reject) => {
+      const xhr = new XMLHttpRequest()
+      xhr.open('POST', `${base}/api/v1/photographer/tournaments/${tournamentId}/photos`)
+      xhr.timeout = 10 * 60 * 1000
+      const token = auth.accessToken
+      if (token) {
+        xhr.setRequestHeader('Authorization', `Bearer ${token}`)
+      }
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable) {
+          onProgress?.(event.loaded)
+        }
+      }
+      xhr.onload = () => {
+        if (xhr.status === 413) {
+          reject(Object.assign(new Error('payload too large'), { statusCode: 413 }))
+          return
+        }
+        try {
+          const data = xhr.responseText ? JSON.parse(xhr.responseText) as UploadBatch & { error?: string } : null
+          if (xhr.status >= 200 && xhr.status < 300 && data && !data.error) {
+            resolve(data)
+            return
+          }
+          reject(Object.assign(new Error(data?.error || 'upload failed'), {
+            statusCode: xhr.status,
+            data,
+          }))
+        }
+        catch {
+          reject(Object.assign(new Error('upload failed'), { statusCode: xhr.status }))
+        }
+      }
+      xhr.ontimeout = () => reject(Object.assign(new Error('upload timeout'), { statusCode: 408 }))
+      xhr.onerror = () => reject(Object.assign(new Error('upload failed'), { statusCode: 0 }))
+      xhr.send(form)
+    })
+  }
+
   function downloadPath(photoId: string, orderId?: string, guestEmail?: string) {
     const params = new URLSearchParams()
     if (orderId) params.set('order_id', orderId)
@@ -285,42 +333,22 @@ export function useApi() {
     getUploadStatus: (id: string) =>
       get<UploadBatch>(`/api/v1/photographer/tournaments/${id}/upload-status`),
 
-    uploadPhotos: (tournamentId: string, files: File[], onProgress?: (loaded: number, total: number) => void) => {
-      const form = new FormData()
-      for (const file of files) {
-        form.append('photos', file)
+    uploadPhotos: async (tournamentId: string, files: File[], onProgress?: (loaded: number, total: number) => void) => {
+      const chunkSize = 3
+      const totalSize = files.reduce((sum, file) => sum + file.size, 0)
+      let sentBytes = 0
+      let last: UploadBatch | null = null
+      for (let i = 0; i < files.length; i += chunkSize) {
+        const chunk = files.slice(i, i + chunkSize)
+        last = await uploadPhotosChunk(tournamentId, chunk, (loaded) => {
+          onProgress?.(Math.min(totalSize, sentBytes + loaded), totalSize || 1)
+        })
+        sentBytes += chunk.reduce((sum, file) => sum + file.size, 0)
       }
-      return new Promise<UploadBatch>((resolve, reject) => {
-        const xhr = new XMLHttpRequest()
-        xhr.open('POST', `${base}/api/v1/photographer/tournaments/${tournamentId}/photos`)
-        const token = auth.accessToken
-        if (token) {
-          xhr.setRequestHeader('Authorization', `Bearer ${token}`)
-        }
-        xhr.upload.onprogress = (event) => {
-          if (event.lengthComputable) {
-            onProgress?.(event.loaded, event.total)
-          }
-        }
-        xhr.onload = () => {
-          try {
-            const data = xhr.responseText ? JSON.parse(xhr.responseText) as UploadBatch & { error?: string } : null
-            if (xhr.status >= 200 && xhr.status < 300 && data && !data.error) {
-              resolve(data)
-              return
-            }
-            reject(Object.assign(new Error(data?.error || 'upload failed'), {
-              statusCode: xhr.status,
-              data,
-            }))
-          }
-          catch {
-            reject(new Error('upload failed'))
-          }
-        }
-        xhr.onerror = () => reject(new Error('upload failed'))
-        xhr.send(form)
-      })
+      if (!last) {
+        throw Object.assign(new Error('upload failed'), { statusCode: 0 })
+      }
+      return last
     },
 
     getPhotographerAgreementStatus: () =>

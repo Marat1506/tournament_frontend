@@ -242,10 +242,17 @@ async function upload() {
   } catch (e: unknown) {
     uploading.value = false
     uploadPhase.value = 'idle'
-    const key = mapApiError(e, [
+    const status = getApiErrorStatus(e)
+    const raw = (e instanceof Error ? e.message : '') + ' ' + (getApiErrorMessage(e) || '')
+    let key = mapApiError(e, [
       { match: 'tournament not found', key: 'photographer.errNotFound' },
       { match: 'unsupported', key: 'photographer.errUnsupportedImage' },
+      { match: 'payload too large', key: 'photographer.errTooLarge' },
+      { match: 'upload timeout', key: 'photographer.errUploadTimeout' },
     ], 'photographer.msgUploadError')
+    if (status === 413) key = 'photographer.errTooLarge'
+    else if (status === 408 || raw.includes('timeout')) key = 'photographer.errUploadTimeout'
+    else if (status === 0) key = 'photographer.errUploadNetwork'
     uploadAlert.value = { type: 'error', message: t(key) }
     toast.error(t(key))
   }
