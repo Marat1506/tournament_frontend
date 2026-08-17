@@ -26,7 +26,7 @@ const { data: tournament } = await useAsyncData(`tournament-${slug}`, () => api.
 
 watchEffect(() => {
   if (tournament.value?.id) {
-    selection.setContext(tournament.value.id)
+    selection.setContext(tournament.value.id, tournament.value.payouts_ready !== false)
   }
 })
 
@@ -113,6 +113,9 @@ function onFiltersApply(v: typeof filters.value) {
       <SearchStepper :current="3" tournament-to="/tournaments" />
       <p class="mb-2 text-xs font-medium uppercase tracking-wide text-gray-500">{{ t('tournaments.selectedLabel') }}</p>
       <TournamentCard v-if="tournament" :tournament="tournament" compact class="mb-4" />
+      <div v-if="tournament && tournament.payouts_ready === false" class="mb-4">
+        <AppAlert type="info" :message="t('cart.errorPayouts')" />
+      </div>
 
       <div v-if="athleteName" class="mb-4 space-y-3">
         <div class="flex items-center justify-between text-sm">
@@ -120,7 +123,7 @@ function onFiltersApply(v: typeof filters.value) {
           <NuxtLink :to="`/tournaments/${slug}/search`" class="font-medium text-brand-600">{{ t('gallery.change') }}</NuxtLink>
         </div>
         <button
-          v-if="tournament && totalPhotos"
+          v-if="tournament && totalPhotos && tournament.payouts_ready !== false"
           class="w-full rounded-xl bg-brand-50 px-4 py-3 text-left text-sm font-semibold text-brand-700 ring-1 ring-brand-100"
           @click="buyBundle"
         >
@@ -145,7 +148,7 @@ function onFiltersApply(v: typeof filters.value) {
         </button>
       </div>
 
-      <PhotoGrid :photos="displayedPhotos" :loading="pending" selectable :athlete-id="athleteId" />
+      <PhotoGrid :photos="displayedPhotos" :loading="pending" selectable :purchases-enabled="tournament?.payouts_ready !== false" :athlete-id="athleteId" />
 
       <div v-if="hasMore && tab === 'all'" class="mt-6 text-center">
         <button class="btn-secondary" :disabled="loadingMore" @click="loadMore">

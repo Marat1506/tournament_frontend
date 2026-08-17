@@ -108,6 +108,7 @@ export interface Tournament {
   currency: string
   status: string
   photo_count: number
+  payouts_ready?: boolean
 }
 
 export interface Athlete {
@@ -195,6 +196,10 @@ export interface AdminUser {
   role: string
   status: string
   email_verified?: boolean
+  phone?: string
+  city?: string
+  display_name?: string
+  stripe_status?: string
   created_at: string
 }
 
@@ -224,6 +229,24 @@ export interface LeadRequest {
 export interface CheckoutResult {
   url: string
   dev_mode?: boolean
+}
+
+export interface ConnectCountry {
+  code: string
+  name: string
+}
+
+export interface PayoutStatus {
+  status: 'not_started' | 'onboarding' | 'restricted' | 'active' | 'disabled' | 'not_configured'
+  country?: string
+  details_submitted: boolean
+  charges_enabled: boolean
+  payouts_enabled: boolean
+  requirements_due?: string[]
+  can_receive_payments: boolean
+  stripe_configured: boolean
+  platform_fee_percent: number
+  countries: ConnectCountry[]
 }
 
 export interface ConsentSummary {

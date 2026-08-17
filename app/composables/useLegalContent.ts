@@ -374,6 +374,7 @@ export function useLegalContent() {
               'Photographers must confirm they have the legal right to shoot at the event and to distribute uploaded photos through PixMomento.',
               'By uploading, you represent that you hold necessary rights and accept responsibility for your content. PixMomento may moderate or remove content but does not verify each upload.',
               'You agree to indemnify PixMomento against claims arising from your uploads to the extent permitted by law.',
+              'Payouts use Stripe Connect. Each photographer has a separate Express account. PixMomento retains a platform commission on each sale; the remainder is paid to the photographer. Bank and tax details are collected by Stripe, not by this website.',
             ],
           },
           {
@@ -455,6 +456,7 @@ export function useLegalContent() {
             'Перед загрузкой фотограф подтверждает право снимать на мероприятии и право распространять материалы через PixMomento.',
             'Загружая контент, вы заявляете о наличии необходимых прав и несёте ответственность за материалы. PixMomento может модерировать или удалять контент, но не проверяет каждую загрузку.',
             'Вы соглашаетесь возмещать претензии, связанные с вашими загрузками, в пределах, допустимых законом.',
+            'Выплаты идут через Stripe Connect. У каждого фотографа отдельный Express-аккаунт. PixMomento удерживает комиссию платформы с каждой продажи, остаток выплачивается фотографу. Банковские и налоговые данные собирает Stripe, а не этот сайт.',
           ],
         },
         {

@@ -12,6 +12,7 @@ import type {
   ListResponse,
   Order,
   OrderDownloadPhoto,
+  PayoutStatus,
   Photo,
   PhotoListResult,
   PlatformHome,
@@ -273,7 +274,18 @@ export function useApi() {
       })
     },
 
-    register: (data: { email: string; password: string; name?: string; role?: string }) =>
+    register: (data: {
+      email: string
+      password: string
+      name?: string
+      role?: string
+      phone?: string
+      city?: string
+      display_name?: string
+      accept_terms?: boolean
+      accept_photo_rights?: boolean
+      accept_commission?: boolean
+    }) =>
       post<AuthResponse>('/api/v1/auth/register', data),
 
     login: (data: { email: string; password: string }) =>
@@ -359,6 +371,15 @@ export function useApi() {
         rights_shoot: rightsShoot,
         rights_distribute: rightsDistribute,
       }),
+
+    getPayouts: () =>
+      get<PayoutStatus>('/api/v1/photographer/payouts'),
+
+    startPayoutOnboarding: (country?: string) =>
+      post<{ url: string }>('/api/v1/photographer/payouts/onboarding', country ? { country } : {}),
+
+    getPayoutLoginLink: () =>
+      post<{ url: string }>('/api/v1/photographer/payouts/login-link'),
 
     getTournamentStats: (id: string) =>
       get<TournamentStats>(`/api/v1/photographer/tournaments/${id}/stats`),

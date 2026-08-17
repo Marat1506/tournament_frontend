@@ -31,6 +31,9 @@ const publishedPhotos = computed(() => published.value?.data ?? [])
 
       <p class="mb-2 text-xs font-medium uppercase tracking-wide text-gray-500">{{ t('tournaments.selectedLabel') }}</p>
       <TournamentCard :tournament="tournament" compact class="mb-3" />
+      <div v-if="tournament.payouts_ready === false" class="mb-4">
+        <AppAlert type="info" :message="t('cart.errorPayouts')" />
+      </div>
       <p class="mb-5 text-sm leading-relaxed text-gray-400">
         {{ t('tournaments.searchHint') }}
       </p>

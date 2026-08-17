@@ -64,10 +64,12 @@ if (error.value || !photo.value) {
 
       <button
         class="btn-primary-solid"
+        :disabled="!selection.payoutsReady"
         @click="selection.toggle(photo)"
       >
         {{ selection.has(photo.id) ? t('photos.removeFromSelection') : t('photos.addToSelection') }}
       </button>
+      <AppAlert v-if="!selection.payoutsReady" type="info" :message="t('cart.errorPayouts')" />
 
       <NuxtLink
         :to="`/shop/tshirts?photo_id=${photo.id}`"

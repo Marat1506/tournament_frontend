@@ -12,6 +12,11 @@ if (!auth.isLoggedIn) {
 }
 
 const { data, refresh, pending, error: loadError } = await useAsyncData('my-tournaments', () => api.getMyTournaments())
+const { data: payouts } = await useAsyncData('photographer-payouts-banner', () => api.getPayouts())
+
+const showPayoutsBanner = computed(() =>
+  !!payouts.value?.stripe_configured && !payouts.value.can_receive_payments,
+)
 
 async function logout() {
   auth.logout()
@@ -23,11 +28,23 @@ async function logout() {
   <div>
     <AppPageHeader :title="t('photographer.dashboardTitle')">
       <template #right>
-        <button class="text-sm font-medium text-gray-500" @click="logout">{{ t('photographer.logout') }}</button>
+        <div class="flex items-center gap-3">
+          <NuxtLink to="/photographer/payouts" class="rounded-full bg-white/10 px-3 py-1.5 text-sm font-medium text-white">{{ t('photographer.payoutsLink') }}</NuxtLink>
+          <button class="text-sm font-medium text-gray-500" @click="logout">{{ t('photographer.logout') }}</button>
+        </div>
       </template>
     </AppPageHeader>
 
     <div class="page-container">
+      <NuxtLink
+        v-if="showPayoutsBanner"
+        to="/photographer/payouts"
+        class="mb-4 block rounded-2xl bg-amber-500/10 p-4 ring-1 ring-amber-500/25"
+      >
+        <p class="font-semibold text-amber-200">{{ t('photographer.payoutsBannerTitle') }}</p>
+        <p class="mt-1 text-sm text-amber-100/80">{{ t('photographer.payoutsBannerText') }}</p>
+      </NuxtLink>
+
       <div class="mb-4 flex items-center justify-between">
         <p class="text-sm text-gray-500">{{ auth.user?.email }}</p>
         <NuxtLink to="/photographer/tournaments/new" class="rounded-full bg-brand-600 px-4 py-2 text-sm font-semibold text-white">

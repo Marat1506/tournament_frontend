@@ -49,6 +49,7 @@ async function checkout() {
       { match: 'not available', key: 'cart.errorPhotoUnavailable' },
       { match: 'bundle requires', key: 'cart.errorBundleMin' },
       { match: 'payment method', key: 'cart.errorPayment' },
+      { match: 'payouts_not_ready', key: 'cart.errorPayouts' },
     ], 'cart.errorCheckout')
     error.value = t(key)
   } finally {
@@ -91,9 +92,15 @@ async function checkout() {
           <span>${{ total.toFixed(2) }}</span>
         </div>
 
+        <AppAlert v-if="!selection.payoutsReady" type="info" :message="t('cart.errorPayouts')" />
+
         <p v-if="error" class="text-sm text-red-600">{{ error }}</p>
 
-        <button class="btn-primary-solid w-full" :disabled="loading || (!auth.isLoggedIn && !guestEmail)" @click="checkout">
+        <button
+          class="btn-primary-solid w-full"
+          :disabled="loading || !selection.payoutsReady || (!auth.isLoggedIn && !guestEmail)"
+          @click="checkout"
+        >
           {{ loading ? t('cart.checkingOut') : t('cart.checkout', { count }) }}
         </button>
       </div>

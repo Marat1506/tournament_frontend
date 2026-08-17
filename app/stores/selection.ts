@@ -7,6 +7,7 @@ type StoredSelection = {
   items: Photo[]
   bundle: { athleteId: string; athleteName: string; price: number } | null
   tournamentId: string
+  payoutsReady: boolean
 }
 
 function readStorage(): StoredSelection | null {
@@ -35,16 +36,18 @@ export const useSelectionStore = defineStore('selection', () => {
   const items = ref<Photo[]>(stored?.items ?? [])
   const bundle = ref<{ athleteId: string; athleteName: string; price: number } | null>(stored?.bundle ?? null)
   const tournamentId = ref<string>(stored?.tournamentId ?? '')
+  const payoutsReady = ref<boolean>(stored?.payoutsReady ?? true)
 
   function persist() {
     writeStorage({
       items: items.value,
       bundle: bundle.value,
       tournamentId: tournamentId.value,
+      payoutsReady: payoutsReady.value,
     })
   }
 
-  watch([items, bundle, tournamentId], persist, { deep: true })
+  watch([items, bundle, tournamentId, payoutsReady], persist, { deep: true })
 
   function toggle(photo: Photo) {
     bundle.value = null
@@ -61,12 +64,13 @@ export const useSelectionStore = defineStore('selection', () => {
     bundle.value = { athleteId, athleteName, price }
   }
 
-  function setContext(id: string) {
+  function setContext(id: string, ready = true) {
     if (tournamentId.value && tournamentId.value !== id) {
       items.value = []
       bundle.value = null
     }
     tournamentId.value = id
+    payoutsReady.value = ready
   }
 
   function has(id: string) {
@@ -87,5 +91,5 @@ export const useSelectionStore = defineStore('selection', () => {
     return items.value.reduce((sum, p) => sum + p.price, 0)
   })
 
-  return { items, bundle, tournamentId, toggle, setBundle, setContext, has, clear, count, total }
+  return { items, bundle, tournamentId, payoutsReady, toggle, setBundle, setContext, has, clear, count, total }
 })

@@ -11,7 +11,9 @@ const toast = useToast()
 const id = route.params.id as string
 
 const { data: tournaments, refresh: refreshList, error: loadError } = await useAsyncData('my-tournaments-detail', () => api.getMyTournaments())
+const { data: payouts } = await useAsyncData('photographer-payouts-banner', () => api.getPayouts())
 const tournament = computed(() => tournaments.value?.data?.find(item => item.id === id))
+const payoutsReady = computed(() => !payouts.value?.stripe_configured || !!payouts.value?.can_receive_payments)
 
 const isPublished = computed(() => tournament.value?.status === 'published')
 
@@ -519,6 +521,11 @@ onUnmounted(() => {
       <section v-else class="card space-y-3 p-4">
         <h2 class="font-semibold">{{ t('photographer.stepPublish') }}</h2>
         <p v-if="!isPublished" class="text-sm text-gray-400">{{ t('photographer.publishHint') }}</p>
+        <AppAlert
+          v-if="!isPublished && !payoutsReady"
+          type="info"
+          :message="t('photographer.publishWithoutPayouts')"
+        />
         <button
           class="btn-primary-solid w-full"
           :disabled="!canPublish"

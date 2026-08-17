@@ -5,6 +5,7 @@ defineProps<{
   photos: Photo[]
   loading?: boolean
   selectable?: boolean
+  purchasesEnabled?: boolean
   athleteId?: string
   fromFaceSearch?: boolean
 }>()
@@ -26,7 +27,7 @@ const { t } = useI18n()
       v-for="photo in photos"
       :key="photo.id"
       :photo="photo"
-      :selectable="selectable"
+      :selectable="Boolean(selectable && purchasesEnabled !== false)"
       :athlete-id="athleteId"
       :from-face-search="fromFaceSearch"
     />

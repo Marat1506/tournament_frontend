@@ -77,7 +77,7 @@ const canSearch = computed(() => faceSearchEnabled.value && consentOk.value && !
 
 watchEffect(() => {
   if (tournament.value?.id) {
-    selection.setContext(tournament.value.id)
+    selection.setContext(tournament.value.id, tournament.value.payouts_ready !== false)
   }
 })
 

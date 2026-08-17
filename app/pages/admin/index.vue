@@ -93,6 +93,14 @@ const userStatusLabels = computed<Record<string, string>>(() => ({
   rejected: t('admin.userStatusRejected'),
 }))
 
+const stripeStatusLabels = computed<Record<string, string>>(() => ({
+  not_started: t('admin.stripeNotStarted'),
+  onboarding: t('admin.stripeOnboarding'),
+  restricted: t('admin.stripeRestricted'),
+  active: t('admin.stripeActive'),
+  disabled: t('admin.stripeDisabled'),
+}))
+
 const typeLabels = computed<Record<string, string>>(() => ({
   tshirt: t('admin.leadTypeTshirt'),
   hire_photographer: t('admin.leadTypePhotographer'),
@@ -472,6 +480,9 @@ async function setUserStatus(id: string, status: string) {
                 </div>
                 <div :class="user.email_verified ? 'text-green-600' : 'text-amber-600'">
                   {{ user.email_verified ? t('admin.emailVerified') : t('admin.emailNotVerified') }}
+                </div>
+                <div v-if="user.stripe_status" :class="user.stripe_status === 'active' ? 'text-green-600' : 'text-gray-400'">
+                  {{ t('admin.stripeLabel') }}: {{ stripeStatusLabels[user.stripe_status] || user.stripe_status }}
                 </div>
               </div>
               <div v-else class="text-xs text-gray-400">{{ formatDate(user.created_at) }}</div>
