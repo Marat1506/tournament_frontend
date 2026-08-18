@@ -1,5 +1,5 @@
 <script setup lang="ts">
-definePageMeta({ middleware: 'client-auth' })
+definePageMeta({ middleware: 'client-auth', ssr: false })
 
 const { t, locale } = useI18n()
 const auth = useAuthStore()
@@ -19,6 +19,7 @@ const belts = beltOptions()
 const { data: consentSummary, refresh: refreshConsent } = await useAsyncData(
   'consent-summary',
   () => api.getConsentSummary(),
+  { server: false },
 )
 
 function formatConsentDate(iso?: string) {

@@ -10,11 +10,12 @@ const show = computed(() =>
 </script>
 
 <template>
-  <NuxtLink
-    v-if="show"
-    to="/confirm-email"
-    class="card flex items-center gap-3 border border-amber-500/30 bg-amber-500/10 p-4 transition active:scale-[0.99]"
-  >
+  <ClientOnly>
+    <NuxtLink
+      v-if="show"
+      to="/confirm-email"
+      class="card flex items-center gap-3 border border-amber-500/30 bg-amber-500/10 p-4 transition active:scale-[0.99]"
+    >
     <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-500/20 text-amber-400">
       <AppIcon name="mail" class="h-5 w-5" />
     </div>
@@ -23,5 +24,6 @@ const show = computed(() =>
       <p class="text-xs text-amber-200/70">{{ t('confirmEmail.bannerHint') }}</p>
     </div>
     <AppIcon name="chevron" class="h-5 w-5 shrink-0 text-amber-400" />
-  </NuxtLink>
+    </NuxtLink>
+  </ClientOnly>
 </template>

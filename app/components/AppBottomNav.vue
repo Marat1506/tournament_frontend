@@ -26,12 +26,14 @@ const items = computed(() => [
       >
         <span class="relative">
           <AppIcon :name="item.icon" class="h-5 w-5" />
-          <span
-            v-if="item.to === '/profile' && canLoad && unreadCount > 0"
-            class="absolute -right-1.5 -top-1 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-brand-600 px-0.5 text-[9px] font-bold text-white"
-          >
-            {{ unreadCount > 9 ? '9+' : unreadCount }}
-          </span>
+          <ClientOnly>
+            <span
+              v-if="item.to === '/profile' && canLoad && unreadCount > 0"
+              class="absolute -right-1.5 -top-1 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-brand-600 px-0.5 text-[9px] font-bold text-white"
+            >
+              {{ unreadCount > 9 ? '9+' : unreadCount }}
+            </span>
+          </ClientOnly>
         </span>
         <span>{{ item.label }}</span>
       </NuxtLink>

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Photo } from '~/types'
 
-definePageMeta({ middleware: 'photographer-auth' })
+definePageMeta({ middleware: 'photographer-auth', ssr: false })
 
 const { t } = useI18n()
 const route = useRoute()
@@ -20,7 +20,7 @@ const loadingMore = ref(false)
 const { data: photosResponse, pending, refresh } = await useAsyncData(
   () => `photographer-photos-${id}-${filter.value}`,
   () => api.getPhotographerPhotos(id, { tagged: filter.value, page: 1, limit: pageSize }),
-  { watch: [filter] },
+  { watch: [filter], server: false },
 )
 
 watch(photosResponse, (response) => {

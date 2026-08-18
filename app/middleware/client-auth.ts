@@ -3,7 +3,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   const auth = useAuthStore()
   const api = useApi()
-  auth.hydrate()
+  await auth.ensureFresh()
 
   if (!auth.isLoggedIn) {
     return navigateTo(`/login?redirect=${encodeURIComponent(to.fullPath)}`)
@@ -13,9 +13,11 @@ export default defineNuxtRouteMiddleware(async (to) => {
     try {
       auth.setUser(await api.me())
     }
-    catch {
-      auth.logout()
-      return navigateTo(`/login?redirect=${encodeURIComponent(to.fullPath)}`)
+    catch (e: unknown) {
+      if (httpStatus(e) === 401) {
+        auth.logout()
+        return navigateTo(`/login?redirect=${encodeURIComponent(to.fullPath)}`)
+      }
     }
   }
 

@@ -1,17 +1,20 @@
 <script setup lang="ts">
-definePageMeta({})
+definePageMeta({ ssr: false })
 
 const { t } = useI18n()
 const route = useRoute()
 const api = useApi()
 const auth = useAuthStore()
 const selection = useSelectionStore()
+if (import.meta.client) auth.hydrate()
 
 const orderId = route.query.order_id as string
 const guestEmail = route.query.guest_email as string | undefined
 
-const { data: order, refresh } = await useAsyncData(`order-${orderId}`, () =>
-  orderId ? api.getOrder(orderId, guestEmail) : Promise.resolve(null),
+const { data: order, refresh } = await useAsyncData(
+  `order-${orderId}`,
+  () => orderId ? api.getOrder(orderId, guestEmail) : Promise.resolve(null),
+  { server: false },
 )
 
 watch(order, (o) => {

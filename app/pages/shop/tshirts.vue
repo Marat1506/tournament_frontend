@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import type { Photo, ProfilePhoto } from '~/types'
 
+definePageMeta({ ssr: false })
+
 const { t } = useI18n()
 const route = useRoute()
 const api = useApi()
@@ -36,7 +38,7 @@ const purchasedPhotos = computed(() => purchased.value?.data ?? [])
 const { data: linkedPhoto } = await useAsyncData(
   () => `tshirt-photo-${form.photo_id}`,
   () => form.photo_id ? api.getPhoto(form.photo_id).catch(() => null) : Promise.resolve(null),
-  { watch: [() => form.photo_id] },
+  { watch: [() => form.photo_id], server: false },
 )
 
 watch([purchasedPhotos, linkedPhoto, () => form.photo_id], () => {

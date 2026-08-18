@@ -1,5 +1,5 @@
 <script setup lang="ts">
-definePageMeta({ middleware: 'photographer-auth' })
+definePageMeta({ middleware: 'photographer-auth', ssr: false })
 
 const { t } = useI18n()
 const route = useRoute()
@@ -7,7 +7,7 @@ const api = useApi()
 const toast = useToast()
 const id = route.params.id as string
 
-const { data: tournaments, refresh, error: loadError } = await useAsyncData('my-tournaments-settings', () => api.getMyTournaments())
+const { data: tournaments, refresh, error: loadError } = await useAsyncData('my-tournaments-settings', () => api.getMyTournaments(), { server: false })
 const tournament = computed(() => tournaments.value?.data?.find(item => item.id === id))
 
 const form = reactive({

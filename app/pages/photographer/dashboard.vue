@@ -1,18 +1,42 @@
 <script setup lang="ts">
-definePageMeta({ middleware: 'photographer-auth' })
+import type { ListResponse, Tournament } from '~/types'
+
+definePageMeta({ middleware: 'photographer-auth', ssr: false })
 
 const { t } = useI18n()
 const auth = useAuthStore()
 const api = useApi()
 const router = useRouter()
-const toast = useToast()
+if (import.meta.client) auth.hydrate()
 
-if (!auth.isLoggedIn) {
-  await navigateTo('/photographer/login')
+const data = ref<ListResponse<Tournament[]> | null>(null)
+const pending = ref(true)
+const loadError = ref(false)
+
+async function loadTournaments() {
+  if (import.meta.client) auth.hydrate()
+  pending.value = true
+  loadError.value = false
+  try {
+    data.value = await api.getMyTournaments()
+  }
+  catch {
+    loadError.value = true
+  }
+  finally {
+    pending.value = false
+  }
 }
 
-const { data, refresh, pending, error: loadError } = await useAsyncData('my-tournaments', () => api.getMyTournaments())
-const { data: payouts } = await useAsyncData('photographer-payouts-banner', () => api.getPayouts())
+const { data: payouts } = await useAsyncData(
+  'photographer-payouts-banner',
+  () => api.getPayouts(),
+  { server: false },
+)
+
+onMounted(() => {
+  loadTournaments()
+})
 
 const showPayoutsBanner = computed(() =>
   !!payouts.value?.stripe_configured && !payouts.value.can_receive_payments,
@@ -58,7 +82,7 @@ async function logout() {
 
       <div v-else-if="loadError" class="card space-y-3 p-6 text-center">
         <AppAlert type="error" :message="t('photographer.loadListFailed')" />
-        <button class="btn-primary-solid" @click="refresh()">{{ t('common.retry') }}</button>
+        <button class="btn-primary-solid" @click="loadTournaments()">{{ t('common.retry') }}</button>
       </div>
 
       <div v-else-if="data?.data?.length" class="space-y-3">

@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import type { Photo } from '~/types'
 
+definePageMeta({ ssr: false })
+
 const route = useRoute()
 const slug = route.params.slug as string
 const athleteId = route.query.athlete_id as string | undefined

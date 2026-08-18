@@ -1,5 +1,5 @@
 <script setup lang="ts">
-definePageMeta({ middleware: 'client-auth' })
+definePageMeta({ middleware: 'client-auth', ssr: false })
 
 const { t } = useI18n()
 const api = useApi()
@@ -15,10 +15,13 @@ const { data, pending } = await useAsyncData(
     filter: filter.value === 'all' ? undefined : filter.value,
     tournament_id: tournamentId.value || undefined,
   }),
+  { server: false },
 )
 
-const { data: tournamentOptions } = await useAsyncData('profile-tournament-options', () =>
-  api.getProfileTournamentOptions(),
+const { data: tournamentOptions } = await useAsyncData(
+  'profile-tournament-options',
+  () => api.getProfileTournamentOptions(),
+  { server: false },
 )
 
 const chips = computed(() => [

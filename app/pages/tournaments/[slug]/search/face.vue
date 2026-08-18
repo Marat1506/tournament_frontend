@@ -1,4 +1,6 @@
 <script setup lang="ts">
+definePageMeta({ ssr: false })
+
 import type { Photo } from '~/types'
 
 const CONSENT_SESSION_KEY = 'bjj_consent_personal_checked'
@@ -41,35 +43,37 @@ const showClaimBanner = computed(() =>
   && !claimDone.value,
 )
 
-const { data: tournament } = await useAsyncData(`tournament-${slug}`, () => api.getTournament(slug))
-const { data: platform } = await useAsyncData('platform-home-face', () => api.getPlatformHome())
-
-if (import.meta.client) {
-  consentPersonal.value = sessionStorage.getItem(CONSENT_SESSION_KEY) === '1'
-}
+const { data: tournament } = await useAsyncData(`tournament-${slug}`, () => api.getTournament(slug), { server: false })
+const { data: platform } = await useAsyncData('platform-home-face', () => api.getPlatformHome(), { server: false })
 
 watch(consentPersonal, (v) => {
   if (!import.meta.client) return
   if (v) sessionStorage.setItem(CONSENT_SESSION_KEY, '1')
   else sessionStorage.removeItem(CONSENT_SESSION_KEY)
 })
-
-if (isClient.value && tournament.value?.id) {
-  const { data: consentSummary } = await useAsyncData(
-    () => `face-consent-${slug}-${tournament.value?.id}`,
-    () => api.getConsentSummary(tournament.value!.id),
-    { watch: [() => tournament.value?.id] },
-  )
-  watch(consentSummary, (s) => {
-    if (s?.has_consent_for_tournament) {
-      hasExistingConsent.value = true
-      consentPersonal.value = true
-    }
-    if (s?.claimed_athlete_ids?.length) {
-      claimedAthleteIds.value = new Set(s.claimed_athlete_ids)
-    }
-  }, { immediate: true })
+if (import.meta.client && sessionStorage.getItem(CONSENT_SESSION_KEY) === '1') {
+  consentPersonal.value = true
 }
+
+const { data: consentSummary } = await useAsyncData(
+  () => `face-consent-${slug}-${tournament.value?.id || 'none'}`,
+  () => {
+    if (!auth.isLoggedIn || auth.user?.role !== 'client' || !tournament.value?.id) {
+      return Promise.resolve(null)
+    }
+    return api.getConsentSummary(tournament.value.id)
+  },
+  { watch: [() => tournament.value?.id, () => auth.isLoggedIn], server: false },
+)
+watch(consentSummary, (s) => {
+  if (s?.has_consent_for_tournament) {
+    hasExistingConsent.value = true
+    consentPersonal.value = true
+  }
+  if (s?.claimed_athlete_ids?.length) {
+    claimedAthleteIds.value = new Set(s.claimed_athlete_ids)
+  }
+}, { immediate: true })
 
 const faceSearchEnabled = computed(() => platform.value?.face_search_enabled ?? true)
 const consentOk = computed(() => consentPersonal.value || hasExistingConsent.value)
@@ -298,7 +302,15 @@ onBeforeUnmount(() => {
           <span class="text-gray-400">{{ t('search.foundCount', { count: results.length }) }}</span>
           <NuxtLink :to="`/tournaments/${slug}`" class="font-medium text-brand-600">{{ t('search.changeMethod') }}</NuxtLink>
         </div>
-        <PhotoGrid :photos="results" selectable from-face-search />
+        <div v-if="tournament && tournament.payouts_ready === false" class="mb-4">
+          <AppAlert type="info" :message="t('cart.errorPayouts')" />
+        </div>
+        <PhotoGrid
+          :photos="results"
+          selectable
+          :purchases-enabled="tournament?.payouts_ready !== false"
+          from-face-search
+        />
       </div>
     </div>
 

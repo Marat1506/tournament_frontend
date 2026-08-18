@@ -1,11 +1,11 @@
 <script setup lang="ts">
-definePageMeta({ middleware: 'client-auth' })
+definePageMeta({ middleware: 'client-auth', ssr: false })
 
 const { t, locale } = useI18n()
 const api = useApi()
 const router = useRouter()
 
-const { data, pending } = await useAsyncData('profile-tournaments', () => api.getProfileTournaments())
+const { data, pending } = await useAsyncData('profile-tournaments', () => api.getProfileTournaments(), { server: false })
 
 function formatDate(iso?: string) {
   if (!iso) return ''
@@ -30,19 +30,19 @@ function formatDate(iso?: string) {
       </div>
 
       <NuxtLink
-        v-for="t in data?.data"
-        :key="t.id"
-        :to="`/profile/photos?tournament_id=${t.id}`"
+        v-for="item in data?.data"
+        :key="item.id"
+        :to="`/profile/photos?tournament_id=${item.id}`"
         class="card flex items-center gap-3 p-4 transition active:scale-[0.99]"
       >
         <div class="h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-white/10">
-          <AppImage :src="t.cover_image" aspect="square" :alt="t.name" />
+          <AppImage :src="item.cover_image" aspect="square" :alt="item.name" />
         </div>
         <div class="min-w-0 flex-1">
-          <div class="truncate font-semibold">{{ t.name }}</div>
-          <div v-if="t.date" class="text-xs text-gray-500">{{ formatDate(t.date) }}</div>
+          <div class="truncate font-semibold">{{ item.name }}</div>
+          <div v-if="item.date" class="text-xs text-gray-500">{{ formatDate(item.date) }}</div>
           <div class="mt-1 text-sm text-gray-600">
-            {{ t('profileTournaments.stats', { found: t.found_count, purchased: t.purchased_count }) }}
+            {{ t('profileTournaments.stats', { found: item.found_count, purchased: item.purchased_count }) }}
           </div>
         </div>
         <AppIcon name="chevron" class="h-5 w-5 shrink-0 text-gray-300" />

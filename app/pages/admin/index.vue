@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Tournament } from '~/types'
 
-definePageMeta({})
+definePageMeta({ ssr: false })
 
 const { t } = useI18n()
 const auth = useAuthStore()
@@ -34,23 +34,23 @@ const statusFilter = ref('')
 const typeFilter = ref('')
 const userStatusFilter = ref('')
 
-const { data: stats, refresh: refreshStats } = await useAsyncData('admin-stats', () => api.getAdminStats())
-const { data: settings, refresh: refreshSettings } = await useAsyncData('admin-settings', () => api.getAdminSettings())
-const { data: tournaments, refresh: refreshTournaments } = await useAsyncData('admin-tournaments', () => api.getAdminTournaments())
+const { data: stats, refresh: refreshStats } = await useAsyncData('admin-stats', () => api.getAdminStats(), { server: false })
+const { data: settings, refresh: refreshSettings } = await useAsyncData('admin-settings', () => api.getAdminSettings(), { server: false })
+const { data: tournaments, refresh: refreshTournaments } = await useAsyncData('admin-tournaments', () => api.getAdminTournaments(), { server: false })
 const { data: users, refresh: refreshUsers } = await useAsyncData(
   () => `admin-users-${userStatusFilter.value}`,
   () => api.getAdminUsers({
     role: userStatusFilter.value === 'photographers_pending' ? 'photographer' : undefined,
     status: userStatusFilter.value === 'photographers_pending' ? 'pending' : userStatusFilter.value || undefined,
   }),
-  { watch: [userStatusFilter] },
+  { watch: [userStatusFilter], server: false },
 )
-const { data: orders } = await useAsyncData('admin-orders', () => api.getAdminOrders())
+const { data: orders } = await useAsyncData('admin-orders', () => api.getAdminOrders(), { server: false })
 
 const { data: leads, refresh: refreshLeads, pending: leadsPending } = await useAsyncData(
   () => `admin-leads-${statusFilter.value}-${typeFilter.value}`,
   () => api.getAdminLeads({ status: statusFilter.value || undefined, type: typeFilter.value || undefined }),
-  { watch: [statusFilter, typeFilter] },
+  { watch: [statusFilter, typeFilter], server: false },
 )
 
 const priceSingle = ref(20)
@@ -58,6 +58,7 @@ const priceBundle = ref(50)
 const settingsSaving = ref(false)
 const heroUploading = ref(false)
 const heroInput = ref<HTMLInputElement | null>(null)
+const heroPreviewSrc = computed(() => settings.value?.hero_image_url || '/main_background_mobile.png')
 
 watch(settings, (s) => {
   if (s) {
@@ -289,7 +290,7 @@ async function setUserStatus(id: string, status: string) {
           <h3 class="font-semibold">{{ t('admin.homePage') }}</h3>
           <p class="text-sm text-gray-500">{{ t('admin.homePageHint') }}</p>
           <div class="h-40 overflow-hidden rounded-xl">
-            <AppImage :src="settings?.hero_image_url" aspect="cover" alt="Hero preview" />
+            <AppImage :src="heroPreviewSrc" aspect="cover" alt="Hero preview" />
           </div>
           <input ref="heroInput" type="file" accept="image/*" class="hidden" @change="onHeroSelected">
           <button class="btn-primary-solid" :disabled="heroUploading" @click="heroInput?.click()">

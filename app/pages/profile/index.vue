@@ -1,5 +1,5 @@
 <script setup lang="ts">
-definePageMeta({})
+definePageMeta({ ssr: false })
 
 const { t, locale } = useI18n()
 const auth = useAuthStore()
@@ -16,7 +16,7 @@ const canLoadStats = computed(() =>
 const { data: stats } = await useAsyncData(
   'profile-stats',
   () => (canLoadStats.value ? api.getProfileStats() : Promise.resolve(null)),
-  { watch: [canLoadStats] },
+  { watch: [canLoadStats], server: false },
 )
 
 const menuItems = computed(() => [
@@ -84,12 +84,12 @@ onMounted(async () => {
         <div class="card space-y-3 p-6 text-center">
           <h2 class="font-semibold">{{ auth.user?.name || auth.user?.email }}</h2>
           <p class="text-sm text-gray-500">{{ auth.isAdmin ? t('profile.admin') : t('profile.photographer') }}</p>
-          <p class="text-sm text-gray-400">{{ t('profile.wrongWorldHint') }}</p>
+          <p class="text-sm text-gray-400">{{ auth.isAdmin ? t('profile.wrongWorldHintAdmin') : t('profile.wrongWorldHint') }}</p>
           <NuxtLink v-if="auth.isAdmin" to="/admin" class="btn-primary-solid">{{ t('profile.adminPanel') }}</NuxtLink>
           <NuxtLink v-if="auth.isPhotographer" to="/photographer/dashboard" class="btn-primary-solid">
             {{ t('profile.photographerDashboard') }}
           </NuxtLink>
-          <button class="text-sm text-gray-500" @click="auth.logout()">{{ t('profile.logoutToAthlete') }}</button>
+          <button class="text-sm text-gray-500" @click="auth.logout()">{{ t('profile.logout') }}</button>
         </div>
       </template>
 

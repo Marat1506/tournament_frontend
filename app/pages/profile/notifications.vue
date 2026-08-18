@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import type { UserNotification } from '~/types'
 
-definePageMeta({ middleware: 'client-auth' })
+definePageMeta({ middleware: 'client-auth', ssr: false })
 
 const { t, locale } = useI18n()
 const api = useApi()
 const router = useRouter()
 const { refresh: refreshBadge } = useNotificationBadge()
 
-const { data, pending, refresh } = await useAsyncData('profile-notifications', () => api.getNotifications())
+const { data, pending, refresh } = await useAsyncData('profile-notifications', () => api.getNotifications(), { server: false })
 
 function formatDate(iso: string) {
   const loc = locale.value === 'ru' ? 'ru-RU' : locale.value === 'es' ? 'es-ES' : 'en-US'

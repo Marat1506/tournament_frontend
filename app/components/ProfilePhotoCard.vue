@@ -9,6 +9,11 @@ const favorites = useFavoritesStore()
 const api = useApi()
 const { t } = useI18n()
 const downloading = ref(false)
+const uiReady = ref(false)
+onMounted(() => {
+  uiReady.value = true
+})
+const isFavorite = computed(() => uiReady.value && favorites.has(props.photo.id))
 
 function onHeart(e: Event) {
   e.preventDefault()
@@ -54,7 +59,7 @@ async function onDownload(e: Event) {
       <AppIcon
         name="heart"
         class="h-4 w-4"
-        :class="favorites.has(photo.id) ? 'fill-red-500 stroke-red-500' : ''"
+        :class="isFavorite ? 'fill-red-500 stroke-red-500' : ''"
       />
     </button>
 

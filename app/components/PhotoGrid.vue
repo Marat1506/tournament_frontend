@@ -1,14 +1,18 @@
 <script setup lang="ts">
 import type { Photo } from '~/types'
 
-defineProps<{
+withDefaults(defineProps<{
   photos: Photo[]
   loading?: boolean
   selectable?: boolean
   purchasesEnabled?: boolean
   athleteId?: string
   fromFaceSearch?: boolean
-}>()
+}>(), {
+  loading: false,
+  selectable: false,
+  purchasesEnabled: true,
+})
 
 const { t } = useI18n()
 </script>

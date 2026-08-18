@@ -1,11 +1,11 @@
 <script setup lang="ts">
-definePageMeta({ middleware: 'client-auth' })
+definePageMeta({ middleware: 'client-auth', ssr: false })
 
 const { t, locale } = useI18n()
 const api = useApi()
 const router = useRouter()
 
-const { data, pending } = await useAsyncData('profile-orders', () => api.getMyOrders())
+const { data, pending } = await useAsyncData('profile-orders', () => api.getMyOrders(), { server: false })
 
 const statusLabels = computed<Record<string, string>>(() => ({
   pending: t('profileOrders.statusPending'),

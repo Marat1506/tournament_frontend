@@ -12,6 +12,18 @@ const favorites = useFavoritesStore()
 const selection = useSelectionStore()
 const faceSearch = useFaceSearchStore()
 const { t } = useI18n()
+const uiReady = ref(false)
+onMounted(() => {
+  uiReady.value = true
+})
+
+const isFavorite = computed(() => uiReady.value && favorites.has(props.photo.id))
+const isSelected = computed(() => uiReady.value && selection.has(props.photo.id))
+const imageSrc = computed(() => {
+  const src = props.photo.thumbnail_url || props.photo.preview_url
+  if (!uiReady.value || !props.fromFaceSearch) return src
+  return faceSearch.mediaUrl(src)
+})
 
 const photoLink = computed(() => {
   const params = new URLSearchParams()
@@ -47,7 +59,7 @@ function onSelect(e: Event) {
   >
     <div class="aspect-[2/3] w-full">
       <AppImage
-        :src="faceSearch.mediaUrl(photo.thumbnail_url || photo.preview_url)"
+        :src="imageSrc"
         :alt="photo.original_filename || 'Photo'"
         aspect="photo"
       />
@@ -61,7 +73,7 @@ function onSelect(e: Event) {
       <AppIcon
         name="heart"
         class="h-4 w-4"
-        :class="favorites.has(photo.id) ? 'fill-red-500 stroke-red-500' : ''"
+        :class="isFavorite ? 'fill-red-500 stroke-red-500' : ''"
       />
     </button>
 
@@ -71,12 +83,12 @@ function onSelect(e: Event) {
 
     <button
       v-if="selectable"
-      class="absolute bottom-1.5 right-1.5 flex h-7 w-7 items-center justify-center rounded-full border-2 bg-white/95 text-xs font-bold"
-      :class="selection.has(photo.id) ? 'border-brand-600 text-brand-600' : 'border-gray-300 text-transparent'"
+      class="absolute bottom-1.5 right-1.5 flex h-8 w-8 items-center justify-center rounded-full backdrop-blur-sm"
+      :class="isSelected ? 'bg-brand-600 text-white' : 'bg-black/35 text-white'"
       :aria-label="t('photoCard.select')"
       @click="onSelect"
     >
-      <AppIcon v-if="selection.has(photo.id)" name="check" class="h-4 w-4" />
+      <AppIcon :name="isSelected ? 'check' : 'cart'" class="h-4 w-4" />
     </button>
   </NuxtLink>
 </template>

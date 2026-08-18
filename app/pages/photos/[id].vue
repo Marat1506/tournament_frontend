@@ -1,4 +1,6 @@
 <script setup lang="ts">
+definePageMeta({ ssr: false })
+
 const { t } = useI18n()
 const route = useRoute()
 const id = route.params.id as string
@@ -21,7 +23,7 @@ const { data: photo, error } = await useAsyncData(`photo-${id}`, async () => {
   catch {
     return faceSearch.findPhoto(id)
   }
-})
+}, { server: false })
 
 if (error.value || !photo.value) {
   throw createError({ statusCode: 404, statusMessage: t('photos.notFound') })

@@ -31,79 +31,55 @@ export function useApi() {
   const auth = useAuthStore()
   const base = import.meta.server ? config.apiBase : config.public.apiBase
 
-  let refreshPromise: Promise<boolean> | null = null
-
   function headers(extra?: Record<string, string>): Record<string, string> {
     const h: Record<string, string> = { ...extra }
+    delete h.Authorization
     if (auth.accessToken) {
       h.Authorization = `Bearer ${auth.accessToken}`
     }
     return h
   }
 
-  async function refreshSession(): Promise<boolean> {
-    if (!auth.refreshToken) return false
-    try {
-      const data = await $fetch<AuthResponse>(`${base}/api/v1/auth/refresh`, {
-        method: 'POST',
-        body: { refresh_token: auth.refreshToken },
-      })
-      auth.setSession(data)
-      return true
-    }
-    catch {
-      auth.logout()
-      return false
-    }
-  }
-
-  async function apiFetch<T>(path: string, opts: Parameters<typeof $fetch>[1] = {}): Promise<T> {
+  async function apiFetch<T>(path: string, opts: Parameters<typeof $fetch>[1] = {}, retried = false): Promise<T> {
+    await auth.ensureFresh()
     const url = path.startsWith('http') ? path : `${base}${path}`
-    const reqHeaders = headers(opts.headers as Record<string, string> | undefined)
+    const extra = opts.headers as Record<string, string> | undefined
+    const reqHeaders = headers(extra)
+    const sentAuth = !!reqHeaders.Authorization
     try {
       return await $fetch<T>(url, { ...opts, headers: reqHeaders })
     }
     catch (e: unknown) {
-      const err = e as { statusCode?: number; status?: number }
-      const status = err.statusCode ?? err.status
-      const retried = reqHeaders['X-Retry'] === '1'
-      if (status === 401 && auth.refreshToken && !retried) {
-        if (!refreshPromise) {
-          refreshPromise = refreshSession().finally(() => { refreshPromise = null })
-        }
-        const ok = await refreshPromise
-        if (ok) {
-          return apiFetch<T>(path, {
-            ...opts,
-            headers: { ...(opts.headers as Record<string, string> | undefined), 'X-Retry': '1' },
-          })
-        }
+      const status = httpStatus(e)
+      if (sentAuth && !retried && status === 401) {
+        await auth.refreshSession()
+        return apiFetch<T>(path, opts, true)
       }
       throw e
     }
   }
 
   async function get<T>(path: string, query?: Record<string, string | number | undefined>) {
-    return apiFetch<T>(path, { query, headers: headers() })
+    return apiFetch<T>(path, { query })
   }
 
   async function post<T>(path: string, body?: unknown) {
-    return apiFetch<T>(path, { method: 'POST', body, headers: headers() })
+    return apiFetch<T>(path, { method: 'POST', body })
   }
 
   async function put<T>(path: string, body?: unknown) {
-    return apiFetch<T>(path, { method: 'PUT', body, headers: headers() })
+    return apiFetch<T>(path, { method: 'PUT', body })
   }
 
   async function del<T>(path: string) {
-    return apiFetch<T>(path, { method: 'DELETE', headers: headers() })
+    return apiFetch<T>(path, { method: 'DELETE' })
   }
 
   async function patch<T>(path: string, body?: unknown) {
-    return apiFetch<T>(path, { method: 'PATCH', body, headers: headers() })
+    return apiFetch<T>(path, { method: 'PATCH', body })
   }
 
-  function uploadPhotosChunk(
+  async function uploadPhotosChunk(
     tournamentId: string,
     files: File[],
     onProgress?: (loaded: number) => void,
@@ -112,7 +88,8 @@ export function useApi() {
     for (const file of files) {
       form.append('photos', file)
     }
-    return new Promise<UploadBatch>((resolve, reject) => {
+
+    const send = () => new Promise<UploadBatch>((resolve, reject) => {
       const xhr = new XMLHttpRequest()
       xhr.open('POST', `${base}/api/v1/photographer/tournaments/${tournamentId}/photos`)
       xhr.timeout = 10 * 60 * 1000
@@ -149,6 +126,19 @@ export function useApi() {
       xhr.onerror = () => reject(Object.assign(new Error('upload failed'), { statusCode: 0 }))
       xhr.send(form)
     })
+
+    await auth.ensureFresh()
+    try {
+      return await send()
+    }
+    catch (e: unknown) {
+      const status = httpStatus(e)
+      if (status === 401) {
+        const ok = await auth.refreshSession()
+        if (ok) return await send()
+      }
+      throw e
+    }
   }
 
   function downloadPath(photoId: string, orderId?: string, guestEmail?: string) {
@@ -159,32 +149,26 @@ export function useApi() {
     return `/api/v1/photos/${photoId}/download${qs ? `?${qs}` : ''}`
   }
 
+  function isAppleTouchDevice() {
+    if (typeof navigator === 'undefined') return false
+    return /iPad|iPhone|iPod/.test(navigator.userAgent)
+      || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+  }
+
   function startNativeDownload(href: string, name?: string) {
     const isBlob = href.startsWith('blob:')
     const sameOrigin = href.startsWith('/') || href.startsWith(window.location.origin)
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
-
-    // Cross-origin S3 URL: fetch/blob is blocked by CORS on iOS Safari.
-    // Navigate so the browser applies Content-Disposition: attachment.
-    if (!isBlob && !sameOrigin && isIOS) {
-      window.location.assign(href)
-      return
-    }
-
-    if (!isBlob && !sameOrigin) {
-      const frame = document.createElement('iframe')
-      frame.style.display = 'none'
-      frame.src = href
-      document.body.appendChild(frame)
-      setTimeout(() => frame.remove(), 60_000)
-      return
-    }
 
     const anchor = document.createElement('a')
     anchor.href = href
-    if (name) anchor.download = name
     anchor.rel = 'noopener'
-    if (!isBlob && !sameOrigin) {
+    if (isBlob || sameOrigin) {
+      if (name) anchor.download = name
+    }
+    else {
+      // Cross-origin S3: download attribute is ignored, hidden iframes are
+      // blocked. A user-gesture click opens the signed URL; S3 Content-Disposition
+      // forces the file download without leaving the success page.
       anchor.target = '_blank'
     }
     document.body.appendChild(anchor)
@@ -192,29 +176,56 @@ export function useApi() {
     anchor.remove()
   }
 
+  function revealDownload(popup: Window | null, href: string, name?: string) {
+    if (popup && !popup.closed) {
+      popup.location.href = href
+      return
+    }
+    startNativeDownload(href, name)
+  }
+
+  async function fetchDownload(url: string, retried = false): Promise<Response> {
+    await auth.ensureFresh()
+    const res = await fetch(url, {
+      headers: { ...headers(), Accept: 'application/json' },
+    })
+    if (res.status === 401 && !retried) {
+      const ok = await auth.refreshSession()
+      if (ok) return fetchDownload(url, true)
+    }
+    return res
+  }
+
   async function downloadPhoto(photoId: string, filename?: string, orderId?: string, guestEmail?: string) {
     const path = downloadPath(photoId, orderId, guestEmail)
     const url = `${base}${path}`
     const fallbackName = filename || `${photoId.slice(0, 8)}.jpg`
-    const res = await fetch(url, {
-      headers: { ...headers(), Accept: 'application/json' },
-    })
-    if (!res.ok) {
-      throw new Error('download failed')
-    }
-    const contentType = res.headers.get('content-type') || ''
-    if (contentType.includes('application/json')) {
-      const data = await res.json() as { url?: string, filename?: string }
-      if (!data.url) {
+    // iOS Safari drops the user-gesture after await, then blocks popup/download.
+    // Open the tab synchronously on tap, then point it at the signed S3 URL.
+    const popup = isAppleTouchDevice() ? window.open('about:blank', '_blank') : null
+    try {
+      const res = await fetchDownload(url)
+      if (!res.ok) {
         throw new Error('download failed')
       }
-      startNativeDownload(data.url, data.filename || fallbackName)
-      return
+      const contentType = res.headers.get('content-type') || ''
+      if (contentType.includes('application/json')) {
+        const data = await res.json() as { url?: string, filename?: string }
+        if (!data.url) {
+          throw new Error('download failed')
+        }
+        revealDownload(popup, data.url, data.filename || fallbackName)
+        return
+      }
+      const blob = await res.blob()
+      const objectUrl = URL.createObjectURL(blob)
+      revealDownload(popup, objectUrl, fallbackName)
+      setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000)
     }
-    const blob = await res.blob()
-    const objectUrl = URL.createObjectURL(blob)
-    startNativeDownload(objectUrl, fallbackName)
-    setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000)
+    catch (e) {
+      popup?.close()
+      throw e
+    }
   }
 
   return {
@@ -291,7 +302,7 @@ export function useApi() {
     login: (data: { email: string; password: string }) =>
       post<AuthResponse>('/api/v1/auth/login', data),
 
-    refreshSession,
+    refreshSession: () => auth.refreshSession(),
 
     verifyEmail: (code: string) =>
       post<{ status: string }>('/api/v1/auth/verify-email', { code }),
@@ -392,6 +403,9 @@ export function useApi() {
 
     qrUrl: (tournamentId: string) =>
       `${base}/api/v1/photographer/tournaments/${tournamentId}/qr`,
+
+    getQr: (tournamentId: string) =>
+      apiFetch<Blob>(`/api/v1/photographer/tournaments/${tournamentId}/qr`, { responseType: 'blob' }),
 
     createOrder: (data: { tournament_id: string; guest_email?: string; items: Array<{ type: string; photo_id?: string; athlete_id?: string }> }) =>
       post<Order>('/api/v1/orders', data),

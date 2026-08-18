@@ -43,13 +43,23 @@ function writeStorage(state: StoredFaceSearch) {
 }
 
 export const useFaceSearchStore = defineStore('faceSearch', () => {
-  const stored = readStorage()
-  const slug = ref(stored?.slug ?? '')
-  const results = ref<Photo[]>(stored?.results ?? [])
-  const guestToken = ref(stored?.guestToken ?? readGuestToken())
+  const slug = ref('')
+  const results = ref<Photo[]>([])
+  const guestToken = ref('')
 
   function persist() {
     writeStorage({ slug: slug.value, results: results.value, guestToken: guestToken.value })
+  }
+
+  function hydrate() {
+    const stored = readStorage()
+    if (stored) {
+      slug.value = stored.slug ?? ''
+      results.value = stored.results ?? []
+      guestToken.value = stored.guestToken || readGuestToken()
+      return
+    }
+    guestToken.value = readGuestToken()
   }
 
   function setResults(tournamentSlug: string, photos: Photo[], token?: string) {
@@ -93,5 +103,5 @@ export const useFaceSearchStore = defineStore('faceSearch', () => {
     }
   }
 
-  return { slug, results, guestToken, setResults, getResults, findPhoto, getGuestToken, mediaUrl, clear }
+  return { slug, results, guestToken, setResults, getResults, findPhoto, getGuestToken, mediaUrl, hydrate, clear }
 })

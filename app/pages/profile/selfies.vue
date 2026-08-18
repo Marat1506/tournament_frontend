@@ -1,11 +1,11 @@
 <script setup lang="ts">
-definePageMeta({ middleware: 'client-auth' })
+definePageMeta({ middleware: 'client-auth', ssr: false })
 
 const { t, locale } = useI18n()
 const api = useApi()
 const router = useRouter()
 
-const { data, pending } = await useAsyncData('profile-selfies', () => api.getProfileSelfies())
+const { data, pending } = await useAsyncData('profile-selfies', () => api.getProfileSelfies(), { server: false })
 
 const typeLabels = computed<Record<string, string>>(() => ({
   face: t('profileSelfies.searchFace'),

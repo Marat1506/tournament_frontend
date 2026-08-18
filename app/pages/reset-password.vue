@@ -1,5 +1,5 @@
 <script setup lang="ts">
-definePageMeta({})
+definePageMeta({ ssr: false })
 
 const { t } = useI18n()
 const api = useApi()

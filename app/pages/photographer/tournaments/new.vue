@@ -1,12 +1,12 @@
 <script setup lang="ts">
-definePageMeta({ middleware: 'photographer-auth' })
+definePageMeta({ middleware: 'photographer-auth', ssr: false })
 
 const { t } = useI18n()
 const api = useApi()
 const router = useRouter()
 const toast = useToast()
 
-const { data: platform } = await useAsyncData('platform-defaults-new', () => api.getPlatformHome())
+const { data: platform } = await useAsyncData('platform-defaults-new', () => api.getPlatformHome(), { server: false })
 
 const form = reactive({
   name: '',

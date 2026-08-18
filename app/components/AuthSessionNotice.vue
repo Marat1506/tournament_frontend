@@ -18,8 +18,12 @@ function logout() {
 </script>
 
 <template>
-  <div v-if="show" class="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm">
-    <p v-if="world === 'client'">
+  <ClientOnly>
+    <div v-if="show" class="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm">
+    <p v-if="world === 'client' && auth.isAdmin">
+      {{ t('auth.sessionAdmin', { email: auth.user?.email }) }}
+    </p>
+    <p v-else-if="world === 'client'">
       {{ t('auth.sessionPhotographer', { email: auth.user?.email }) }}
     </p>
     <p v-else>
@@ -51,5 +55,6 @@ function logout() {
         {{ t('profile.logout') }}
       </button>
     </div>
-  </div>
+    </div>
+  </ClientOnly>
 </template>

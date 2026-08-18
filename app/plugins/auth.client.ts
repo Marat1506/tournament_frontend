@@ -1,8 +1,12 @@
 export default defineNuxtPlugin(() => {
   const auth = useAuthStore()
   auth.hydrate()
+  useSelectionStore().hydrate()
+  useFaceSearchStore().hydrate()
+  useFavoritesStore().load()
 
   onNuxtReady(async () => {
+    await auth.ensureFresh()
     if (!auth.accessToken) return
     const api = useApi()
     const route = useRoute()
@@ -16,8 +20,9 @@ export default defineNuxtPlugin(() => {
       ) {
         await navigateTo('/confirm-email')
       }
-    } catch {
-      auth.logout()
+    }
+    catch (e: unknown) {
+      if (httpStatus(e) === 401) auth.logout()
     }
   })
 })

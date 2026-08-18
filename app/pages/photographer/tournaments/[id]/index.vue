@@ -1,17 +1,16 @@
 <script setup lang="ts">
 import type { UploadBatch } from '~/types'
 
-definePageMeta({ middleware: 'photographer-auth' })
+definePageMeta({ middleware: 'photographer-auth', ssr: false })
 
 const { t } = useI18n()
-const auth = useAuthStore()
 const route = useRoute()
 const api = useApi()
 const toast = useToast()
 const id = route.params.id as string
 
-const { data: tournaments, refresh: refreshList, error: loadError } = await useAsyncData('my-tournaments-detail', () => api.getMyTournaments())
-const { data: payouts } = await useAsyncData('photographer-payouts-banner', () => api.getPayouts())
+const { data: tournaments, refresh: refreshList, error: loadError } = await useAsyncData('my-tournaments-detail', () => api.getMyTournaments(), { server: false })
+const { data: payouts } = await useAsyncData('photographer-payouts-banner', () => api.getPayouts(), { server: false })
 const tournament = computed(() => tournaments.value?.data?.find(item => item.id === id))
 const payoutsReady = computed(() => !payouts.value?.stripe_configured || !!payouts.value?.can_receive_payments)
 
@@ -44,7 +43,11 @@ const agreementSaving = ref(false)
 const agreementError = ref('')
 const flowStep = ref(1)
 
-const { data: agreementStatus } = await useAsyncData('photographer-agreement', () => api.getPhotographerAgreementStatus())
+const { data: agreementStatus } = await useAsyncData(
+  'photographer-agreement',
+  () => api.getPhotographerAgreementStatus(),
+  { server: false },
+)
 watch(agreementStatus, (s) => {
   if (s?.agreed) agreementAgreed.value = true
 }, { immediate: true })
@@ -316,10 +319,7 @@ watchEffect(async () => {
   }
   qrError.value = false
   try {
-    const blob = await $fetch<Blob>(api.qrUrl(id), {
-      headers: { Authorization: `Bearer ${auth.accessToken}` },
-      responseType: 'blob',
-    })
+    const blob = await api.getQr(id)
     if (qrBlobUrl.value) URL.revokeObjectURL(qrBlobUrl.value)
     qrBlobUrl.value = URL.createObjectURL(blob)
   } catch {

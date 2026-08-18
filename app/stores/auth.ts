@@ -1,9 +1,11 @@
 import { defineStore } from 'pinia'
-import type { User } from '~/types'
+import type { AuthResponse, User } from '~/types'
 
 const ACCESS_KEY = 'bjj_access_token'
 const REFRESH_KEY = 'bjj_refresh_token'
 const USER_KEY = 'bjj_user'
+
+let refreshInFlight: Promise<boolean> | null = null
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref<User | null>(null)
@@ -17,6 +19,14 @@ export const useAuthStore = defineStore('auth', () => {
       return
     }
     localStorage.removeItem(USER_KEY)
+  }
+
+  function persistTokens() {
+    if (!import.meta.client) return
+    if (accessToken.value) localStorage.setItem(ACCESS_KEY, accessToken.value)
+    else localStorage.removeItem(ACCESS_KEY)
+    if (refreshToken.value) localStorage.setItem(REFRESH_KEY, refreshToken.value)
+    else localStorage.removeItem(REFRESH_KEY)
   }
 
   function hydrate() {
@@ -41,10 +51,9 @@ export const useAuthStore = defineStore('auth', () => {
     accessToken.value = tokens.access_token
     refreshToken.value = tokens.refresh_token
     user.value = tokens.user
+    persistTokens()
+    persistUser()
     if (import.meta.client) {
-      localStorage.setItem(ACCESS_KEY, tokens.access_token)
-      localStorage.setItem(REFRESH_KEY, tokens.refresh_token)
-      persistUser()
       const skipSync = tokens.user.role === 'client' && !tokens.user.email_verified
       if (!skipSync) {
         const favorites = useFavoritesStore()
@@ -58,10 +67,9 @@ export const useAuthStore = defineStore('auth', () => {
     user.value = null
     accessToken.value = ''
     refreshToken.value = ''
+    persistTokens()
+    persistUser()
     if (import.meta.client) {
-      localStorage.removeItem(ACCESS_KEY)
-      localStorage.removeItem(REFRESH_KEY)
-      localStorage.removeItem(USER_KEY)
       useFavoritesStore().synced = false
     }
   }
@@ -81,7 +89,48 @@ export const useAuthStore = defineStore('auth', () => {
     persistUser()
   }
 
-  const isLoggedIn = computed(() => !!accessToken.value)
+  async function refreshSession(): Promise<boolean> {
+    hydrate()
+    if (!refreshToken.value) return false
+    if (refreshInFlight) return refreshInFlight
+
+    const currentRefresh = refreshToken.value
+    refreshInFlight = (async () => {
+      try {
+        const config = useRuntimeConfig()
+        const base = import.meta.server ? config.apiBase : config.public.apiBase
+        const data = await $fetch<AuthResponse>(`${base}/api/v1/auth/refresh`, {
+          method: 'POST',
+          body: { refresh_token: currentRefresh },
+        })
+        setSession(data)
+        return true
+      }
+      catch (e: unknown) {
+        if (httpStatus(e) === 401) {
+          logout()
+        }
+        return false
+      }
+    })().finally(() => {
+      refreshInFlight = null
+    })
+
+    return refreshInFlight
+  }
+
+  async function ensureFresh(): Promise<boolean> {
+    hydrate()
+    if (!accessToken.value && !refreshToken.value) return true
+    if (isAccessTokenFresh(accessToken.value)) return true
+    if (!refreshToken.value) {
+      logout()
+      return false
+    }
+    return refreshSession()
+  }
+
+  const isLoggedIn = computed(() => !!accessToken.value || !!refreshToken.value)
   const isPhotographer = computed(() => user.value?.role === 'photographer')
   const isApprovedPhotographer = computed(() =>
     isPhotographer.value && user.value?.status === 'approved',
@@ -91,6 +140,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   return {
     user, accessToken, refreshToken, setSession, setUser, logout,
-    isLoggedIn, isPhotographer, isApprovedPhotographer, isAdmin, isEmailVerified, hydrate,
+    isLoggedIn, isPhotographer, isApprovedPhotographer, isAdmin, isEmailVerified,
+    hydrate, ensureFresh, refreshSession,
   }
 })

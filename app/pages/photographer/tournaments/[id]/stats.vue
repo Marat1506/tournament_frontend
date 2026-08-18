@@ -1,13 +1,13 @@
 <script setup lang="ts">
-definePageMeta({ middleware: 'photographer-auth' })
+definePageMeta({ middleware: 'photographer-auth', ssr: false })
 
 const { t } = useI18n()
 const route = useRoute()
 const api = useApi()
 const id = route.params.id as string
 
-const { data: stats, pending, error: statsError, refresh } = await useAsyncData(`stats-${id}`, () => api.getTournamentStats(id))
-const { data: tournaments } = await useAsyncData('stats-tournament', () => api.getMyTournaments())
+const { data: stats, pending, error: statsError, refresh } = await useAsyncData(`stats-${id}`, () => api.getTournamentStats(id), { server: false })
+const { data: tournaments } = await useAsyncData('stats-tournament', () => api.getMyTournaments(), { server: false })
 const tournament = computed(() => tournaments.value?.data?.find(item => item.id === id))
 </script>
 

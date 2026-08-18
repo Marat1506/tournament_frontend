@@ -1,28 +1,43 @@
 <script setup lang="ts">
-definePageMeta({ middleware: 'photographer-auth' })
+import type { PayoutStatus } from '~/types'
+
+definePageMeta({ middleware: 'photographer-auth', ssr: false })
 
 const { t } = useI18n()
 const api = useApi()
 const route = useRoute()
 const toast = useToast()
+const auth = useAuthStore()
+if (import.meta.client) auth.hydrate()
 
 const country = ref('')
 const loading = ref(false)
 const actionError = ref('')
+const data = ref<PayoutStatus | null>(null)
+const pending = ref(true)
+const loadError = ref(false)
 
-const { data, pending, error: loadError, refresh } = await useAsyncData('photographer-payouts', () => api.getPayouts())
-
-watch(data, (status) => {
-  if (status?.country) country.value = status.country
-}, { immediate: true })
+async function loadPayouts() {
+  if (import.meta.client) auth.hydrate()
+  pending.value = true
+  loadError.value = false
+  try {
+    data.value = await api.getPayouts()
+    if (data.value?.country) country.value = data.value.country
+  }
+  catch {
+    loadError.value = true
+  }
+  finally {
+    pending.value = false
+  }
+}
 
 onMounted(async () => {
+  await loadPayouts()
   const flag = route.query.onboarding
-  if (flag === 'return' || flag === 'refresh') {
-    await refresh()
-    if (flag === 'refresh' && data.value && !data.value.can_receive_payments && data.value.stripe_configured) {
-      await startOnboarding()
-    }
+  if (flag === 'refresh' && data.value && !data.value.can_receive_payments && data.value.stripe_configured) {
+    await startOnboarding()
   }
 })
 
@@ -103,7 +118,7 @@ async function openDashboard() {
 
       <div v-else-if="loadError" class="card space-y-3 p-6 text-center">
         <AppAlert type="error" :message="t('photographer.payoutsLoadFailed')" />
-        <button class="btn-primary-solid" @click="refresh()">{{ t('common.retry') }}</button>
+        <button class="btn-primary-solid" @click="loadPayouts()">{{ t('common.retry') }}</button>
       </div>
 
       <template v-else-if="data">

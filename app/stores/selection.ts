@@ -32,11 +32,10 @@ function writeStorage(state: StoredSelection) {
 }
 
 export const useSelectionStore = defineStore('selection', () => {
-  const stored = readStorage()
-  const items = ref<Photo[]>(stored?.items ?? [])
-  const bundle = ref<{ athleteId: string; athleteName: string; price: number } | null>(stored?.bundle ?? null)
-  const tournamentId = ref<string>(stored?.tournamentId ?? '')
-  const payoutsReady = ref<boolean>(stored?.payoutsReady ?? true)
+  const items = ref<Photo[]>([])
+  const bundle = ref<{ athleteId: string; athleteName: string; price: number } | null>(null)
+  const tournamentId = ref('')
+  const payoutsReady = ref(true)
 
   function persist() {
     writeStorage({
@@ -45,6 +44,15 @@ export const useSelectionStore = defineStore('selection', () => {
       tournamentId: tournamentId.value,
       payoutsReady: payoutsReady.value,
     })
+  }
+
+  function hydrate() {
+    const stored = readStorage()
+    if (!stored) return
+    items.value = stored.items ?? []
+    bundle.value = stored.bundle ?? null
+    tournamentId.value = stored.tournamentId ?? ''
+    payoutsReady.value = stored.payoutsReady ?? true
   }
 
   watch([items, bundle, tournamentId, payoutsReady], persist, { deep: true })
@@ -91,5 +99,5 @@ export const useSelectionStore = defineStore('selection', () => {
     return items.value.reduce((sum, p) => sum + p.price, 0)
   })
 
-  return { items, bundle, tournamentId, payoutsReady, toggle, setBundle, setContext, has, clear, count, total }
+  return { items, bundle, tournamentId, payoutsReady, toggle, setBundle, setContext, has, clear, hydrate, count, total }
 })

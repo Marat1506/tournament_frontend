@@ -1,5 +1,5 @@
 <script setup lang="ts">
-definePageMeta({})
+definePageMeta({ ssr: false })
 
 import { CODE_SENT_KEY, PENDING_EMAIL_KEY } from '~/composables/useEmailVerification'
 

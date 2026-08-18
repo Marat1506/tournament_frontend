@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import type { Photo } from '~/types'
 
+definePageMeta({ ssr: false })
+
 const { t } = useI18n()
 const auth = useAuthStore()
 const favorites = useFavoritesStore()

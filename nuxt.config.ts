@@ -6,6 +6,31 @@ export default defineNuxtConfig({
 
   modules: ['@nuxtjs/tailwindcss', '@pinia/nuxt'],
 
+  routeRules: {
+    '/cart': { ssr: false },
+    '/checkout': { ssr: false },
+    '/checkout/**': { ssr: false },
+    '/profile': { ssr: false },
+    '/profile/**': { ssr: false },
+    '/photographer': { ssr: false },
+    '/photographer/**': { ssr: false },
+    '/admin': { ssr: false },
+    '/admin/**': { ssr: false },
+    '/favorites': { ssr: false },
+    '/login': { ssr: false },
+    '/register': { ssr: false },
+    '/forgot-password': { ssr: false },
+    '/reset-password': { ssr: false },
+    '/confirm-email': { ssr: false },
+    '/verify-email': { ssr: false },
+    '/shop': { ssr: false },
+    '/shop/**': { ssr: false },
+    '/photos': { ssr: false },
+    '/photos/**': { ssr: false },
+    '/tournaments/**/photos': { ssr: false },
+    '/tournaments/**/search/face': { ssr: false },
+  },
+
   app: {
     head: {
       title: 'PixMomento',
