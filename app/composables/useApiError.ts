@@ -14,6 +14,16 @@ export function getApiErrorStatus(e: unknown): number | undefined {
   return err.statusCode ?? err.status
 }
 
+export function getCommonApiErrorKey(e: unknown): string | undefined {
+  const status = getApiErrorStatus(e)
+  const message = getApiErrorMessage(e)
+  if (!status && !message) return 'errors.network'
+  if (status === 408 || status === 504) return 'errors.timeout'
+  if (status === 429) return 'errors.tooManyRequests'
+  if (status && status >= 500) return 'errors.server'
+  return undefined
+}
+
 /** Map known backend error strings to an i18n key, or return fallbackKey. */
 export function mapApiError(
   e: unknown,
@@ -27,5 +37,5 @@ export function mapApiError(
       : rule.match.test(msg)
     if (matched) return rule.key
   }
-  return fallbackKey
+  return getCommonApiErrorKey(e) ?? fallbackKey
 }

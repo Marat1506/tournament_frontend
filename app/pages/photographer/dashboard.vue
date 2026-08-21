@@ -164,7 +164,7 @@ async function logout() {
         </div>
 
         <div class="space-y-3">
-          <div class="cabinet-row">
+          <NuxtLink to="/terms" class="cabinet-row">
             <div class="icon-tile">
               <AppIcon name="sparkles" class="h-5 w-5" />
             </div>
@@ -172,7 +172,8 @@ async function logout() {
               <div class="font-semibold">{{ t('photographer.platformTerms') }}</div>
               <div class="text-sm text-gray-500">{{ t('photographer.platformTermsHint') }}</div>
             </div>
-          </div>
+            <AppIcon name="chevron" class="h-5 w-5 shrink-0 text-gray-500" />
+          </NuxtLink>
 
           <button type="button" class="cabinet-row w-full text-left" @click="listMode = true">
             <div class="icon-tile">
@@ -306,7 +307,10 @@ async function logout() {
               </p>
               <p class="mt-1 text-xs text-gray-500">{{ item.photo_count }} {{ t('common.photos') }}</p>
             </div>
-            <AppIcon name="chevron" class="mt-5 h-5 w-5 shrink-0 text-gray-500" />
+            <span class="mt-3 inline-flex min-h-10 shrink-0 items-center gap-1 rounded-lg px-3 text-sm font-semibold text-brand-400 ring-1 ring-brand-500/40">
+              <AppIcon :name="item.photo_count ? 'chevron' : 'upload'" class="h-4 w-4" />
+              {{ item.photo_count ? t('photographer.openTournament') : t('photographer.addPhotos') }}
+            </span>
           </NuxtLink>
         </div>
 

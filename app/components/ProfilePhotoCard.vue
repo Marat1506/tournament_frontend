@@ -7,6 +7,7 @@ const props = defineProps<{
 
 const favorites = useFavoritesStore()
 const api = useApi()
+const toast = useToast()
 const { t } = useI18n()
 const downloading = ref(false)
 const uiReady = ref(false)
@@ -29,8 +30,8 @@ async function onDownload(e: Event) {
   try {
     await api.downloadPhoto(props.photo.id, props.photo.original_filename)
   }
-  catch {
-    // ignore — user can retry
+  catch (e: unknown) {
+    toast.error(t(getCommonApiErrorKey(e) ?? 'checkout.downloadFailed'))
   }
   finally {
     downloading.value = false
@@ -52,7 +53,7 @@ async function onDownload(e: Event) {
     </div>
 
     <button
-      class="absolute right-1.5 top-1.5 flex h-8 w-8 items-center justify-center rounded-full bg-black/35 text-white backdrop-blur-sm"
+      class="absolute right-1.5 top-1.5 flex h-11 w-11 items-center justify-center rounded-full bg-black/45 text-white backdrop-blur-sm transition active:scale-90"
       :aria-label="t('photoCard.favorite')"
       @click="onHeart"
     >
@@ -65,7 +66,7 @@ async function onDownload(e: Event) {
 
     <button
       v-if="photo.purchased"
-      class="absolute bottom-1.5 right-1.5 flex h-8 w-8 items-center justify-center rounded-full bg-brand-600 text-white shadow-md disabled:opacity-60"
+      class="absolute bottom-1.5 right-1.5 flex h-11 w-11 items-center justify-center rounded-full bg-brand-600 text-white shadow-md transition active:scale-90 disabled:opacity-60"
       :aria-label="t('profilePhotos.download')"
       :disabled="downloading"
       @click="onDownload"

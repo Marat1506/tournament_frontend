@@ -8,6 +8,10 @@ type StoredSelection = {
   bundle: { athleteId: string; athleteName: string; price: number } | null
   tournamentId: string
   payoutsReady: boolean
+  returnPath: string
+  guestEmail: string
+  pendingOrderId: string
+  pendingSignature: string
 }
 
 function readStorage(): StoredSelection | null {
@@ -36,6 +40,10 @@ export const useSelectionStore = defineStore('selection', () => {
   const bundle = ref<{ athleteId: string; athleteName: string; price: number } | null>(null)
   const tournamentId = ref('')
   const payoutsReady = ref(true)
+  const returnPath = ref('')
+  const guestEmail = ref('')
+  const pendingOrderId = ref('')
+  const pendingSignature = ref('')
 
   function persist() {
     writeStorage({
@@ -43,6 +51,10 @@ export const useSelectionStore = defineStore('selection', () => {
       bundle: bundle.value,
       tournamentId: tournamentId.value,
       payoutsReady: payoutsReady.value,
+      returnPath: returnPath.value,
+      guestEmail: guestEmail.value,
+      pendingOrderId: pendingOrderId.value,
+      pendingSignature: pendingSignature.value,
     })
   }
 
@@ -53,11 +65,25 @@ export const useSelectionStore = defineStore('selection', () => {
     bundle.value = stored.bundle ?? null
     tournamentId.value = stored.tournamentId ?? ''
     payoutsReady.value = stored.payoutsReady ?? true
+    returnPath.value = stored.returnPath ?? ''
+    guestEmail.value = stored.guestEmail ?? ''
+    pendingOrderId.value = stored.pendingOrderId ?? ''
+    pendingSignature.value = stored.pendingSignature ?? ''
   }
 
-  watch([items, bundle, tournamentId, payoutsReady], persist, { deep: true })
+  watch(
+    [items, bundle, tournamentId, payoutsReady, returnPath, guestEmail, pendingOrderId, pendingSignature],
+    persist,
+    { deep: true },
+  )
+
+  function clearPendingOrder() {
+    pendingOrderId.value = ''
+    pendingSignature.value = ''
+  }
 
   function toggle(photo: Photo) {
+    clearPendingOrder()
     bundle.value = null
     const idx = items.value.findIndex(p => p.id === photo.id)
     if (idx >= 0) {
@@ -68,12 +94,14 @@ export const useSelectionStore = defineStore('selection', () => {
   }
 
   function setBundle(athleteId: string, athleteName: string, price: number) {
+    clearPendingOrder()
     items.value = []
     bundle.value = { athleteId, athleteName, price }
   }
 
   function setContext(id: string, ready = true) {
     if (tournamentId.value && tournamentId.value !== id) {
+      clearPendingOrder()
       items.value = []
       bundle.value = null
     }
@@ -81,7 +109,25 @@ export const useSelectionStore = defineStore('selection', () => {
     payoutsReady.value = ready
   }
 
+  function setReturnPath(path: string) {
+    returnPath.value = path
+  }
+
+  function setGuestEmail(value: string) {
+    const normalized = value.trim()
+    if (guestEmail.value.toLowerCase() !== normalized.toLowerCase()) {
+      clearPendingOrder()
+    }
+    guestEmail.value = normalized
+  }
+
+  function setPendingOrder(id: string, signature: string) {
+    pendingOrderId.value = id
+    pendingSignature.value = signature
+  }
+
   function selectAll(photos: Photo[]) {
+    clearPendingOrder()
     bundle.value = null
     const seen = new Set(items.value.map(p => p.id))
     for (const photo of photos) {
@@ -99,6 +145,11 @@ export const useSelectionStore = defineStore('selection', () => {
   function clear() {
     items.value = []
     bundle.value = null
+    tournamentId.value = ''
+    returnPath.value = ''
+    payoutsReady.value = true
+    guestEmail.value = ''
+    clearPendingOrder()
     if (import.meta.client) {
       sessionStorage.removeItem(STORAGE_KEY)
     }
@@ -110,5 +161,27 @@ export const useSelectionStore = defineStore('selection', () => {
     return items.value.reduce((sum, p) => sum + p.price, 0)
   })
 
-  return { items, bundle, tournamentId, payoutsReady, toggle, setBundle, setContext, has, selectAll, clear, hydrate, count, total }
+  return {
+    items,
+    bundle,
+    tournamentId,
+    payoutsReady,
+    returnPath,
+    guestEmail,
+    pendingOrderId,
+    pendingSignature,
+    toggle,
+    setBundle,
+    setContext,
+    setReturnPath,
+    setGuestEmail,
+    setPendingOrder,
+    clearPendingOrder,
+    has,
+    selectAll,
+    clear,
+    hydrate,
+    count,
+    total,
+  }
 })

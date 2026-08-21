@@ -145,14 +145,9 @@ export function useApi() {
     const params = new URLSearchParams()
     if (orderId) params.set('order_id', orderId)
     if (guestEmail) params.set('guest_email', guestEmail)
+    params.set('proxy', '1')
     const qs = params.toString()
     return `/api/v1/photos/${photoId}/download${qs ? `?${qs}` : ''}`
-  }
-
-  function isAppleTouchDevice() {
-    if (typeof navigator === 'undefined') return false
-    return /iPad|iPhone|iPod/.test(navigator.userAgent)
-      || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
   }
 
   function startNativeDownload(href: string, name?: string) {
@@ -176,11 +171,7 @@ export function useApi() {
     anchor.remove()
   }
 
-  function revealDownload(popup: Window | null, href: string, name?: string) {
-    if (popup && !popup.closed) {
-      popup.location.href = href
-      return
-    }
+  function revealDownload(href: string, name?: string) {
     startNativeDownload(href, name)
   }
 
@@ -200,32 +191,25 @@ export function useApi() {
     const path = downloadPath(photoId, orderId, guestEmail)
     const url = `${base}${path}`
     const fallbackName = filename || `${photoId.slice(0, 8)}.jpg`
-    // iOS Safari drops the user-gesture after await, then blocks popup/download.
-    // Open the tab synchronously on tap, then point it at the signed S3 URL.
-    const popup = isAppleTouchDevice() ? window.open('about:blank', '_blank') : null
-    try {
-      const res = await fetchDownload(url)
-      if (!res.ok) {
+    const res = await fetchDownload(url)
+    if (!res.ok) {
+      const error = new Error('download failed') as Error & { statusCode: number }
+      error.statusCode = res.status
+      throw error
+    }
+    const contentType = res.headers.get('content-type') || ''
+    if (contentType.includes('application/json')) {
+      const data = await res.json() as { url?: string, filename?: string }
+      if (!data.url) {
         throw new Error('download failed')
       }
-      const contentType = res.headers.get('content-type') || ''
-      if (contentType.includes('application/json')) {
-        const data = await res.json() as { url?: string, filename?: string }
-        if (!data.url) {
-          throw new Error('download failed')
-        }
-        revealDownload(popup, data.url, data.filename || fallbackName)
-        return
-      }
-      const blob = await res.blob()
-      const objectUrl = URL.createObjectURL(blob)
-      revealDownload(popup, objectUrl, fallbackName)
-      setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000)
+      revealDownload(data.url, data.filename || fallbackName)
+      return
     }
-    catch (e) {
-      popup?.close()
-      throw e
-    }
+    const blob = await res.blob()
+    const objectUrl = URL.createObjectURL(blob)
+    revealDownload(objectUrl, fallbackName)
+    setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000)
   }
 
   return {

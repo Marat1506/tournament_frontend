@@ -221,13 +221,21 @@ async function openDashboard() {
 
           <label v-if="needsCountry" class="block space-y-2">
             <span class="text-sm font-medium">{{ t('photographer.payoutsCountry') }}</span>
-            <select v-model="country" class="input-field">
+            <select
+              v-model="country"
+              class="input-field"
+              :class="{ 'input-field-error': actionError && !country }"
+              @change="actionError = ''"
+            >
               <option value="" disabled>{{ t('photographer.payoutsCountryPlaceholder') }}</option>
               <option v-for="item in data.countries" :key="item.code" :value="item.code">
                 {{ item.name }}
               </option>
             </select>
             <span class="block text-xs text-gray-500">{{ t('photographer.payoutsCountryHint') }}</span>
+            <span v-if="actionError && !country" class="field-error">
+              {{ t('photographer.payoutsCountryRequired') }}
+            </span>
           </label>
           <p v-else-if="data.country" class="text-sm text-gray-400">
             {{ t('photographer.payoutsCountryLocked', { country: data.country }) }}
@@ -238,7 +246,7 @@ async function openDashboard() {
           <button
             v-if="showContinue"
             class="btn-primary-solid w-full"
-            :disabled="loading || (needsCountry && !country)"
+            :disabled="loading"
             @click="startOnboarding"
           >
             {{ loading ? t('photographer.payoutsRedirecting') : primaryLabel }}

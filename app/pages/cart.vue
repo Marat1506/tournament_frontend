@@ -3,6 +3,7 @@ definePageMeta({ ssr: false })
 
 const { t } = useI18n()
 const route = useRoute()
+const router = useRouter()
 const api = useApi()
 const auth = useAuthStore()
 const selection = useSelectionStore()
@@ -12,7 +13,9 @@ if (import.meta.client) selection.hydrate()
 const tournamentId = computed(() =>
   (route.query.tournament_id as string | undefined) || selection.tournamentId,
 )
-const guestEmail = ref('')
+const guestEmail = ref(selection.guestEmail)
+const guestEmailInput = ref<HTMLInputElement | null>(null)
+const emailTouched = ref(false)
 const loading = ref(false)
 const error = ref('')
 const step = computed(() => (hasItems.value ? 4 : 3))
@@ -20,6 +23,22 @@ const step = computed(() => (hasItems.value ? 4 : 3))
 const hasItems = computed(() => selection.items.length > 0 || !!selection.bundle)
 const total = computed(() => selection.total)
 const count = computed(() => selection.count)
+const paymentCancelled = ref(route.query.payment === 'cancelled')
+const checkoutSignature = computed(() => JSON.stringify({
+  tournamentId: tournamentId.value,
+  email: auth.isLoggedIn ? '' : guestEmail.value.trim().toLowerCase(),
+  bundle: selection.bundle
+    ? { athleteId: selection.bundle.athleteId, price: selection.bundle.price }
+    : null,
+  items: selection.items.map(item => item.id).sort(),
+}))
+const guestEmailError = computed(() => {
+  if (auth.isLoggedIn || !emailTouched.value) return ''
+  const value = guestEmail.value.trim()
+  if (!value) return t('cart.errorEmail')
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return t('cart.errorEmailInvalid')
+  return ''
+})
 
 const { data: tournament } = await useAsyncData(
   () => `cart-tournament-${tournamentId.value || 'none'}`,
@@ -32,9 +51,18 @@ const { data: tournament } = await useAsyncData(
 )
 
 async function checkout() {
+  if (loading.value) return
   if (!hasItems.value || !tournamentId.value) {
     error.value = t('cart.errorEmpty')
     return
+  }
+  if (!auth.isLoggedIn) {
+    emailTouched.value = true
+    await nextTick()
+    if (guestEmailError.value) {
+      guestEmailInput.value?.focus()
+      return
+    }
   }
   loading.value = true
   error.value = ''
@@ -43,12 +71,18 @@ async function checkout() {
       ? [{ type: 'bundle', athlete_id: selection.bundle.athleteId }]
       : selection.items.map(p => ({ type: 'single', photo_id: p.id }))
 
-    const order = await api.createOrder({
-      tournament_id: tournamentId.value,
-      guest_email: auth.isLoggedIn ? undefined : guestEmail.value,
-      items,
-    })
-    const result = await api.checkout(order.id, auth.isLoggedIn ? undefined : guestEmail.value)
+    const signature = checkoutSignature.value
+    let orderId = selection.pendingSignature === signature ? selection.pendingOrderId : ''
+    if (!orderId) {
+      const order = await api.createOrder({
+        tournament_id: tournamentId.value,
+        guest_email: auth.isLoggedIn ? undefined : guestEmail.value.trim(),
+        items,
+      })
+      orderId = order.id
+      selection.setPendingOrder(order.id, signature)
+    }
+    const result = await api.checkout(orderId, auth.isLoggedIn ? undefined : guestEmail.value.trim())
     if (result.dev_mode) {
       await navigateTo(result.url)
     }
@@ -64,14 +98,26 @@ async function checkout() {
       { match: 'not available', key: 'cart.errorPhotoUnavailable' },
       { match: 'bundle requires', key: 'cart.errorBundleMin' },
       { match: 'payment method', key: 'cart.errorPayment' },
+      { match: 'stripe session', key: 'cart.errorPayment' },
+      { match: 'order is not pending', key: 'cart.errorCheckoutRetry' },
       { match: 'payouts_not_ready', key: 'cart.errorPayouts' },
     ], 'cart.errorCheckout')
-    error.value = t(key)
+    if (key === 'cart.errorCheckoutRetry') selection.clearPendingOrder()
+    error.value = !getApiErrorStatus(e) ? t('errors.network') : t(key)
   }
   finally {
     loading.value = false
   }
 }
+
+watch(guestEmail, value => selection.setGuestEmail(value))
+
+onMounted(() => {
+  if (!paymentCancelled.value) return
+  const query = { ...route.query }
+  delete query.payment
+  router.replace({ query })
+})
 
 function removePhoto(id: string) {
   const photo = selection.items.find(p => p.id === id)
@@ -79,6 +125,7 @@ function removePhoto(id: string) {
 }
 
 const backToPhotos = computed(() => {
+  if (selection.returnPath) return selection.returnPath
   if (tournament.value?.slug) return `/tournaments/${tournament.value.slug}/photos`
   return '/tournaments'
 })
@@ -96,6 +143,8 @@ const backToPhotos = computed(() => {
 
     <div class="page-container space-y-4">
       <SearchStepper :current="step" :steps="4" tournament-to="/tournaments" />
+
+      <AppAlert v-if="paymentCancelled" type="info" :message="t('cart.paymentCancelled')" />
 
       <div v-if="!hasItems" class="card p-10 text-center text-gray-500">
         {{ t('cart.empty') }}
@@ -132,7 +181,9 @@ const backToPhotos = computed(() => {
                 <AppImage :src="photo.thumbnail_url || photo.preview_url" aspect="square" />
               </div>
               <button
-                class="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/70 text-xs"
+                type="button"
+                class="absolute right-0 top-0 flex h-11 w-11 items-center justify-center rounded-bl-xl bg-black/75 text-lg transition active:scale-90"
+                :aria-label="t('cart.removePhoto')"
                 @click="removePhoto(photo.id)"
               >
                 ×
@@ -146,9 +197,32 @@ const backToPhotos = computed(() => {
         </div>
 
         <div v-if="!auth.isLoggedIn" class="card p-4">
-          <label class="mb-2 block text-sm font-medium">{{ t('cart.guestEmail') }}</label>
-          <input v-model="guestEmail" type="email" class="input-field" placeholder="you@example.com" required>
+          <label for="guest-email" class="mb-2 block font-semibold">{{ t('cart.guestEmail') }}</label>
+          <input
+            id="guest-email"
+            ref="guestEmailInput"
+            v-model="guestEmail"
+            type="email"
+            autocomplete="email"
+            inputmode="email"
+            class="input-field"
+            :class="{ 'input-field-error': guestEmailError }"
+            placeholder="you@example.com"
+            :aria-invalid="!!guestEmailError"
+            :aria-describedby="guestEmailError ? 'guest-email-error' : 'guest-email-hint'"
+            required
+            @blur="emailTouched = true"
+            @input="error = ''"
+          >
+          <p v-if="guestEmailError" id="guest-email-error" class="field-error">{{ guestEmailError }}</p>
+          <p v-else id="guest-email-hint" class="mt-2 text-sm leading-relaxed text-gray-400">
+            {{ t('cart.guestEmailHint') }}
+            <NuxtLink to="/login?redirect=/cart" class="font-medium text-brand-400">{{ t('cart.signIn') }}</NuxtLink>
+            {{ t('cart.or') }}
+            <NuxtLink to="/register?redirect=/cart" class="font-medium text-brand-400">{{ t('cart.createAccount') }}</NuxtLink>
+          </p>
         </div>
+        <AppAlert v-else type="info" :message="t('cart.accountPurchaseHint')" />
 
         <div class="card space-y-3 p-4">
           <div class="flex items-center justify-between text-sm">
@@ -164,13 +238,14 @@ const backToPhotos = computed(() => {
         </div>
 
         <AppAlert v-if="!selection.payoutsReady" type="info" :message="t('cart.errorPayouts')" />
-        <p v-if="error" class="text-sm text-red-400">{{ error }}</p>
+        <AppAlert v-if="error" type="error" :message="error" />
 
         <button
           class="btn-primary-solid"
-          :disabled="loading || !selection.payoutsReady || (!auth.isLoggedIn && !guestEmail)"
+          :disabled="loading || !selection.payoutsReady"
           @click="checkout"
         >
+          <span v-if="loading" class="loading-spinner" aria-hidden="true" />
           {{ loading ? t('cart.checkingOut') : t('cart.payAmount', { total: total.toFixed(2) }) }}
         </button>
 

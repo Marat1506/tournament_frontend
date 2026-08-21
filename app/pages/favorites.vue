@@ -11,10 +11,12 @@ const api = useApi()
 
 const photoMap = ref<Record<string, Photo>>({})
 const loading = ref(false)
+const loadError = ref('')
 
 async function loadFavoritePhotos() {
   if (loading.value) return
   loading.value = true
+  loadError.value = ''
   try {
     if (auth.isLoggedIn) {
       const photos = favorites.synced
@@ -45,6 +47,9 @@ async function loadFavoritePhotos() {
       favorites.setIds(validIds)
     }
   }
+  catch (e: unknown) {
+    loadError.value = t(getCommonApiErrorKey(e) ?? 'favorites.loadFailed')
+  }
   finally {
     loading.value = false
   }
@@ -65,6 +70,7 @@ const photos = computed(() => Object.values(photoMap.value))
 
 function buySelected() {
   if (!selection.count) return
+  selection.setReturnPath('/favorites')
   const tid = selection.tournamentId || photos.value[0]?.tournament_id
   navigateTo(tid ? `/cart?tournament_id=${tid}` : '/cart')
 }
@@ -75,8 +81,14 @@ function buySelected() {
     <AppPageHeader :title="t('favorites.title')" />
     <div class="page-container">
       <p class="mb-4 text-sm text-gray-400">{{ t('profile.favoritesHint') }}</p>
-      <PhotoGrid :photos="photos" :loading="loading" selectable />
-      <p v-if="!loading && !photos.length" class="mt-8 text-center text-gray-500">
+      <div v-if="loadError" class="card space-y-3 p-4">
+        <AppAlert type="error" :message="loadError" />
+        <button type="button" class="btn-secondary justify-center" @click="loadFavoritePhotos">
+          {{ t('common.retry') }}
+        </button>
+      </div>
+      <PhotoGrid v-else :photos="photos" :loading="loading" selectable />
+      <p v-if="!loadError && !loading && !photos.length" class="mt-8 text-center text-gray-500">
         {{ t('favorites.empty') }}
       </p>
       <p v-if="!auth.isLoggedIn && photos.length" class="mt-4 text-center text-xs text-gray-400">

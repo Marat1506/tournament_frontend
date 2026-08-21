@@ -30,8 +30,7 @@ async function submit() {
     success.value = true
   }
   catch (e: unknown) {
-    const err = e as { data?: { error?: string } }
-    errorMsg.value = err.data?.error || t('orderPhotographer.submitFailed')
+    errorMsg.value = t(getCommonApiErrorKey(e) ?? 'orderPhotographer.submitFailed')
   }
   finally {
     loading.value = false

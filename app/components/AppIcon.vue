@@ -1,6 +1,6 @@
 <script setup lang="ts">
 defineProps<{
-  name: 'home' | 'trophy' | 'heart' | 'user' | 'camera' | 'search' | 'upload' | 'face' | 'shirt' | 'bell' | 'help' | 'filter' | 'back' | 'check' | 'settings' | 'chevron' | 'cart' | 'photos' | 'mail' | 'download' | 'calendar' | 'pin' | 'wallet' | 'chart' | 'lock' | 'shield' | 'star' | 'grid' | 'list' | 'plus' | 'trash' | 'pencil' | 'phone' | 'sparkles'
+  name: 'home' | 'trophy' | 'heart' | 'user' | 'camera' | 'search' | 'upload' | 'face' | 'shirt' | 'bell' | 'help' | 'filter' | 'back' | 'check' | 'settings' | 'chevron' | 'cart' | 'photos' | 'mail' | 'download' | 'calendar' | 'pin' | 'wallet' | 'chart' | 'lock' | 'shield' | 'star' | 'grid' | 'list' | 'plus' | 'trash' | 'pencil' | 'phone' | 'sparkles' | 'clock'
   class?: string
 }>()
 </script>
@@ -150,6 +150,10 @@ defineProps<{
       <template v-else-if="name === 'sparkles'">
         <path d="M12 3v4M12 17v4M4.2 6.2l2.8 2.8M17 17l2.8 2.8M3 12h4M17 12h4M4.2 17.8 7 15M17 9l2.8-2.8" />
         <circle cx="12" cy="12" r="2.2" />
+      </template>
+      <template v-else-if="name === 'clock'">
+        <circle cx="12" cy="12" r="8" />
+        <path d="M12 8v4l3 2" />
       </template>
     </svg>
     <template #fallback>

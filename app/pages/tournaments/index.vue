@@ -3,7 +3,7 @@ const { t } = useI18n()
 const api = useApi()
 const search = ref('')
 
-const { data, pending, refresh } = await useAsyncData(
+const { data, pending, error: loadError, refresh } = await useAsyncData(
   () => `tournaments-${search.value}`,
   () => api.getTournaments(search.value || undefined),
 )
@@ -43,13 +43,19 @@ watch(search, () => {
         </div>
       </div>
 
-      <div class="mb-3 mt-6 flex items-center justify-between">
+      <div class="mb-3 mt-6">
         <h3 class="font-semibold">{{ t('home.recentTournaments') }}</h3>
-        <span class="text-sm text-brand-400">{{ t('home.viewAll') }} ›</span>
       </div>
 
       <div v-if="pending" class="space-y-3">
         <div v-for="n in 4" :key="n" class="card h-28 animate-pulse bg-white/10" />
+      </div>
+
+      <div v-else-if="loadError" class="card space-y-3 p-5">
+        <AppAlert type="error" :message="t(getCommonApiErrorKey(loadError) ?? 'tournaments.loadFailed')" />
+        <button type="button" class="btn-secondary justify-center" @click="refresh()">
+          {{ t('common.retry') }}
+        </button>
       </div>
 
       <div v-else-if="data?.data?.length" class="space-y-3">

@@ -60,11 +60,6 @@ function formatDate(iso?: string) {
           <AppIcon name="back" class="h-5 w-5" />
         </button>
       </template>
-      <template #right>
-        <button class="flex h-10 w-10 items-center justify-center text-gray-500" :aria-label="t('common.filters')">
-          <AppIcon name="filter" class="h-5 w-5" />
-        </button>
-      </template>
     </AppPageHeader>
 
     <div class="page-container space-y-4 !pt-0">

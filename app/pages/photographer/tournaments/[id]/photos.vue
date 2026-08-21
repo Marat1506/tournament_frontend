@@ -100,7 +100,7 @@ async function saveTag() {
     await refresh()
     setTimeout(closeTag, 400)
   } catch (e: unknown) {
-    tagError.value = getApiErrorMessage(e) || t('photographer.saveFailed')
+    tagError.value = t(getCommonApiErrorKey(e) ?? 'photographer.saveFailed')
     toast.error(tagError.value)
   } finally {
     tagLoading.value = false
@@ -117,7 +117,7 @@ async function deletePhoto() {
     closeTag()
     toast.success(t('photographer.photoDeleted'))
   } catch (e: unknown) {
-    tagError.value = getApiErrorMessage(e) || t('photographer.deleteFailed')
+    tagError.value = t(getCommonApiErrorKey(e) ?? 'photographer.deleteFailed')
     toast.error(tagError.value)
   } finally {
     deleteLoading.value = false
@@ -136,6 +136,8 @@ async function deletePhoto() {
     </AppPageHeader>
 
     <div class="page-container space-y-4">
+      <PhotographerEventTabs :id="id" active="athletes" />
+
       <div class="flex gap-2">
         <button
           v-for="opt in filterOptions"
@@ -185,10 +187,11 @@ async function deletePhoto() {
 
         <button
           v-if="hasMore"
-          class="btn-secondary w-full"
+          class="btn-secondary w-full justify-center"
           :disabled="loadingMore"
           @click="loadMore"
         >
+          <span v-if="loadingMore" class="loading-spinner" aria-hidden="true" />
           {{ loadingMore ? t('common.loading') : t('photographer.loadMorePhotos') }}
         </button>
       </div>
@@ -201,7 +204,14 @@ async function deletePhoto() {
         <div class="max-h-[90vh] w-full overflow-y-auto rounded-t-2xl bg-[#151b28] p-4 pb-8">
           <h3 class="mb-4 text-lg font-bold">{{ t('photographer.tagModalTitle') }}</h3>
           <div class="space-y-3">
-            <input v-model="tagForm.name" class="input-field" :placeholder="t('photographer.athleteName')">
+            <input
+              v-model="tagForm.name"
+              class="input-field"
+              :class="{ 'input-field-error': tagError && !tagForm.name.trim() }"
+              :placeholder="t('photographer.athleteName')"
+              :aria-invalid="!!(tagError && !tagForm.name.trim())"
+              @input="tagError = ''"
+            >
             <input v-model="tagForm.category" class="input-field" :placeholder="t('photographer.category')">
             <select v-model="tagForm.gender" class="input-field">
               <option value="">{{ t('photographer.gender') }}</option>
@@ -217,11 +227,16 @@ async function deletePhoto() {
               <option v-for="o in weightClassOptions" :key="o.value" :value="o.value">{{ o.label }}</option>
             </select>
           </div>
-          <p v-if="tagError" class="mt-3 text-sm text-red-500">{{ tagError }}</p>
+          <AppAlert v-if="tagError" class="mt-3" type="error" :message="tagError" />
           <p v-if="tagSuccess" class="mt-3 text-sm text-green-500">{{ tagSuccess }}</p>
           <div class="mt-4 flex flex-col gap-2">
-            <button class="btn-primary-solid" :disabled="tagLoading" @click="saveTag">{{ t('common.save') }}</button>
-            <button class="text-sm text-red-500" :disabled="deleteLoading" @click="deletePhoto">{{ t('photographer.deletePhoto') }}</button>
+            <button class="btn-primary-solid" :disabled="tagLoading || deleteLoading" @click="saveTag">
+              <span v-if="tagLoading" class="loading-spinner" aria-hidden="true" />
+              {{ t('common.save') }}
+            </button>
+            <button class="min-h-11 rounded-xl text-sm font-medium text-red-400 transition hover:bg-red-500/10" :disabled="deleteLoading || tagLoading" @click="deletePhoto">
+              {{ deleteLoading ? t('common.loading') : t('photographer.deletePhoto') }}
+            </button>
           </div>
         </div>
       </div>

@@ -30,6 +30,7 @@ const { data: tournament } = await useAsyncData(`tournament-${slug}`, () => api.
 watchEffect(() => {
   if (tournament.value?.id) {
     selection.setContext(tournament.value.id, tournament.value.payouts_ready !== false)
+    selection.setReturnPath(route.fullPath)
   }
 })
 
@@ -208,7 +209,7 @@ function toggleSelectAll() {
           selectable
           :purchases-enabled="tournament?.payouts_ready !== false"
           :athlete-id="athleteId"
-          :class="view === 'list' ? 'photo-grid-list' : ''"
+          :layout="view"
         />
       </div>
 

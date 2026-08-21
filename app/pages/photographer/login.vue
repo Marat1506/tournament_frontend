@@ -73,7 +73,7 @@ async function submit() {
       error.value = t('photographer.rejected')
     }
     else {
-      error.value = t('photographer.loginError')
+      error.value = t(getCommonApiErrorKey(e) ?? 'photographer.loginError')
     }
   }
   finally {

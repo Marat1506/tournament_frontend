@@ -57,6 +57,8 @@ const MIN_PHOTO_PRICE = 10
 
 const priceSingle = ref(20)
 const priceBundle = ref(50)
+const priceSingleInput = ref<HTMLInputElement | null>(null)
+const priceBundleInput = ref<HTMLInputElement | null>(null)
 const settingsSaving = ref(false)
 const heroUploading = ref(false)
 const heroRemoving = ref(false)
@@ -119,44 +121,66 @@ const roleLabels = computed<Record<string, string>>(() => ({
 const editingTournament = ref<Tournament | null>(null)
 const editPriceSingle = ref(0)
 const editPriceBundle = ref(0)
+const editPriceSingleInput = ref<HTMLInputElement | null>(null)
+const editPriceBundleInput = ref<HTMLInputElement | null>(null)
 const editStatus = ref('published')
 const tournamentSaving = ref(false)
 const coverInput = ref<HTMLInputElement | null>(null)
 const coverTargetId = ref<string | null>(null)
 
-const pricesValid = computed(() =>
-  priceSingle.value >= MIN_PHOTO_PRICE
-  && priceBundle.value >= MIN_PHOTO_PRICE
-  && priceBundle.value >= priceSingle.value,
+const priceSingleError = computed(() =>
+  priceSingle.value < MIN_PHOTO_PRICE
+    ? t('admin.priceSingleMin', { min: MIN_PHOTO_PRICE })
+    : '',
 )
-const editPricesValid = computed(() =>
-  editPriceSingle.value >= MIN_PHOTO_PRICE
-  && editPriceBundle.value >= MIN_PHOTO_PRICE
-  && editPriceBundle.value >= editPriceSingle.value,
+const priceBundleError = computed(() => {
+  if (priceBundle.value < MIN_PHOTO_PRICE) {
+    return t('admin.priceBundleMin', { min: MIN_PHOTO_PRICE })
+  }
+  if (priceBundle.value < priceSingle.value) {
+    return t('admin.priceBundleMinSingle')
+  }
+  return ''
+})
+const editPriceSingleError = computed(() =>
+  editPriceSingle.value < MIN_PHOTO_PRICE
+    ? t('admin.priceSingleMin', { min: MIN_PHOTO_PRICE })
+    : '',
 )
-
+const editPriceBundleError = computed(() => {
+  if (editPriceBundle.value < MIN_PHOTO_PRICE) {
+    return t('admin.priceBundleMin', { min: MIN_PHOTO_PRICE })
+  }
+  if (editPriceBundle.value < editPriceSingle.value) {
+    return t('admin.priceBundleMinSingle')
+  }
+  return ''
+})
 function formatDate(iso: string) {
   return new Date(iso).toLocaleString('ru-RU')
 }
 
 function adminErrorMessage(e: unknown) {
-  return getApiErrorMessage(e) || t('admin.saveFailed')
+  return t(getCommonApiErrorKey(e) ?? 'admin.saveFailed')
 }
 
 function validatePrices(single: number, bundle: number) {
   if (single < MIN_PHOTO_PRICE || bundle < MIN_PHOTO_PRICE) {
-    toast.error(t('admin.priceMin', { min: MIN_PHOTO_PRICE }))
     return false
   }
   if (bundle < single) {
-    toast.error(t('admin.priceBundleMinSingle'))
     return false
   }
   return true
 }
 
 async function saveSettings() {
-  if (!validatePrices(priceSingle.value, priceBundle.value)) return
+  if (!validatePrices(priceSingle.value, priceBundle.value)) {
+    await nextTick()
+    if (priceSingleError.value) priceSingleInput.value?.focus()
+    else priceBundleInput.value?.focus()
+    return
+  }
   settingsSaving.value = true
   try {
     await api.updateAdminSettings({
@@ -210,7 +234,12 @@ function openEditTournament(t: Tournament) {
 
 async function saveTournament() {
   if (!editingTournament.value) return
-  if (!validatePrices(editPriceSingle.value, editPriceBundle.value)) return
+  if (!validatePrices(editPriceSingle.value, editPriceBundle.value)) {
+    await nextTick()
+    if (editPriceSingleError.value) editPriceSingleInput.value?.focus()
+    else editPriceBundleInput.value?.focus()
+    return
+  }
   tournamentSaving.value = true
   try {
     await api.updateAdminTournament(editingTournament.value.id, {
@@ -360,15 +389,43 @@ async function setUserStatus(id: string, status: string) {
           <p class="text-sm text-gray-500">{{ t('admin.defaultPricesHint') }}</p>
           <label class="block text-sm">
             <span class="text-gray-600">{{ t('admin.priceOnePhoto') }}</span>
-            <input v-model.number="priceSingle" type="number" :min="MIN_PHOTO_PRICE" step="0.01" class="input-field mt-1">
-            <span class="mt-1 block text-xs text-gray-500">{{ t('admin.priceMinHint', { min: MIN_PHOTO_PRICE }) }}</span>
+            <input
+              ref="priceSingleInput"
+              v-model.number="priceSingle"
+              type="number"
+              :min="MIN_PHOTO_PRICE"
+              step="0.01"
+              class="input-field mt-1"
+              :class="{ 'input-field-error': priceSingleError }"
+              :aria-invalid="!!priceSingleError"
+              :aria-describedby="priceSingleError ? 'default-price-single-error' : undefined"
+            >
+            <span v-if="priceSingleError" id="default-price-single-error" class="field-error block">
+              {{ priceSingleError }}
+            </span>
+            <span v-else class="mt-1.5 block text-xs text-gray-500">
+              {{ t('admin.priceMinHint', { min: MIN_PHOTO_PRICE }) }}
+            </span>
           </label>
           <label class="block text-sm">
             <span class="text-gray-600">{{ t('admin.priceAllPhotos') }}</span>
-            <input v-model.number="priceBundle" type="number" :min="MIN_PHOTO_PRICE" step="0.01" class="input-field mt-1">
+            <input
+              ref="priceBundleInput"
+              v-model.number="priceBundle"
+              type="number"
+              :min="MIN_PHOTO_PRICE"
+              step="0.01"
+              class="input-field mt-1"
+              :class="{ 'input-field-error': priceBundleError }"
+              :aria-invalid="!!priceBundleError"
+              :aria-describedby="priceBundleError ? 'default-price-bundle-error' : undefined"
+            >
+            <span v-if="priceBundleError" id="default-price-bundle-error" class="field-error block">
+              {{ priceBundleError }}
+            </span>
           </label>
-          <p v-if="!pricesValid" class="text-sm text-amber-400">{{ t('admin.priceMin', { min: MIN_PHOTO_PRICE }) }}</p>
-          <button class="btn-primary-solid" :disabled="settingsSaving || !pricesValid" @click="saveSettings">
+          <button class="btn-primary-solid" :disabled="settingsSaving" @click="saveSettings">
+            <span v-if="settingsSaving" class="loading-spinner" aria-hidden="true" />
             {{ settingsSaving ? t('settings.saving') : t('admin.savePrices') }}
           </button>
         </div>
@@ -580,13 +637,32 @@ async function setUserStatus(id: string, status: string) {
           <h3 class="font-semibold">{{ editingTournament.name }}</h3>
           <label class="block text-sm">
             <span class="text-gray-600">{{ t('admin.priceSingle') }}</span>
-            <input v-model.number="editPriceSingle" type="number" :min="MIN_PHOTO_PRICE" step="0.01" class="input-field mt-1">
+            <input
+              ref="editPriceSingleInput"
+              v-model.number="editPriceSingle"
+              type="number"
+              :min="MIN_PHOTO_PRICE"
+              step="0.01"
+              class="input-field mt-1"
+              :class="{ 'input-field-error': editPriceSingleError }"
+              :aria-invalid="!!editPriceSingleError"
+            >
+            <span v-if="editPriceSingleError" class="field-error block">{{ editPriceSingleError }}</span>
           </label>
           <label class="block text-sm">
             <span class="text-gray-600">{{ t('admin.priceBundle') }}</span>
-            <input v-model.number="editPriceBundle" type="number" :min="MIN_PHOTO_PRICE" step="0.01" class="input-field mt-1">
+            <input
+              ref="editPriceBundleInput"
+              v-model.number="editPriceBundle"
+              type="number"
+              :min="MIN_PHOTO_PRICE"
+              step="0.01"
+              class="input-field mt-1"
+              :class="{ 'input-field-error': editPriceBundleError }"
+              :aria-invalid="!!editPriceBundleError"
+            >
+            <span v-if="editPriceBundleError" class="field-error block">{{ editPriceBundleError }}</span>
           </label>
-          <p v-if="!editPricesValid" class="text-sm text-amber-400">{{ t('admin.priceMin', { min: MIN_PHOTO_PRICE }) }}</p>
           <label class="block text-sm">
             <span class="text-gray-600">{{ t('admin.statusLabel') }}</span>
             <select v-model="editStatus" class="input-field mt-1">
@@ -595,7 +671,8 @@ async function setUserStatus(id: string, status: string) {
             </select>
           </label>
           <div class="flex gap-2">
-            <button class="btn-primary-solid flex-1" :disabled="tournamentSaving || !editPricesValid" @click="saveTournament">
+            <button class="btn-primary-solid flex-1" :disabled="tournamentSaving" @click="saveTournament">
+              <span v-if="tournamentSaving" class="loading-spinner" aria-hidden="true" />
               {{ tournamentSaving ? t('settings.saving') : t('common.save') }}
             </button>
             <button class="rounded-2xl px-4 py-3 text-sm font-medium text-gray-400 ring-1 ring-white/10" @click="editingTournament = null">

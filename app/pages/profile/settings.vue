@@ -12,7 +12,8 @@ const belt = ref(auth.user?.belt || '')
 const saving = ref(false)
 const saved = ref(false)
 const error = ref('')
-const consentBusy = ref(false)
+const consentAction = ref<'unpublish' | 'revoke' | null>(null)
+const consentBusy = computed(() => consentAction.value !== null)
 const showPersonal = ref(true)
 
 const belts = beltOptions()
@@ -43,8 +44,7 @@ async function save() {
     toast.success(t('settings.saved'))
   }
   catch (e: unknown) {
-    const msg = getApiErrorMessage(e)
-    error.value = msg || t('settings.saveFailed')
+    error.value = t(getCommonApiErrorKey(e) ?? 'settings.saveFailed')
     toast.error(error.value)
   }
   finally {
@@ -54,33 +54,33 @@ async function save() {
 
 async function unpublishCatalog() {
   if (!confirm(t('settings.consentUnpublishConfirm'))) return
-  consentBusy.value = true
+  consentAction.value = 'unpublish'
   try {
     await api.unpublishCatalog()
     await refreshConsent()
     toast.success(t('settings.consentUnpublished'))
   }
-  catch {
-    toast.error(t('settings.consentActionFailed'))
+  catch (e: unknown) {
+    toast.error(t(getCommonApiErrorKey(e) ?? 'settings.consentActionFailed'))
   }
   finally {
-    consentBusy.value = false
+    consentAction.value = null
   }
 }
 
 async function revokeConsent() {
   if (!confirm(t('settings.consentRevokeConfirm'))) return
-  consentBusy.value = true
+  consentAction.value = 'revoke'
   try {
     await api.revokeConsent()
     await refreshConsent()
     toast.success(t('settings.consentRevoked'))
   }
-  catch {
-    toast.error(t('settings.consentActionFailed'))
+  catch (e: unknown) {
+    toast.error(t(getCommonApiErrorKey(e) ?? 'settings.consentActionFailed'))
   }
   finally {
-    consentBusy.value = false
+    consentAction.value = null
   }
 }
 
@@ -136,10 +136,11 @@ async function logout() {
         </label>
         <p class="text-xs text-gray-400">Email: {{ auth.user?.email }}</p>
         <button class="btn-primary-solid" :disabled="saving" @click="save">
+          <span v-if="saving" class="loading-spinner" aria-hidden="true" />
           {{ saving ? t('settings.saving') : t('settings.save') }}
         </button>
         <p v-if="saved" class="text-center text-sm text-green-400">{{ t('settings.saved') }}</p>
-        <p v-if="error" class="text-center text-sm text-red-400">{{ error }}</p>
+        <AppAlert v-if="error" type="error" :message="error" />
       </div>
 
       <NuxtLink to="/forgot-password" class="cabinet-row">
@@ -233,6 +234,7 @@ async function logout() {
             :disabled="consentBusy"
             @click="unpublishCatalog"
           >
+            <span v-if="consentAction === 'unpublish'" class="loading-spinner" aria-hidden="true" />
             {{ t('settings.consentUnpublish') }}
           </button>
           <button
@@ -242,6 +244,7 @@ async function logout() {
             :disabled="consentBusy"
             @click="revokeConsent"
           >
+            <span v-if="consentAction === 'revoke'" class="loading-spinner mr-2 inline-block align-middle" aria-hidden="true" />
             {{ t('settings.consentRevoke') }}
           </button>
         </div>

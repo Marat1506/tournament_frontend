@@ -21,6 +21,8 @@ const form = reactive({
 
 const saving = ref(false)
 const error = ref('')
+const priceSingleInput = ref<HTMLInputElement | null>(null)
+const priceBundleInput = ref<HTMLInputElement | null>(null)
 
 watch(tournament, (t) => {
   if (!t) return
@@ -33,14 +35,24 @@ watch(tournament, (t) => {
 }, { immediate: true })
 
 const MIN_PHOTO_PRICE = 10
+const priceSingleError = computed(() =>
+  form.price_single < MIN_PHOTO_PRICE ? t('admin.priceSingleMin', { min: MIN_PHOTO_PRICE }) : '',
+)
+const priceBundleError = computed(() => {
+  if (form.price_bundle < MIN_PHOTO_PRICE) return t('admin.priceBundleMin', { min: MIN_PHOTO_PRICE })
+  if (form.price_bundle < form.price_single) return t('admin.priceBundleMinSingle')
+  return ''
+})
 
 async function save() {
   if (!form.name.trim()) {
     error.value = t('photographer.errNameRequired')
     return
   }
-  if (form.price_single < MIN_PHOTO_PRICE || form.price_bundle < MIN_PHOTO_PRICE || form.price_bundle < form.price_single) {
-    error.value = t('photographer.errInvalidPrices')
+  if (priceSingleError.value || priceBundleError.value) {
+    await nextTick()
+    if (priceSingleError.value) priceSingleInput.value?.focus()
+    else priceBundleInput.value?.focus()
     return
   }
   saving.value = true
@@ -58,7 +70,7 @@ async function save() {
     await refreshNuxtData('my-tournaments-detail')
     toast.success(t('photographer.settingsSaved'))
   } catch (e: unknown) {
-    error.value = getApiErrorMessage(e) || t('photographer.settingsSaveFailed')
+    error.value = t(getCommonApiErrorKey(e) ?? 'photographer.settingsSaveFailed')
     toast.error(error.value)
   } finally {
     saving.value = false
@@ -73,16 +85,6 @@ async function save() {
         <NuxtLink :to="`/photographer/tournaments/${id}`" class="flex h-10 w-10 items-center justify-center rounded-full hover:bg-white/10">
           <AppIcon name="back" class="h-5 w-5" />
         </NuxtLink>
-      </template>
-      <template #right>
-        <button
-          type="button"
-          class="rounded-full bg-brand-600 px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-50"
-          :disabled="saving"
-          @click="save"
-        >
-          {{ saving ? t('settings.saving') : t('common.save') }}
-        </button>
       </template>
     </AppPageHeader>
 
@@ -134,17 +136,38 @@ async function save() {
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="mb-1 block text-xs text-gray-500">{{ t('photographer.priceSingle') }}</label>
-            <input v-model.number="form.price_single" type="number" min="10" step="0.01" class="input-field">
+            <input
+              ref="priceSingleInput"
+              v-model.number="form.price_single"
+              type="number"
+              :min="MIN_PHOTO_PRICE"
+              step="0.01"
+              class="input-field"
+              :class="{ 'input-field-error': priceSingleError }"
+              :aria-invalid="!!priceSingleError"
+            >
+            <p v-if="priceSingleError" class="field-error">{{ priceSingleError }}</p>
           </div>
           <div>
             <label class="mb-1 block text-xs text-gray-500">{{ t('photographer.priceBundleShort') }}</label>
-            <input v-model.number="form.price_bundle" type="number" min="10" step="0.01" class="input-field">
+            <input
+              ref="priceBundleInput"
+              v-model.number="form.price_bundle"
+              type="number"
+              :min="MIN_PHOTO_PRICE"
+              step="0.01"
+              class="input-field"
+              :class="{ 'input-field-error': priceBundleError }"
+              :aria-invalid="!!priceBundleError"
+            >
+            <p v-if="priceBundleError" class="field-error">{{ priceBundleError }}</p>
           </div>
         </div>
 
         <AppAlert v-if="error" type="error" :message="error" />
 
         <button type="submit" class="btn-primary-solid w-full" :disabled="saving">
+          <span v-if="saving" class="loading-spinner" aria-hidden="true" />
           {{ saving ? t('settings.saving') : t('common.save') }}
         </button>
       </form>

@@ -12,7 +12,7 @@ const form = reactive({
   name: '',
   date: '',
   location: '',
-  organizer: 'IBJJF',
+  organizer: '',
   price_single: 20,
   price_bundle: 50,
 })
@@ -28,6 +28,8 @@ const coverPreview = ref<string | null>(null)
 const coverInput = ref<HTMLInputElement | null>(null)
 const loading = ref(false)
 const error = ref('')
+const priceSingleInput = ref<HTMLInputElement | null>(null)
+const priceBundleInput = ref<HTMLInputElement | null>(null)
 const wizardStep = ref(1)
 const feePercent = computed(() => 10)
 
@@ -54,10 +56,20 @@ function goNext() {
 }
 
 const MIN_PHOTO_PRICE = 10
+const priceSingleError = computed(() =>
+  form.price_single < MIN_PHOTO_PRICE ? t('admin.priceSingleMin', { min: MIN_PHOTO_PRICE }) : '',
+)
+const priceBundleError = computed(() => {
+  if (form.price_bundle < MIN_PHOTO_PRICE) return t('admin.priceBundleMin', { min: MIN_PHOTO_PRICE })
+  if (form.price_bundle < form.price_single) return t('admin.priceBundleMinSingle')
+  return ''
+})
 
 async function submit() {
-  if (form.price_single < MIN_PHOTO_PRICE || form.price_bundle < MIN_PHOTO_PRICE || form.price_bundle < form.price_single) {
-    error.value = t('photographer.errInvalidPrices')
+  if (priceSingleError.value || priceBundleError.value) {
+    await nextTick()
+    if (priceSingleError.value) priceSingleInput.value?.focus()
+    else priceBundleInput.value?.focus()
     return
   }
   loading.value = true
@@ -150,17 +162,37 @@ onUnmounted(() => {
           <div class="grid grid-cols-2 gap-3">
             <div>
               <label class="mb-1 block text-xs text-gray-500">{{ t('photographer.priceSingle') }}</label>
-              <input v-model.number="form.price_single" type="number" min="10" step="0.01" class="input-field">
+              <input
+                ref="priceSingleInput"
+                v-model.number="form.price_single"
+                type="number"
+                :min="MIN_PHOTO_PRICE"
+                step="0.01"
+                class="input-field"
+                :class="{ 'input-field-error': priceSingleError }"
+                :aria-invalid="!!priceSingleError"
+              >
+              <p v-if="priceSingleError" class="field-error">{{ priceSingleError }}</p>
             </div>
             <div>
               <label class="mb-1 block text-xs text-gray-500">{{ t('photographer.priceBundleShort') }}</label>
-              <input v-model.number="form.price_bundle" type="number" min="10" step="0.01" class="input-field">
+              <input
+                ref="priceBundleInput"
+                v-model.number="form.price_bundle"
+                type="number"
+                :min="MIN_PHOTO_PRICE"
+                step="0.01"
+                class="input-field"
+                :class="{ 'input-field-error': priceBundleError }"
+                :aria-invalid="!!priceBundleError"
+              >
+              <p v-if="priceBundleError" class="field-error">{{ priceBundleError }}</p>
             </div>
           </div>
           <p class="text-sm leading-relaxed text-gray-400">{{ t('photographer.newSlotHint') }}</p>
         </template>
 
-        <p v-if="error" class="text-sm text-red-500">{{ error }}</p>
+        <AppAlert v-if="error" type="error" :message="error" />
         <div class="flex gap-3">
           <button
             v-if="wizardStep === 2"
@@ -172,6 +204,7 @@ onUnmounted(() => {
             {{ t('common.back') }}
           </button>
           <button type="submit" class="btn-primary-solid flex-1" :disabled="loading">
+            <span v-if="loading && wizardStep === 2" class="loading-spinner" aria-hidden="true" />
             <template v-if="wizardStep === 1">{{ t('common.continue') }}</template>
             <template v-else>{{ loading ? t('photographer.creating') : t('photographer.create') }}</template>
           </button>

@@ -6,6 +6,7 @@ const props = defineProps<{
   selectable?: boolean
   athleteId?: string
   fromFaceSearch?: boolean
+  layout?: 'grid' | 'list'
 }>()
 
 const favorites = useFavoritesStore()
@@ -56,8 +57,9 @@ function onSelect(e: Event) {
   <NuxtLink
     :to="photoLink"
     class="group relative block overflow-hidden rounded-xl bg-white/10"
+    :class="{ 'flex min-h-28': layout === 'list' }"
   >
-    <div class="aspect-[2/3] w-full">
+    <div :class="layout === 'list' ? 'h-28 w-24 shrink-0' : 'aspect-[2/3] w-full'">
       <AppImage
         :src="imageSrc"
         :alt="photo.original_filename || 'Photo'"
@@ -67,7 +69,7 @@ function onSelect(e: Event) {
 
     <button
       v-if="selectable"
-      class="absolute right-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-full backdrop-blur-sm"
+      class="absolute right-1.5 top-1.5 flex h-11 w-11 items-center justify-center rounded-full backdrop-blur-sm transition active:scale-90"
       :class="isSelected ? 'bg-brand-600 text-white' : 'bg-black/40 text-white ring-1 ring-white/40'"
       :aria-label="t('photoCard.select')"
       @click="onSelect"
@@ -76,7 +78,7 @@ function onSelect(e: Event) {
     </button>
 
     <button
-      class="absolute left-1.5 top-1.5 flex h-8 w-8 items-center justify-center rounded-full bg-black/35 text-white backdrop-blur-sm"
+      class="absolute left-1.5 top-1.5 flex h-11 w-11 items-center justify-center rounded-full bg-black/45 text-white backdrop-blur-sm transition active:scale-90"
       :aria-label="t('photoCard.favorite')"
       @click="onHeart"
     >
@@ -87,7 +89,15 @@ function onSelect(e: Event) {
       />
     </button>
 
-    <div class="absolute bottom-1.5 left-1.5 rounded-md bg-black/65 px-2 py-0.5 text-[11px] font-bold text-white">
+    <div v-if="layout === 'list'" class="min-w-0 flex-1 self-center px-4" :class="{ 'pr-14': selectable }">
+      <div class="truncate text-sm font-semibold">{{ photo.original_filename || t('common.photo') }}</div>
+      <div class="mt-2 text-lg font-bold text-brand-400">${{ photo.price.toFixed(0) }}</div>
+      <div v-if="selectable" class="mt-1 text-xs" :class="isSelected ? 'text-brand-300' : 'text-gray-500'">
+        {{ isSelected ? t('photoCard.selected') : t('photoCard.tapToSelect') }}
+      </div>
+    </div>
+
+    <div v-else class="absolute bottom-1.5 left-1.5 rounded-md bg-black/65 px-2 py-0.5 text-[11px] font-bold text-white">
       ${{ photo.price.toFixed(0) }}
     </div>
   </NuxtLink>

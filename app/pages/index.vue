@@ -69,12 +69,16 @@ const trustItems = computed(() => [
 
       <div class="relative mt-8 w-full space-y-3">
         <NuxtLink to="/tournaments" class="btn-primary-solid">
-          <AppIcon name="face" class="h-5 w-5" />
-          {{ t('home.findPhotos') }}
+          <span class="flex h-6 w-6 shrink-0 items-center justify-center" aria-hidden="true">
+            <AppIcon name="face" class="h-5 w-5" />
+          </span>
+          <span class="leading-none">{{ t('home.findPhotos') }}</span>
         </NuxtLink>
         <NuxtLink to="/photographer/login" class="btn-ghost-brand">
-          <AppIcon name="camera" class="h-5 w-5" />
-          {{ t('home.uploadPhotos') }}
+          <span class="flex h-6 w-6 shrink-0 items-center justify-center" aria-hidden="true">
+            <AppIcon name="camera" class="h-5 w-5" />
+          </span>
+          <span class="leading-none">{{ t('home.uploadPhotos') }}</span>
         </NuxtLink>
       </div>
     </section>

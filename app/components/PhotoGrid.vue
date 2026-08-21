@@ -8,10 +8,12 @@ withDefaults(defineProps<{
   purchasesEnabled?: boolean
   athleteId?: string
   fromFaceSearch?: boolean
+  layout?: 'grid' | 'list'
 }>(), {
   loading: false,
   selectable: false,
   purchasesEnabled: true,
+  layout: 'grid',
 })
 
 const { t } = useI18n()
@@ -26,7 +28,13 @@ const { t } = useI18n()
     {{ t('favorites.noPhotos') }}
   </div>
 
-  <div v-else class="grid grid-cols-3 gap-1.5 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
+  <div
+    v-else
+    class="grid"
+    :class="layout === 'list'
+      ? 'grid-cols-1 gap-3'
+      : 'grid-cols-3 gap-1.5 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6'"
+  >
     <PhotoCard
       v-for="photo in photos"
       :key="photo.id"
@@ -34,6 +42,7 @@ const { t } = useI18n()
       :selectable="Boolean(selectable && purchasesEnabled !== false)"
       :athlete-id="athleteId"
       :from-face-search="fromFaceSearch"
+      :layout="layout"
     />
   </div>
 </template>

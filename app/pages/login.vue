@@ -46,7 +46,7 @@ async function submit() {
       await router.push('/confirm-email')
       return
     }
-    error.value = t('auth.loginError')
+    error.value = t(getCommonApiErrorKey(e) ?? 'auth.loginError')
   } finally {
     loading.value = false
   }

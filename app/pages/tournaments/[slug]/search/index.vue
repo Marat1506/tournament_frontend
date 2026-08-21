@@ -11,7 +11,7 @@ const query = ref('')
 
 const { data: tournament } = await useAsyncData(`tournament-${slug}`, () => api.getTournament(slug))
 
-const { data: athletes, pending, refresh } = await useAsyncData(
+const { data: athletes, pending, error: loadError, refresh } = await useAsyncData(
   () => `athletes-${slug}-${JSON.stringify(filters.value)}-${query.value}`,
   () => api.searchAthletes(slug, query.value, filtersToQuery(filters.value)),
   { watch: [filters, query] },
@@ -45,9 +45,9 @@ function onFiltersApply(v: typeof filters.value) {
 
 <template>
   <div class="page-with-floating-cta">
-    <AppPageHeader :title="pageTitle">
+    <AppPageHeader :title="t('tournaments.findMyPhotos')">
       <template #left>
-        <NuxtLink :to="`/tournaments/${slug}`" class="flex h-10 w-10 items-center justify-center rounded-full hover:bg-white/10">
+        <NuxtLink to="/tournaments" class="flex h-10 w-10 items-center justify-center rounded-full hover:bg-white/10">
           <AppIcon name="back" class="h-5 w-5" />
         </NuxtLink>
       </template>
@@ -67,29 +67,28 @@ function onFiltersApply(v: typeof filters.value) {
       <SearchStepper :current="2" tournament-to="/tournaments" />
       <SearchModeTabs :slug="slug" mode="name" />
 
-      <h2 class="mb-2 text-xl font-bold">{{ t('search.findYourselfTitle') }}</h2>
-      <TournamentCard v-if="tournament" :tournament="tournament" compact class="mb-3" />
-      <div class="mb-4 flex justify-end">
-        <NuxtLink :to="`/tournaments/${slug}`" class="inline-flex items-center gap-1 text-sm font-medium text-brand-400">
-          <AppIcon name="pencil" class="h-3.5 w-3.5" />
-          {{ t('search.changeTournament') }}
-        </NuxtLink>
-      </div>
+      <h1 class="text-2xl font-bold tracking-tight">{{ pageTitle }}</h1>
+      <p class="mt-2 text-sm leading-relaxed text-gray-400">{{ t('search.nameHint') }}</p>
 
       <input
         v-model="query"
         type="search"
         :placeholder="t('search.namePlaceholder')"
-        class="input-field mb-2"
+        class="input-field mt-5"
         autofocus
       >
-      <p class="mb-4 text-xs text-gray-500">{{ t('search.nameHint') }}</p>
+      <p class="mt-2 text-xs text-gray-500">{{ t('search.startTyping') }}</p>
 
-      <div v-if="pending" class="space-y-2">
+      <div v-if="pending" class="mt-4 space-y-2">
         <div v-for="n in 4" :key="n" class="card h-16 animate-pulse bg-white/10" />
       </div>
 
-      <div v-else-if="(athletes?.data ?? []).length" class="space-y-2">
+      <div v-else-if="loadError" class="card mt-4 space-y-3 p-5 text-center">
+        <AppAlert type="error" :message="t('errors.network')" />
+        <button type="button" class="btn-secondary justify-center" @click="refresh()">{{ t('common.retry') }}</button>
+      </div>
+
+      <div v-else-if="(athletes?.data ?? []).length" class="mt-4 space-y-2">
         <button
           v-for="athlete in athletes?.data ?? []"
           :key="athlete.id"
@@ -109,16 +108,15 @@ function onFiltersApply(v: typeof filters.value) {
         </button>
       </div>
 
-      <div v-else-if="query.length >= 1 || filterCount" class="card p-10 text-center text-gray-500">
+      <div v-else-if="query.length >= 1 || filterCount" class="card mt-4 p-8 text-center text-gray-400">
         {{ t('search.notFound') }}
       </div>
 
-      <div v-else class="card space-y-3 p-6 text-center">
+      <div v-else class="card mt-4 p-6 text-center">
         <p class="text-sm text-gray-400">{{ t('search.noNamesYet') }}</p>
-        <NuxtLink :to="`/tournaments/${slug}/search/face`" class="font-medium text-brand-400">
-          {{ t('tournaments.searchByFace') }} →
-        </NuxtLink>
       </div>
+
+      <SelectedTournamentCard v-if="tournament" class="mt-4" :tournament="tournament" change-to="/tournaments" />
     </div>
 
     <CategoryFilterPanel v-model="filters" :open="showFilters" @update:model-value="onFiltersApply" @update:open="showFilters = $event" />

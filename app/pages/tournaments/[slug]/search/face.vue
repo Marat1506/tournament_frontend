@@ -4,6 +4,8 @@ definePageMeta({ ssr: false })
 import type { Photo } from '~/types'
 
 const CONSENT_SESSION_KEY = 'bjj_consent_personal_checked'
+const MAX_SELFIE_SIZE = 5 * 1024 * 1024
+const ALLOWED_SELFIE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp'])
 
 const route = useRoute()
 const slug = route.params.slug as string
@@ -83,6 +85,7 @@ const canSearch = computed(() => faceSearchEnabled.value && consentOk.value && !
 watchEffect(() => {
   if (tournament.value?.id) {
     selection.setContext(tournament.value.id, tournament.value.payouts_ready !== false)
+    selection.setReturnPath(`/tournaments/${slug}/search/face`)
   }
 })
 
@@ -92,6 +95,16 @@ function onFileChange(event: Event) {
   if (!file) return
 
   errorMsg.value = ''
+  if (!ALLOWED_SELFIE_TYPES.has(file.type)) {
+    errorMsg.value = t('search.unsupportedSelfie')
+    input.value = ''
+    return
+  }
+  if (file.size > MAX_SELFIE_SIZE) {
+    errorMsg.value = t('search.selfieTooLarge', { max: 5 })
+    input.value = ''
+    return
+  }
   results.value = null
   faceSearch.clear()
   selectedFile.value = file
@@ -149,7 +162,7 @@ async function search() {
     results.value = data
     faceSearch.setResults(slug, data, response.guest_consent_token)
     if (!data.length) {
-      errorMsg.value = t('search.faceNotFound')
+      errorMsg.value = t('search.noFaceMatches')
     }
   }
   catch (e: unknown) {
@@ -158,13 +171,13 @@ async function search() {
       errorMsg.value = t('search.faceDisabled')
     }
     else if (err.data?.error === 'no face detected in image') {
-      errorMsg.value = t('search.faceNotFound')
+      errorMsg.value = t('search.noFaceInImage')
     }
     else if (err.data?.error === 'personal consent is required') {
       errorMsg.value = t('search.consentRequired')
     }
     else {
-      errorMsg.value = err.data?.error || t('search.searchFailed')
+      errorMsg.value = t(getCommonApiErrorKey(e) ?? 'search.searchFailed')
     }
   }
   finally {
@@ -197,6 +210,11 @@ function dismissClaim() {
   claimDismissed.value = true
 }
 
+function editSearch() {
+  results.value = null
+  errorMsg.value = ''
+}
+
 onBeforeUnmount(() => {
   if (previewUrl.value) {
     URL.revokeObjectURL(previewUrl.value)
@@ -206,118 +224,102 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="page-with-floating-cta">
-    <AppPageHeader :title="t('search.byFace')">
+    <AppPageHeader :title="t('tournaments.findMyPhotos')">
       <template #left>
-        <NuxtLink :to="`/tournaments/${slug}`" class="flex h-10 w-10 items-center justify-center rounded-full hover:bg-white/10">
+        <NuxtLink to="/tournaments" class="flex h-10 w-10 items-center justify-center rounded-full hover:bg-white/10">
           <AppIcon name="back" class="h-5 w-5" />
         </NuxtLink>
       </template>
     </AppPageHeader>
 
     <div class="page-container">
-      <SearchStepper :current="results ? 3 : 2" tournament-to="/tournaments" />
+      <SearchStepper :current="results?.length ? 3 : 2" tournament-to="/tournaments" />
       <SearchModeTabs :slug="slug" mode="face" />
 
-      <h2 class="mb-2 text-xl font-bold">{{ t('search.findYourselfTitle') }}</h2>
-      <p class="mb-4 text-sm text-gray-400">{{ t('search.findYourselfHint') }}</p>
+      <h1 class="text-2xl font-bold tracking-tight">{{ t('search.findYourselfTitle') }}</h1>
+      <p class="mt-2 text-sm leading-relaxed text-gray-400">{{ t('search.findYourselfHint') }}</p>
 
-      <TournamentCard v-if="tournament" :tournament="tournament" compact class="mb-3" />
-      <div class="mb-5 flex justify-end">
-        <NuxtLink :to="`/tournaments/${slug}`" class="inline-flex items-center gap-1 text-sm font-medium text-brand-400">
-          <AppIcon name="pencil" class="h-3.5 w-3.5" />
-          {{ t('search.changeTournament') }}
-        </NuxtLink>
-      </div>
+      <AppAlert v-if="!faceSearchEnabled" class="mt-4" type="info" :message="t('search.faceDisabledHint')" />
 
-      <div v-if="!faceSearchEnabled" class="mb-4 rounded-xl bg-amber-500/10 px-4 py-3 text-sm text-amber-200 ring-1 ring-amber-500/20">
-        {{ t('search.faceDisabledHint') }}
-      </div>
-
-      <div
-        v-if="hasExistingConsent"
-        class="mb-4 rounded-xl bg-green-500/10 px-4 py-3 text-sm text-green-200 ring-1 ring-green-500/20"
-      >
-        {{ t('search.consentAlreadyGiven') }}
-      </div>
-
-      <div v-else class="card mb-4 border-brand-500/30 p-5 ring-1 ring-brand-500/20">
-        <div class="mb-3 flex items-start gap-3">
-          <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-500/15 text-brand-400">
-            <AppIcon name="face" class="h-5 w-5" />
-          </span>
-          <div>
-            <h2 class="font-semibold text-gray-100">{{ t('search.consentTitle') }}</h2>
-            <p class="mt-1 text-sm text-gray-400">{{ t('search.consentIntro') }}</p>
-          </div>
-        </div>
-
-        <label class="flex cursor-pointer items-start gap-3 rounded-xl border border-white/10 bg-white/5 p-4">
-          <input
-            v-model="consentPersonal"
-            type="checkbox"
-            class="input-check"
-          >
-          <span class="text-sm leading-relaxed text-gray-200">{{ t('search.consentCheckbox') }}</span>
-        </label>
-
-        <NuxtLink to="/privacy" class="mt-3 inline-block text-sm text-brand-500 hover:underline">
-          {{ t('search.consentPrivacyLink') }}
-        </NuxtLink>
-      </div>
-
-      <div class="card mb-4 p-5" :class="{ 'opacity-60': !faceSearchEnabled || !consentOk }">
+      <div v-if="!results?.length" class="card mt-5 p-4">
         <div
-          class="mb-4 flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-brand-500/50 bg-brand-600/5 px-4 py-8 text-center"
+          class="flex flex-col items-center justify-center rounded-2xl border border-dashed border-brand-500/60 bg-brand-600/5 px-4 py-7 text-center"
         >
-          <div class="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-brand-600/20 text-brand-400">
-            <AppIcon name="face" class="h-7 w-7" />
+          <div class="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-600/20 text-brand-400">
+            <AppIcon name="face" class="h-6 w-6" />
           </div>
-          <div class="font-semibold">{{ t('search.uploadSelfie') }}</div>
-          <p class="mt-1 max-w-xs text-xs text-gray-400">{{ t('search.uploadSelfieHint') }}</p>
-          <button type="button" class="btn-primary-solid mt-4 max-w-xs" :disabled="!faceSearchEnabled || !consentOk" @click="pickFile">
-            {{ previewUrl ? t('search.anotherPhoto') : t('search.choosePhoto') }}
+          <h2 class="font-semibold">{{ t('search.uploadSelfie') }}</h2>
+          <p class="mt-1 max-w-xs text-sm leading-relaxed text-gray-400">{{ t('search.uploadSelfieHint') }}</p>
+
+          <div v-if="previewUrl" class="mt-4 w-full overflow-hidden rounded-xl bg-white/10">
+            <img :src="previewUrl" :alt="t('search.previewAlt')" class="mx-auto max-h-60 w-full object-contain">
+          </div>
+
+          <button
+            type="button"
+            class="btn-primary-solid mt-5 w-auto min-w-52 px-8"
+            :disabled="!faceSearchEnabled || !consentOk || searching"
+            @click="pickFile"
+          >
+            {{ previewUrl ? t('search.anotherPhoto') : t('search.chooseFromGallery') }}
+          </button>
+
+          <div class="my-3 flex w-full items-center gap-3 text-xs uppercase tracking-wide text-gray-500">
+            <span class="h-px flex-1 bg-white/10" />
+            {{ t('search.or') }}
+            <span class="h-px flex-1 bg-white/10" />
+          </div>
+          <button
+            type="button"
+            class="btn-secondary justify-center"
+            :disabled="!faceSearchEnabled || !consentOk || searching"
+            @click="takePhoto"
+          >
+            <AppIcon name="camera" class="h-5 w-5" />
+            {{ t('search.takeSelfie') }}
           </button>
         </div>
 
-        <input
-          ref="fileInput"
-          type="file"
-          accept="image/jpeg,image/png,image/webp"
-          class="hidden"
-          :disabled="!faceSearchEnabled || !consentOk"
-          @change="onFileChange"
+        <input ref="fileInput" type="file" accept="image/jpeg,image/png,image/webp" class="hidden" @change="onFileChange">
+        <input ref="cameraInput" type="file" accept="image/jpeg,image/png,image/webp" capture="user" class="hidden" @change="onFileChange">
+
+        <label
+          v-if="!hasExistingConsent"
+          class="mt-4 flex cursor-pointer items-start gap-3 rounded-xl bg-white/[0.04] p-3 ring-1 ring-white/10"
         >
-        <input
-          ref="cameraInput"
-          type="file"
-          accept="image/jpeg,image/png,image/webp"
-          capture="user"
-          class="hidden"
-          :disabled="!faceSearchEnabled || !consentOk"
-          @change="onFileChange"
-        >
+          <input v-model="consentPersonal" type="checkbox" class="input-check">
+          <span class="text-sm leading-relaxed text-gray-300">
+            {{ t('search.consentCheckbox') }}
+            <NuxtLink to="/privacy" class="font-medium text-brand-400">{{ t('search.consentPrivacyLink') }}</NuxtLink>
+          </span>
+        </label>
 
-        <div v-if="previewUrl" class="mb-4 overflow-hidden rounded-xl bg-white/10">
-          <img :src="previewUrl" :alt="t('search.previewAlt')" class="mx-auto max-h-64 w-full object-contain">
-        </div>
-
-        <p class="mb-3 text-center text-xs uppercase tracking-wide text-gray-500">{{ t('search.or') }}</p>
-        <button type="button" class="btn-secondary justify-center gap-2" :disabled="!faceSearchEnabled || !consentOk" @click="takePhoto">
-          <AppIcon name="camera" class="h-5 w-5" />
-          {{ t('search.takePhotoNow') }}
-        </button>
-
+        <p v-if="!consentOk" class="mt-3 text-sm text-amber-300">{{ t('search.consentBeforePhoto') }}</p>
         <button
+          v-if="selectedFile"
           type="button"
-          class="btn-primary-solid mt-3"
+          class="btn-primary-solid mt-4"
           :disabled="!canSearch"
           @click="search"
         >
+          <span v-if="searching" class="loading-spinner" aria-hidden="true" />
           {{ searching ? t('search.searching') : t('search.findPhotos') }}
         </button>
+        <AppAlert v-if="errorMsg" class="mt-4" type="error" :message="errorMsg" />
       </div>
 
-      <div class="cabinet-row mb-4">
+      <div v-else class="card mt-5 flex items-center gap-3 p-3">
+        <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-green-500/15 text-green-300">
+          <AppIcon name="check" class="h-5 w-5" />
+        </div>
+        <div class="min-w-0 flex-1">
+          <div class="font-semibold">{{ t('search.searchComplete') }}</div>
+          <div class="text-sm text-gray-500">{{ t('search.foundCount', { count: results.length }) }}</div>
+        </div>
+        <button type="button" class="btn-outline shrink-0" @click="editSearch">{{ t('search.changeSelfie') }}</button>
+      </div>
+
+      <div class="mt-4 flex items-center gap-3 rounded-xl bg-surface p-3 ring-1 ring-white/[0.06]">
         <div class="icon-tile">
           <AppIcon name="shield" class="h-5 w-5" />
         </div>
@@ -327,11 +329,13 @@ onBeforeUnmount(() => {
         </div>
       </div>
 
-      <p v-if="errorMsg" class="mb-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
-        {{ errorMsg }}
-      </p>
+      <SelectedTournamentCard v-if="tournament" class="mt-4" :tournament="tournament" change-to="/tournaments" />
 
-      <div v-if="showClaimBanner" class="card mb-4 space-y-3 border-brand-500/30 p-4 ring-1 ring-brand-500/20">
+      <div v-if="tournament && tournament.payouts_ready === false" class="mt-4">
+        <AppAlert type="info" :message="t('cart.errorPayouts')" />
+      </div>
+
+      <div v-if="showClaimBanner" class="card mt-4 space-y-3 border-brand-500/30 p-4 ring-1 ring-brand-500/20">
         <p class="text-sm text-gray-200">
           {{ t('search.claimPrompt', { count: results?.length ?? 0 }) }}
         </p>
@@ -345,14 +349,7 @@ onBeforeUnmount(() => {
         </div>
       </div>
 
-      <div v-if="results?.length">
-        <div class="mb-4 flex items-center justify-between text-sm">
-          <span class="text-gray-400">{{ t('search.foundCount', { count: results.length }) }}</span>
-          <NuxtLink :to="`/tournaments/${slug}`" class="font-medium text-brand-600">{{ t('search.changeMethod') }}</NuxtLink>
-        </div>
-        <div v-if="tournament && tournament.payouts_ready === false" class="mb-4">
-          <AppAlert type="info" :message="t('cart.errorPayouts')" />
-        </div>
+      <div v-if="results?.length" class="mt-5">
         <PhotoGrid
           :photos="results"
           selectable
@@ -362,7 +359,7 @@ onBeforeUnmount(() => {
       </div>
     </div>
 
-    <div v-if="results?.length" class="floating-above-nav">
+    <div v-if="results?.length && selection.count" class="floating-above-nav">
       <div class="card flex items-center gap-3 p-3 shadow-lg">
         <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-600 text-white">
           <AppIcon name="cart" class="h-5 w-5" />

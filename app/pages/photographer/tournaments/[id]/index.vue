@@ -5,6 +5,7 @@ definePageMeta({ middleware: 'photographer-auth', ssr: false })
 
 const { t } = useI18n()
 const route = useRoute()
+const router = useRouter()
 const api = useApi()
 const toast = useToast()
 const id = route.params.id as string
@@ -31,10 +32,13 @@ const sendPercent = ref(0)
 const uploadPhase = ref<'idle' | 'sending' | 'processing'>('idle')
 const uploadAlert = ref<{ type: 'success' | 'error' | 'info'; message: string } | null>(null)
 const publishAlert = ref<{ type: 'success' | 'error' | 'info'; message: string } | null>(null)
+const slotPaymentCancelled = ref(route.query.slot === 'cancel')
 const coverAlert = ref<{ type: 'success' | 'error'; message: string } | null>(null)
 const coverInput = ref<HTMLInputElement | null>(null)
 const uploadInput = ref<HTMLInputElement | null>(null)
 const coverUploading = ref(false)
+const MAX_UPLOAD_FILE_SIZE = 50 * 1024 * 1024
+const ALLOWED_UPLOAD_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp'])
 
 const agreementShoot = ref(false)
 const agreementDistribute = ref(false)
@@ -249,8 +253,14 @@ function fileKey(file: File) {
 function addFiles(list: File[]) {
   const existing = new Set(files.value.map(fileKey))
   const next = [...files.value]
+  const rejected: string[] = []
   for (const file of list) {
-    if (!file.type.startsWith('image/') && !/\.(jpe?g|png|webp)$/i.test(file.name)) {
+    if (!ALLOWED_UPLOAD_TYPES.has(file.type) && !/\.(jpe?g|png|webp)$/i.test(file.name)) {
+      rejected.push(t('photographer.uploadUnsupportedFile', { name: file.name }))
+      continue
+    }
+    if (file.size > MAX_UPLOAD_FILE_SIZE) {
+      rejected.push(t('photographer.uploadFileTooLarge', { name: file.name }))
       continue
     }
     const key = fileKey(file)
@@ -263,7 +273,9 @@ function addFiles(list: File[]) {
   batch.value = null
   sendPercent.value = 0
   uploadPhase.value = 'idle'
-  uploadAlert.value = null
+  uploadAlert.value = rejected.length
+    ? { type: 'error', message: rejected.slice(0, 2).join(' ') }
+    : null
 }
 
 function removeFile(index: number) {
@@ -398,9 +410,15 @@ onMounted(async () => {
     if (slot === 'paid') {
       toast.success(t('photographer.slotPaid'))
     }
+    else {
+      toast.info(t('photographer.slotPaymentCancelled'))
+    }
     if (agreementAgreed.value) {
       flowStep.value = needsSlot.value ? 2 : filesStep.value
     }
+    const query = { ...route.query }
+    delete query.slot
+    await router.replace({ query })
   }
 })
 
@@ -434,7 +452,13 @@ watch(needsSlot, (needed, wasNeeded) => {
     </div>
 
     <div v-else class="page-container space-y-5">
-      <PhotographerEventTabs :id="id" active="photos" />
+      <PhotographerEventTabs :id="id" active="upload" />
+
+      <AppAlert
+        v-if="slotPaymentCancelled"
+        type="info"
+        :message="t('photographer.slotPaymentCancelled')"
+      />
 
       <AppAlert
         v-if="isPublished"
@@ -554,7 +578,7 @@ watch(needsSlot, (needed, wasNeeded) => {
           ref="uploadInput"
           type="file"
           multiple
-          accept="image/jpeg,image/png,image/webp,image/*"
+          accept="image/jpeg,image/png,image/webp"
           class="hidden"
           :disabled="uploadInProgress"
           @change="onFilesSelected"
@@ -613,6 +637,17 @@ watch(needsSlot, (needed, wasNeeded) => {
       <section v-else class="card space-y-3 p-4">
         <h2 class="font-semibold">{{ t('photographer.stepPublish') }}</h2>
         <p v-if="!isPublished" class="text-sm text-gray-400">{{ t('photographer.publishHint') }}</p>
+        <div v-if="!isPublished" class="rounded-xl bg-brand-500/10 p-4 ring-1 ring-brand-500/20">
+          <p class="font-semibold">{{ t('photographer.assignAthletesTitle') }}</p>
+          <p class="mt-1 text-sm text-gray-400">{{ t('photographer.assignAthletesHint') }}</p>
+          <NuxtLink
+            :to="`/photographer/tournaments/${id}/photos`"
+            class="btn-secondary mt-3 w-full justify-center"
+          >
+            <AppIcon name="user" class="h-4 w-4" />
+            {{ t('photographer.assignAthletes') }}
+          </NuxtLink>
+        </div>
         <AppAlert
           v-if="!isPublished && !payoutsReady"
           type="info"
