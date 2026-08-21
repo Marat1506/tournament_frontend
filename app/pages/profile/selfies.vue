@@ -42,11 +42,11 @@ function formatDate(iso: string) {
       <div v-for="s in data?.data" :key="s.id" class="card p-4">
         <div class="flex items-start justify-between gap-3">
           <div>
-            <div class="font-medium">{{ typeLabels[s.search_type] || s.search_type }}</div>
-            <div v-if="s.tournament_name" class="text-sm text-gray-600">{{ s.tournament_name }}</div>
+            <div class="font-medium">{{ typeLabels[s.search_type] || t('profileSelfies.unknownType') }}</div>
+            <div v-if="s.tournament_name" class="text-sm text-gray-400">{{ s.tournament_name }}</div>
             <div class="text-xs text-gray-400">{{ formatDate(s.created_at) }}</div>
           </div>
-          <div class="rounded-full bg-brand-50 px-2.5 py-1 text-xs font-medium text-brand-700">
+          <div class="rounded-full bg-brand-600/20 px-2.5 py-1 text-xs font-medium text-brand-300">
             {{ s.result_count }} {{ t('common.photos') }}
           </div>
         </div>

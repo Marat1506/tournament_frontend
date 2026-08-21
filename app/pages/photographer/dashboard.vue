@@ -227,6 +227,10 @@ async function logout() {
             <NuxtLink to="/photographer/tournaments/new" class="btn-primary-solid">
               {{ t('photographer.createBtn') }}
             </NuxtLink>
+            <button type="button" class="btn-secondary justify-center" @click="listMode = true">
+              <AppIcon name="upload" class="h-4 w-4" />
+              {{ t('photographer.addToExistingTournament') }}
+            </button>
           </div>
 
           <NuxtLink to="/support" class="cabinet-row">

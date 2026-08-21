@@ -42,7 +42,6 @@ const primaryItems = computed(() => [
 const secondaryItems = computed(() => [
   { to: '/profile/tournaments', label: t('profile.myTournaments'), icon: 'trophy' as const },
   { to: '/profile/orders', label: t('profile.myOrders'), icon: 'cart' as const },
-  { to: '/profile/notifications', label: t('notifications.title'), icon: 'bell' as const },
   { to: '/profile/selfies', label: t('profile.mySelfies'), icon: 'face' as const },
 ])
 
@@ -186,7 +185,7 @@ onMounted(async () => {
         </div>
 
         <button
-          class="w-full rounded-2xl border border-red-500/30 py-3 text-center text-sm font-semibold text-red-400 transition hover:bg-red-500/10"
+          class="min-h-11 w-full rounded-2xl border border-red-500/30 py-3 text-center text-sm font-semibold text-red-400 transition hover:bg-red-500/10"
           @click="auth.logout()"
         >
           {{ t('profile.logout') }}

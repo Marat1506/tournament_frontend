@@ -370,7 +370,7 @@ onBeforeUnmount(() => {
         </div>
         <NuxtLink
           :to="`/cart?tournament_id=${tournament?.id}`"
-          class="rounded-xl bg-brand-600 px-3 py-2.5 text-sm font-semibold text-white"
+          class="min-h-11 rounded-xl bg-brand-600 px-3 py-2.5 text-sm font-semibold text-white"
           :class="{ 'pointer-events-none opacity-40': !selection.count }"
         >
           {{ t('search.toCart') }} ›

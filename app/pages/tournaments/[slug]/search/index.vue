@@ -54,7 +54,7 @@ function onFiltersApply(v: typeof filters.value) {
       <template #right>
         <button
           class="flex h-10 items-center gap-1 rounded-full px-3 text-sm font-medium"
-          :class="filterCount ? 'bg-brand-50 text-brand-600' : 'text-gray-500'"
+          :class="filterCount ? 'bg-brand-600/20 text-brand-300' : 'text-gray-400'"
           @click="showFilters = true"
         >
           <AppIcon name="filter" class="h-5 w-5" />

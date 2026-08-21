@@ -119,7 +119,8 @@
   "notifications": {
     "title": "Уведомления",
     "empty": "Пока нет уведомлений",
-    "loadFailed": "Не удалось загрузить уведомления."
+    "loadFailed": "Не удалось загрузить уведомления.",
+    "markReadFailed": "Не удалось отметить уведомление прочитанным. Попробуйте ещё раз."
   },
   "auth": {
     "loginTitle": "Вход для спортсменов",
@@ -258,7 +259,8 @@
     "statusPending": "Ожидает",
     "statusPaid": "Оплачен",
     "statusFailed": "Ошибка",
-    "statusCancelled": "Отменён"
+    "statusCancelled": "Отменён",
+    "statusUnknown": "Неизвестный статус"
   },
   "profileSelfies": {
     "title": "Мои загрузки (селфи)",
@@ -266,11 +268,13 @@
     "searchFace": "Поиск по лицу",
     "searchName": "Поиск по имени",
     "empty": "История пуста. Выполните поиск по лицу на турнире.",
-    "findNew": "Найти новые фото"
+    "findNew": "Найти новые фото",
+    "unknownType": "Поиск фотографий"
   },
   "cart": {
     "title": "Корзина",
     "empty": "Корзина пуста",
+    "findPhotos": "Перейти к фотографиям",
     "bundle": "Комплект: {name}",
     "bundleHint": "Все фото спортсмена",
     "remove": "Удалить",
@@ -335,6 +339,7 @@
     "downloadPhotos": "Скачать фото",
     "photo": "Фото {id}",
     "bundlePhoto": "Фото из пакета · {id}",
+    "photoNumber": "Фото {number}",
     "download": "Скачать",
     "downloading": "Скачивание...",
     "preparingDownloads": "Подготавливаем файлы для скачивания…",
@@ -390,6 +395,7 @@
     "loading": "Загрузка…",
     "close": "Закрыть",
     "retry": "Повторить",
+    "optional": "необязательно",
     "continue": "Продолжить",
     "photo": "Фото"
   },
@@ -683,6 +689,7 @@
     "pickPhotosBtn": "Выбрать фото",
     "addMoreFiles": "Добавить ещё фото",
     "pickManyHint": "Откройте окно выбора файлов и отметьте нужные снимки.",
+    "selectFilesFirst": "Сначала выберите хотя бы одну фотографию.",
     "pickManySub": "JPEG, PNG или WebP · до 50 МБ на один файл",
     "uploadUnsupportedFile": "Файл «{name}» не добавлен: поддерживаются только JPEG, PNG и WebP.",
     "uploadFileTooLarge": "Файл «{name}» больше 50 МБ и не был добавлен.",
@@ -779,6 +786,7 @@
     "tabEdit": "Редактировать",
     "openTournament": "Открыть",
     "addPhotos": "Добавить фото",
+    "addToExistingTournament": "Добавить фото в существующий турнир",
     "slotPaymentCancelled": "Оплата слота отменена. Деньги не списаны — вы можете повторить оплату, когда будете готовы.",
     "assignAthletesTitle": "Следующий шаг: укажите спортсменов",
     "assignAthletesHint": "Добавьте имена к фотографиям, чтобы родители могли найти снимки поиском.",
@@ -830,6 +838,10 @@
     "roleClient": "Клиент",
     "rolePhotographer": "Фотограф",
     "roleAdmin": "Админ",
+    "roleUnknown": "Неизвестная роль",
+    "statusUnknown": "Неизвестный статус",
+    "leadTypeUnknown": "Другой тип заявки",
+    "stripeUnknown": "Неизвестный статус Stripe",
     "profileLink": "Профиль",
     "statLeadsNew": "Новых заявок",
     "statOrders": "Заказов",

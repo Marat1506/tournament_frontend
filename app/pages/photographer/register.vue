@@ -111,7 +111,7 @@ async function submit() {
           <span class="text-sm text-gray-300">{{ t('photographer.registerCommission') }}</span>
         </label>
 
-        <p v-if="error" class="text-sm text-red-600">{{ error }}</p>
+        <p v-if="error" class="text-sm text-red-400">{{ error }}</p>
         <NuxtLink
           v-if="doorLink === 'photographer'"
           to="/photographer/login"
@@ -133,7 +133,7 @@ async function submit() {
 
       <p class="mt-4 text-center text-sm text-gray-500">
         {{ t('photographer.hasAccount') }}
-        <NuxtLink to="/photographer/login" class="font-medium text-brand-600">{{ t('photographer.loginBtn') }}</NuxtLink>
+        <NuxtLink to="/photographer/login" class="font-medium text-brand-400">{{ t('photographer.loginBtn') }}</NuxtLink>
       </p>
       <p class="mt-6 text-center text-sm text-gray-500">
         <NuxtLink to="/register" class="font-medium text-brand-400">{{ t('photographer.iAmAthlete') }}</NuxtLink>

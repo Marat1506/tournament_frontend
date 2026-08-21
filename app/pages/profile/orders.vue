@@ -43,15 +43,15 @@ function formatDate(iso: string) {
           </div>
           <div class="text-right">
             <div class="font-bold">${{ order.total }}</div>
-            <div class="text-xs" :class="order.status === 'paid' ? 'text-green-600' : 'text-gray-500'">
-              {{ statusLabels[order.status] || order.status }}
+            <div class="text-xs" :class="order.status === 'paid' ? 'text-green-400' : 'text-gray-500'">
+              {{ statusLabels[order.status] || t('profileOrders.statusUnknown') }}
             </div>
           </div>
         </div>
         <NuxtLink
           v-if="order.status === 'paid'"
           :to="`/checkout/success?order_id=${order.id}`"
-          class="mt-3 inline-flex text-sm font-medium text-brand-600"
+          class="mt-3 inline-flex min-h-11 items-center text-sm font-medium text-brand-400"
         >
           {{ t('profileOrders.download') }}
         </NuxtLink>

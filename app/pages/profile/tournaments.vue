@@ -41,7 +41,7 @@ function formatDate(iso?: string) {
         <div class="min-w-0 flex-1">
           <div class="truncate font-semibold">{{ item.name }}</div>
           <div v-if="item.date" class="text-xs text-gray-500">{{ formatDate(item.date) }}</div>
-          <div class="mt-1 text-sm text-gray-600">
+          <div class="mt-1 text-sm text-gray-400">
             {{ t('profileTournaments.stats', { found: item.found_count, purchased: item.purchased_count }) }}
           </div>
         </div>
@@ -52,7 +52,7 @@ function formatDate(iso?: string) {
         {{ t('profileTournaments.empty') }}
       </p>
 
-      <NuxtLink to="/tournaments" class="block py-4 text-center text-sm font-medium text-brand-600">
+      <NuxtLink to="/tournaments" class="block py-4 text-center text-sm font-medium text-brand-400">
         {{ t('profileTournaments.showAll') }}
       </NuxtLink>
     </div>

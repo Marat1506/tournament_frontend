@@ -88,8 +88,11 @@ async function save() {
       </template>
     </AppPageHeader>
 
-    <div v-if="loadError" class="page-container">
+    <div v-if="loadError" class="page-container space-y-3">
       <AppAlert type="error" :message="t('photographer.loadDetailFailed')" />
+      <button type="button" class="btn-secondary justify-center" @click="refresh()">
+        {{ t('common.retry') }}
+      </button>
     </div>
 
     <div v-else-if="!tournament" class="page-container">

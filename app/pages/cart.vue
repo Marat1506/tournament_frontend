@@ -142,12 +142,18 @@ const backToPhotos = computed(() => {
     </AppPageHeader>
 
     <div class="page-container space-y-4">
-      <SearchStepper :current="step" :steps="4" tournament-to="/tournaments" />
+      <SearchStepper :current="step" :steps="4" :third-label="t('cart.title')" tournament-to="/tournaments" />
 
       <AppAlert v-if="paymentCancelled" type="info" :message="t('cart.paymentCancelled')" />
 
-      <div v-if="!hasItems" class="card p-10 text-center text-gray-500">
-        {{ t('cart.empty') }}
+      <div v-if="!hasItems" class="card p-8 text-center">
+        <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-white/5 text-gray-400">
+          <AppIcon name="cart" class="h-6 w-6" />
+        </div>
+        <p class="mt-3 text-gray-400">{{ t('cart.empty') }}</p>
+        <NuxtLink :to="backToPhotos" class="btn-outline mt-4">
+          {{ t('cart.findPhotos') }}
+        </NuxtLink>
       </div>
 
       <template v-else>

@@ -50,11 +50,11 @@ async function submit() {
 
     <div class="page-container">
       <div v-if="success" class="card p-8 text-center">
-        <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-green-50 text-green-600">
+        <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-green-500/15 text-green-400">
           <AppIcon name="check" class="h-7 w-7" />
         </div>
         <h2 class="text-lg font-semibold">{{ t('orderPhotographer.successTitle') }}</h2>
-        <p class="mt-2 text-sm text-gray-600">{{ t('orderPhotographer.successHint') }}</p>
+        <p class="mt-2 text-sm text-gray-400">{{ t('orderPhotographer.successHint') }}</p>
         <NuxtLink to="/" class="btn-primary-solid mt-6">{{ t('orderPhotographer.home') }}</NuxtLink>
       </div>
 
@@ -69,7 +69,7 @@ async function submit() {
         <input v-model="form.event_location" type="text" :placeholder="t('orderPhotographer.location')" class="input-field">
         <textarea v-model="form.message" rows="4" :placeholder="t('orderPhotographer.message')" class="input-field" />
 
-        <p v-if="errorMsg" class="text-sm text-red-600">{{ errorMsg }}</p>
+        <p v-if="errorMsg" class="text-sm text-red-400">{{ errorMsg }}</p>
 
         <button type="submit" class="btn-primary-solid w-full" :disabled="loading">
           {{ loading ? t('orderPhotographer.submitting') : t('orderPhotographer.submit') }}

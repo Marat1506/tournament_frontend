@@ -142,7 +142,7 @@ async function deletePhoto() {
         <button
           v-for="opt in filterOptions"
           :key="opt.id"
-          class="chip"
+          class="chip min-h-11"
           :class="filter === opt.id ? 'chip-active' : 'chip-inactive'"
           @click="filter = opt.id"
         >
@@ -204,28 +204,46 @@ async function deletePhoto() {
         <div class="max-h-[90vh] w-full overflow-y-auto rounded-t-2xl bg-[#151b28] p-4 pb-8">
           <h3 class="mb-4 text-lg font-bold">{{ t('photographer.tagModalTitle') }}</h3>
           <div class="space-y-3">
-            <input
-              v-model="tagForm.name"
-              class="input-field"
-              :class="{ 'input-field-error': tagError && !tagForm.name.trim() }"
-              :placeholder="t('photographer.athleteName')"
-              :aria-invalid="!!(tagError && !tagForm.name.trim())"
-              @input="tagError = ''"
-            >
-            <input v-model="tagForm.category" class="input-field" :placeholder="t('photographer.category')">
-            <select v-model="tagForm.gender" class="input-field">
-              <option value="">{{ t('photographer.gender') }}</option>
-              <option v-for="o in genderOptions.filter(x => x.value)" :key="o.value" :value="o.value">{{ o.label }}</option>
-            </select>
-            <select v-model="tagForm.belt" class="input-field">
-              <option v-for="o in beltOptions" :key="o.value" :value="o.value">{{ o.label }}</option>
-            </select>
-            <select v-model="tagForm.age_group" class="input-field">
-              <option v-for="o in ageGroupOptions" :key="o.value" :value="o.value">{{ o.label }}</option>
-            </select>
-            <select v-model="tagForm.weight_class" class="input-field">
-              <option v-for="o in weightClassOptions" :key="o.value" :value="o.value">{{ o.label }}</option>
-            </select>
+            <label class="block space-y-2">
+              <span class="text-sm font-medium">{{ t('photographer.athleteName') }}</span>
+              <input
+                v-model="tagForm.name"
+                class="input-field"
+                :class="{ 'input-field-error': tagError && !tagForm.name.trim() }"
+                :placeholder="t('photographer.athleteName')"
+                :aria-invalid="!!(tagError && !tagForm.name.trim())"
+                @input="tagError = ''"
+              >
+            </label>
+            <label class="block space-y-2">
+              <span class="text-sm font-medium">{{ t('photographer.category') }} · {{ t('common.optional') }}</span>
+              <input v-model="tagForm.category" class="input-field" :placeholder="t('photographer.category')">
+            </label>
+            <label class="block space-y-2">
+              <span class="text-sm font-medium">{{ t('photographer.gender') }} · {{ t('common.optional') }}</span>
+              <select v-model="tagForm.gender" class="input-field">
+                <option value="">{{ t('photographer.gender') }}</option>
+                <option v-for="o in genderOptions.filter(x => x.value)" :key="o.value" :value="o.value">{{ o.label }}</option>
+              </select>
+            </label>
+            <label class="block space-y-2">
+              <span class="text-sm font-medium">{{ t('photographer.belt') }} · {{ t('common.optional') }}</span>
+              <select v-model="tagForm.belt" class="input-field">
+                <option v-for="o in beltOptions" :key="o.value" :value="o.value">{{ o.label }}</option>
+              </select>
+            </label>
+            <label class="block space-y-2">
+              <span class="text-sm font-medium">{{ t('photographer.ageGroup') }} · {{ t('common.optional') }}</span>
+              <select v-model="tagForm.age_group" class="input-field">
+                <option v-for="o in ageGroupOptions" :key="o.value" :value="o.value">{{ o.label }}</option>
+              </select>
+            </label>
+            <label class="block space-y-2">
+              <span class="text-sm font-medium">{{ t('photographer.weightClass') }} · {{ t('common.optional') }}</span>
+              <select v-model="tagForm.weight_class" class="input-field">
+                <option v-for="o in weightClassOptions" :key="o.value" :value="o.value">{{ o.label }}</option>
+              </select>
+            </label>
           </div>
           <AppAlert v-if="tagError" class="mt-3" type="error" :message="tagError" />
           <p v-if="tagSuccess" class="mt-3 text-sm text-green-500">{{ tagSuccess }}</p>

@@ -51,7 +51,7 @@ function logout() {
       >
         {{ t('profile.cabinet') }}
       </NuxtLink>
-      <button type="button" class="text-gray-400" @click="logout">
+      <button type="button" class="min-h-11 rounded-lg px-2 text-gray-400 hover:bg-white/5" @click="logout">
         {{ t('profile.logout') }}
       </button>
     </div>

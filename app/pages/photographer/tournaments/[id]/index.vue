@@ -129,6 +129,13 @@ const canPublish = computed(() =>
   && !needsSlot.value
   && (tournament.value?.photo_count ?? 0) > 0,
 )
+const publishBlockedReason = computed(() => {
+  if (isPublished.value || publishing.value) return ''
+  if (uploadInProgress.value) return t('photographer.uploadStayOpen')
+  if (needsSlot.value) return t('photographer.slotRequired')
+  if ((tournament.value?.photo_count ?? 0) === 0) return t('photographer.msgUploadFirst')
+  return ''
+})
 
 function canOpenStep(n: number) {
   if (n === 1) return !agreementAgreed.value || flowStep.value === 1
@@ -481,7 +488,7 @@ watch(needsSlot, (needed, wasNeeded) => {
             <p v-if="tournament.location" class="mt-1 text-sm text-gray-500">{{ tournament.location }}</p>
             <button
               type="button"
-              class="mt-2 text-sm font-medium text-brand-600"
+              class="mt-2 text-sm font-medium text-brand-400"
               :disabled="coverUploading"
               @click="coverInput?.click()"
             >
@@ -515,21 +522,21 @@ watch(needsSlot, (needed, wasNeeded) => {
             @click="goToStep(index + 1)"
           >
             <div
-              class="flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold"
+              class="flex h-11 w-11 items-center justify-center rounded-full text-sm font-bold"
               :class="index + 1 <= flowStep ? 'bg-brand-600 text-white' : 'bg-white/10 text-gray-500'"
             >
               {{ index + 1 }}
             </div>
             <span
               class="text-center text-[11px] font-medium leading-tight"
-              :class="index + 1 <= flowStep ? 'text-brand-600' : 'text-gray-400'"
+              :class="index + 1 <= flowStep ? 'text-brand-400' : 'text-gray-400'"
             >
               {{ label }}
             </span>
           </button>
           <div
             v-if="index < flowSteps.length - 1"
-            class="mx-1 mt-4 h-0.5 flex-1 rounded-full"
+            class="mx-1 mt-[21px] h-0.5 flex-1 rounded-full"
             :class="index + 1 < flowStep ? 'bg-brand-600' : 'bg-white/10'"
           />
         </template>
@@ -599,7 +606,7 @@ watch(needsSlot, (needed, wasNeeded) => {
             class="flex items-center justify-between gap-3 rounded-xl bg-white/5 px-3 py-2 text-sm"
           >
             <span class="min-w-0 truncate">{{ file.name }}</span>
-            <button type="button" class="shrink-0 text-xs text-gray-400" :disabled="uploadInProgress" @click="removeFile(index)">
+            <button type="button" class="min-h-11 shrink-0 rounded-lg px-3 text-xs text-gray-400 hover:bg-white/5" :disabled="uploadInProgress" @click="removeFile(index)">
               {{ t('common.delete') }}
             </button>
           </li>
@@ -608,6 +615,9 @@ watch(needsSlot, (needed, wasNeeded) => {
         <button class="btn-primary-solid w-full" :disabled="uploadInProgress || !files.length" @click="upload">
           {{ t('photographer.uploadBtn', { count: files.length }) }}
         </button>
+        <p v-if="!files.length && !uploadInProgress" class="text-sm text-gray-400">
+          {{ t('photographer.selectFilesFirst') }}
+        </p>
       </section>
 
       <section v-else-if="flowStep === uploadStep" class="card space-y-3 p-4">
@@ -621,6 +631,9 @@ watch(needsSlot, (needed, wasNeeded) => {
         >
           {{ t('photographer.uploadBtn', { count: files.length }) }}
         </button>
+        <p v-if="!files.length && uploadPhase === 'idle'" class="text-sm text-gray-400">
+          {{ t('photographer.selectFilesFirst') }}
+        </p>
         <p v-if="uploadInProgress" class="text-sm text-gray-400">{{ t('photographer.uploadStayOpen') }}</p>
         <div v-if="uploadPhase !== 'idle'" class="space-y-2">
           <div class="h-2 overflow-hidden rounded-full bg-white/10">
@@ -671,6 +684,7 @@ watch(needsSlot, (needed, wasNeeded) => {
               : (publishing ? t('photographer.publishing') : t('photographer.publish'))
           }}
         </button>
+        <p v-if="publishBlockedReason" class="text-sm text-amber-300">{{ publishBlockedReason }}</p>
         <AppAlert v-if="publishAlert" :type="publishAlert.type" :message="publishAlert.message" />
         <button
           v-if="!isPublished"
@@ -683,13 +697,13 @@ watch(needsSlot, (needed, wasNeeded) => {
       </section>
 
       <section v-if="agreementAgreed" class="card space-y-3 p-4">
-        <NuxtLink :to="`/photographer/tournaments/${id}/settings`" class="block font-medium text-brand-600">
+        <NuxtLink :to="`/photographer/tournaments/${id}/settings`" class="block font-medium text-brand-400">
           {{ t('photographer.settingsLink') }}
         </NuxtLink>
-        <NuxtLink :to="`/photographer/tournaments/${id}/photos`" class="block font-medium text-brand-600">
+        <NuxtLink :to="`/photographer/tournaments/${id}/photos`" class="block font-medium text-brand-400">
           {{ t('photographer.tagPhotosLink') }}
         </NuxtLink>
-        <NuxtLink :to="`/photographer/tournaments/${id}/stats`" class="block font-medium text-brand-600">
+        <NuxtLink :to="`/photographer/tournaments/${id}/stats`" class="block font-medium text-brand-400">
           {{ t('photographer.statsLink') }}
         </NuxtLink>
       </section>

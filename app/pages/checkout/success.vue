@@ -132,10 +132,9 @@ async function downloadItem(item: { photo_id: string; original_filename?: string
   }
 }
 
-function photoLabel(item: { photo_id: string; original_filename?: string; item_type?: string }) {
+function photoLabel(item: { original_filename?: string }, index: number) {
   if (item.original_filename) return item.original_filename
-  if (item.item_type === 'bundle') return t('checkout.bundlePhoto', { id: item.photo_id.slice(0, 8) })
-  return t('checkout.photo', { id: item.photo_id.slice(0, 8) })
+  return t('checkout.photoNumber', { number: index + 1 })
 }
 </script>
 
@@ -144,7 +143,7 @@ function photoLabel(item: { photo_id: string; original_filename?: string; item_t
     <AppPageHeader :title="isPaid ? t('checkout.completedTitle') : paymentEnded ? t('checkout.paymentProblemTitle') : t('checkout.confirmationTitle')" />
 
     <div class="page-container space-y-5">
-      <SearchStepper :current="4" :steps="4" :completed="isPaid" tournament-to="/tournaments" />
+      <SearchStepper :current="4" :steps="4" :completed="isPaid" :third-label="t('cart.title')" tournament-to="/tournaments" />
 
       <div v-if="orderPageError" class="card space-y-4 p-5">
         <AppAlert type="error" :message="orderPageError" />
@@ -246,14 +245,14 @@ function photoLabel(item: { photo_id: string; original_filename?: string; item_t
 
           <div v-if="downloadPhotos.length" class="mt-4 space-y-2">
             <button
-              v-for="item in downloadPhotos"
+              v-for="(item, index) in downloadPhotos"
               :key="item.photo_id"
               type="button"
               class="btn-secondary w-full justify-between px-4"
               :disabled="downloadingId === item.photo_id"
               @click="downloadItem(item)"
             >
-              <span class="truncate pr-3 text-left">{{ photoLabel(item) }}</span>
+              <span class="truncate pr-3 text-left">{{ photoLabel(item, index) }}</span>
               <span class="shrink-0 text-brand-400">
                 {{ downloadingId === item.photo_id ? t('checkout.downloading') : t('checkout.download') }}
               </span>

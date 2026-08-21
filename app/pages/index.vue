@@ -98,7 +98,7 @@ const trustItems = computed(() => [
             </div>
             <span
               v-if="index < howSteps.length - 1"
-              class="flex shrink-0 items-center text-sm text-gray-600"
+              class="flex shrink-0 items-center text-sm text-gray-400"
               aria-hidden="true"
             >›</span>
           </template>

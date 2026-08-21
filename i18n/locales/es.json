@@ -119,7 +119,8 @@
   "notifications": {
     "title": "Notificaciones",
     "empty": "Aún no hay notificaciones",
-    "loadFailed": "No pudimos cargar las notificaciones."
+    "loadFailed": "No pudimos cargar las notificaciones.",
+    "markReadFailed": "No pudimos marcar la notificación como leída. Inténtalo de nuevo."
   },
   "auth": {
     "loginTitle": "Entrada para atletas",
@@ -258,7 +259,8 @@
     "statusPending": "Pendiente",
     "statusPaid": "Pagado",
     "statusFailed": "Error",
-    "statusCancelled": "Cancelado"
+    "statusCancelled": "Cancelado",
+    "statusUnknown": "Estado desconocido"
   },
   "profileSelfies": {
     "title": "Mis subidas (selfies)",
@@ -266,11 +268,13 @@
     "searchFace": "Búsqueda por rostro",
     "searchName": "Búsqueda por nombre",
     "empty": "Historial vacío. Prueba la búsqueda por rostro en un torneo.",
-    "findNew": "Buscar fotos nuevas"
+    "findNew": "Buscar fotos nuevas",
+    "unknownType": "Búsqueda de fotos"
   },
   "cart": {
     "title": "Carrito",
     "empty": "El carrito está vacío",
+    "findPhotos": "Ver fotos",
     "bundle": "Pack: {name}",
     "bundleHint": "Todas las fotos del atleta",
     "remove": "Eliminar",
@@ -335,6 +339,7 @@
     "downloadPhotos": "Descargar fotos",
     "photo": "Foto {id}",
     "bundlePhoto": "Foto del paquete · {id}",
+    "photoNumber": "Foto {number}",
     "download": "Descargar",
     "downloading": "Descargando...",
     "preparingDownloads": "Preparando los archivos para descargar…",
@@ -390,6 +395,7 @@
     "loading": "Cargando…",
     "close": "Cerrar",
     "retry": "Reintentar",
+    "optional": "opcional",
     "continue": "Continuar",
     "photo": "Foto"
   },
@@ -683,6 +689,7 @@
     "pickPhotosBtn": "Elegir fotos",
     "addMoreFiles": "Añadir más fotos",
     "pickManyHint": "Abra el selector de archivos y elija las fotografías que desea cargar.",
+    "selectFilesFirst": "Primero selecciona al menos una foto.",
     "pickManySub": "JPEG, PNG o WebP · hasta 50 MB por archivo",
     "uploadUnsupportedFile": "No se añadió «{name}». Solo se admiten JPEG, PNG y WebP.",
     "uploadFileTooLarge": "«{name}» supera los 50 MB y no se añadió.",
@@ -779,6 +786,7 @@
     "tabEdit": "Editar",
     "openTournament": "Abrir",
     "addPhotos": "Añadir fotos",
+    "addToExistingTournament": "Añadir fotos a un torneo existente",
     "slotPaymentCancelled": "El pago del evento se canceló. No se realizó ningún cargo y puedes intentarlo de nuevo cuando quieras.",
     "assignAthletesTitle": "Siguiente paso: asigna atletas",
     "assignAthletesHint": "Añade nombres a las fotos para que las familias puedan encontrarlas con la búsqueda.",
@@ -830,6 +838,10 @@
     "roleClient": "Cliente",
     "rolePhotographer": "Fotógrafo",
     "roleAdmin": "Admin",
+    "roleUnknown": "Rol desconocido",
+    "statusUnknown": "Estado desconocido",
+    "leadTypeUnknown": "Otro tipo de solicitud",
+    "stripeUnknown": "Estado de Stripe desconocido",
     "profileLink": "Perfil",
     "statLeadsNew": "Solicitudes nuevas",
     "statOrders": "Pedidos",

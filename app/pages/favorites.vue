@@ -103,7 +103,7 @@ function buySelected() {
           <div class="text-xs text-gray-400">${{ selection.total.toFixed(2) }}</div>
         </div>
         <button
-          class="rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-40"
+          class="min-h-11 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-40"
           :disabled="!selection.count"
           @click="buySelected"
         >

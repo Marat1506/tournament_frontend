@@ -4,6 +4,7 @@ const props = withDefaults(defineProps<{
   steps?: 3 | 4
   tournamentTo?: string
   completed?: boolean
+  thirdLabel?: string
 }>(), {
   steps: 3,
 })
@@ -15,7 +16,7 @@ const items = computed(() => {
   const list = [
     { label: t('tournaments.stepTournament'), to: props.current > 1 ? (props.tournamentTo || '/tournaments') : '' },
     { label: t('tournaments.stepSearch'), to: '' },
-    { label: t('tournaments.stepPhotos'), to: '' },
+    { label: props.thirdLabel || t('tournaments.stepPhotos'), to: '' },
   ]
   if (props.steps === 4) {
     list.push({ label: t('tournaments.stepPay'), to: '' })

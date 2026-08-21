@@ -91,7 +91,7 @@ async function submit() {
       <form class="space-y-4" @submit.prevent="submit">
         <input v-model="email" type="email" class="input-field" :placeholder="t('auth.email')" required>
         <input v-model="password" type="password" class="input-field" :placeholder="t('photographer.password')" required>
-        <p v-if="error" class="text-sm text-red-600">{{ error }}</p>
+        <p v-if="error" class="text-sm text-red-400">{{ error }}</p>
         <NuxtLink
           v-if="showClientLink"
           to="/login"
@@ -104,11 +104,11 @@ async function submit() {
         </button>
       </form>
       <p class="mt-3 text-center text-sm">
-        <NuxtLink to="/forgot-password?role=photographer" class="font-medium text-brand-600">{{ t('auth.forgotPassword') }}</NuxtLink>
+        <NuxtLink to="/forgot-password?role=photographer" class="font-medium text-brand-400">{{ t('auth.forgotPassword') }}</NuxtLink>
       </p>
       <p class="mt-4 text-center text-sm text-gray-500">
         {{ t('photographer.noAccount') }}
-        <NuxtLink to="/photographer/register" class="font-medium text-brand-600">{{ t('photographer.registerLink') }}</NuxtLink>
+        <NuxtLink to="/photographer/register" class="font-medium text-brand-400">{{ t('photographer.registerLink') }}</NuxtLink>
       </p>
       <p class="mt-6 text-center text-sm text-gray-500">
         <NuxtLink to="/login" class="font-medium text-brand-400">{{ t('photographer.iAmAthlete') }}</NuxtLink>

@@ -142,10 +142,10 @@ onUnmounted(() => {
             <div v-if="coverPreview" class="h-28 w-28 overflow-hidden rounded-xl ring-2 ring-brand-200">
               <img :src="coverPreview" :alt="t('photographer.coverAlt')" class="h-full w-full object-cover">
             </div>
-            <div v-else class="flex h-16 w-16 items-center justify-center rounded-full bg-brand-100 text-brand-600">
+            <div v-else class="flex h-16 w-16 items-center justify-center rounded-full bg-brand-600/20 text-brand-400">
               <AppIcon name="upload" class="h-7 w-7" />
             </div>
-            <span class="text-sm font-medium text-brand-600">
+            <span class="text-sm font-medium text-brand-400">
               {{ coverPreview ? t('photographer.changeCover') : t('photographer.addCover') }}
             </span>
             <span class="text-xs text-gray-500">{{ t('photographer.coverHint') }}</span>

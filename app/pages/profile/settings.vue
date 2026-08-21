@@ -239,7 +239,7 @@ async function logout() {
           </button>
           <button
             type="button"
-            class="rounded-xl border border-red-500/30 px-4 py-2.5 text-sm font-medium text-red-400 transition hover:bg-red-500/10"
+            class="min-h-11 rounded-xl border border-red-500/30 px-4 py-2.5 text-sm font-medium text-red-400 transition hover:bg-red-500/10"
             :class="consentSummary.has_published_photos ? '' : 'sm:col-span-2'"
             :disabled="consentBusy"
             @click="revokeConsent"
@@ -258,7 +258,7 @@ async function logout() {
         {{ t('settings.logout') }}
       </button>
 
-      <p class="pb-2 text-center text-xs text-gray-600">{{ t('settings.version') }}</p>
+      <p class="pb-2 text-center text-xs text-gray-500">{{ t('settings.version') }}</p>
     </div>
   </div>
 </template>

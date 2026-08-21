@@ -6,6 +6,7 @@ definePageMeta({ middleware: 'client-auth', ssr: false })
 const { t, locale } = useI18n()
 const api = useApi()
 const router = useRouter()
+const toast = useToast()
 const { refresh: refreshBadge } = useNotificationBadge()
 
 const { data, pending, error: loadError, refresh } = await useAsyncData(
@@ -26,8 +27,8 @@ async function markRead(item: UserNotification) {
     item.read_at = new Date().toISOString()
     await refreshBadge()
   }
-  catch {
-    // ignore
+  catch (e: unknown) {
+    toast.error(t(getCommonApiErrorKey(e) ?? 'notifications.markReadFailed'))
   }
 }
 

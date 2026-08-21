@@ -26,7 +26,7 @@ async function pick(code: AppLocale) {
       v-for="opt in options"
       :key="opt.code"
       type="button"
-      class="min-w-[2rem] rounded-full px-2 py-1 transition"
+      class="min-h-11 min-w-11 rounded-full px-2 py-1 transition"
       :class="locale === opt.code ? 'bg-brand-600 text-white shadow-sm' : 'text-gray-300 hover:text-white'"
       :aria-pressed="locale === opt.code"
       @click="pick(opt.code)"
