@@ -15,6 +15,7 @@ const toast = useToast()
 const { t } = useI18n()
 
 const fileInput = ref<HTMLInputElement | null>(null)
+const cameraInput = ref<HTMLInputElement | null>(null)
 const previewUrl = ref<string | null>(null)
 const selectedFile = ref<File | null>(null)
 const consentPersonal = ref(false)
@@ -101,12 +102,22 @@ function onFileChange(event: Event) {
   previewUrl.value = URL.createObjectURL(file)
 }
 
-function pickFile() {
+function requireConsentForPick() {
   if (!consentOk.value) {
     errorMsg.value = t('search.consentRequired')
-    return
+    return false
   }
+  return true
+}
+
+function pickFile() {
+  if (!requireConsentForPick()) return
   fileInput.value?.click()
+}
+
+function takePhoto() {
+  if (!requireConsentForPick()) return
+  cameraInput.value?.click()
 }
 
 async function search() {
@@ -272,6 +283,14 @@ onBeforeUnmount(() => {
           ref="fileInput"
           type="file"
           accept="image/jpeg,image/png,image/webp"
+          class="hidden"
+          :disabled="!faceSearchEnabled || !consentOk"
+          @change="onFileChange"
+        >
+        <input
+          ref="cameraInput"
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
           capture="user"
           class="hidden"
           :disabled="!faceSearchEnabled || !consentOk"
@@ -283,7 +302,7 @@ onBeforeUnmount(() => {
         </div>
 
         <p class="mb-3 text-center text-xs uppercase tracking-wide text-gray-500">{{ t('search.or') }}</p>
-        <button type="button" class="btn-secondary justify-center gap-2" :disabled="!faceSearchEnabled || !consentOk" @click="pickFile">
+        <button type="button" class="btn-secondary justify-center gap-2" :disabled="!faceSearchEnabled || !consentOk" @click="takePhoto">
           <AppIcon name="camera" class="h-5 w-5" />
           {{ t('search.takePhotoNow') }}
         </button>

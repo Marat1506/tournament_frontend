@@ -53,12 +53,15 @@ const { data: leads, refresh: refreshLeads, pending: leadsPending } = await useA
   { watch: [statusFilter, typeFilter], server: false },
 )
 
+const MIN_PHOTO_PRICE = 10
+
 const priceSingle = ref(20)
 const priceBundle = ref(50)
 const settingsSaving = ref(false)
 const heroUploading = ref(false)
+const heroRemoving = ref(false)
 const heroInput = ref<HTMLInputElement | null>(null)
-const heroPreviewSrc = computed(() => settings.value?.hero_image_url || '/main_background_mobile.png')
+const hasHeroPreview = computed(() => !!settings.value?.hero_image_url)
 
 watch(settings, (s) => {
   if (s) {
@@ -129,7 +132,20 @@ function adminErrorMessage(e: unknown) {
   return getApiErrorMessage(e) || t('admin.saveFailed')
 }
 
+function validatePrices(single: number, bundle: number) {
+  if (single < MIN_PHOTO_PRICE || bundle < MIN_PHOTO_PRICE) {
+    toast.error(t('admin.priceMin', { min: MIN_PHOTO_PRICE }))
+    return false
+  }
+  if (bundle < single) {
+    toast.error(t('admin.priceBundleMinSingle'))
+    return false
+  }
+  return true
+}
+
 async function saveSettings() {
+  if (!validatePrices(priceSingle.value, priceBundle.value)) return
   settingsSaving.value = true
   try {
     await api.updateAdminSettings({
@@ -152,13 +168,25 @@ async function onHeroSelected(e: Event) {
   try {
     await api.uploadAdminHero(file)
     await refreshSettings()
-    await refreshNuxtData('platform-home')
     toast.success(t('admin.heroUploaded'))
   } catch (err: unknown) {
     toast.error(adminErrorMessage(err))
   } finally {
     heroUploading.value = false
     if (heroInput.value) heroInput.value.value = ''
+  }
+}
+
+async function removeHero() {
+  heroRemoving.value = true
+  try {
+    await api.clearAdminHero()
+    await refreshSettings()
+    toast.success(t('admin.heroRemoved'))
+  } catch (err: unknown) {
+    toast.error(adminErrorMessage(err))
+  } finally {
+    heroRemoving.value = false
   }
 }
 
@@ -171,6 +199,7 @@ function openEditTournament(t: Tournament) {
 
 async function saveTournament() {
   if (!editingTournament.value) return
+  if (!validatePrices(editPriceSingle.value, editPriceBundle.value)) return
   tournamentSaving.value = true
   try {
     await api.updateAdminTournament(editingTournament.value.id, {
@@ -289,13 +318,30 @@ async function setUserStatus(id: string, status: string) {
         <div class="card space-y-4 p-4">
           <h3 class="font-semibold">{{ t('admin.homePage') }}</h3>
           <p class="text-sm text-gray-500">{{ t('admin.homePageHint') }}</p>
-          <div class="h-40 overflow-hidden rounded-xl">
-            <AppImage :src="heroPreviewSrc" aspect="cover" alt="Hero preview" />
+          <div v-if="hasHeroPreview" class="h-40 overflow-hidden rounded-xl">
+            <AppImage :src="settings?.hero_image_url" aspect="cover" alt="Hero preview" />
+          </div>
+          <div
+            v-else
+            class="flex h-40 flex-col items-center justify-center rounded-xl border border-dashed border-white/15 bg-white/5 px-4 text-center text-sm text-gray-500"
+          >
+            {{ t('admin.heroEmpty') }}
           </div>
           <input ref="heroInput" type="file" accept="image/*" class="hidden" @change="onHeroSelected">
-          <button class="btn-primary-solid" :disabled="heroUploading" @click="heroInput?.click()">
-            {{ heroUploading ? t('admin.uploading') : t('admin.uploadPreview') }}
-          </button>
+          <div class="flex flex-wrap gap-2">
+            <button class="btn-primary-solid" :disabled="heroUploading || heroRemoving" @click="heroInput?.click()">
+              {{ heroUploading ? t('admin.uploading') : t('admin.uploadPreview') }}
+            </button>
+            <button
+              v-if="hasHeroPreview"
+              type="button"
+              class="btn-secondary"
+              :disabled="heroUploading || heroRemoving"
+              @click="removeHero"
+            >
+              {{ heroRemoving ? t('admin.removing') : t('admin.removePreview') }}
+            </button>
+          </div>
         </div>
 
         <div class="card space-y-4 p-4">
@@ -303,11 +349,11 @@ async function setUserStatus(id: string, status: string) {
           <p class="text-sm text-gray-500">{{ t('admin.defaultPricesHint') }}</p>
           <label class="block text-sm">
             <span class="text-gray-600">{{ t('admin.priceOnePhoto') }}</span>
-            <input v-model.number="priceSingle" type="number" min="1" step="0.01" class="input-field mt-1">
+            <input v-model.number="priceSingle" type="number" :min="MIN_PHOTO_PRICE" step="0.01" class="input-field mt-1">
           </label>
           <label class="block text-sm">
             <span class="text-gray-600">{{ t('admin.priceAllPhotos') }}</span>
-            <input v-model.number="priceBundle" type="number" min="1" step="0.01" class="input-field mt-1">
+            <input v-model.number="priceBundle" type="number" :min="MIN_PHOTO_PRICE" step="0.01" class="input-field mt-1">
           </label>
           <button class="btn-primary-solid" :disabled="settingsSaving" @click="saveSettings">
             {{ settingsSaving ? t('settings.saving') : t('admin.savePrices') }}
@@ -521,11 +567,11 @@ async function setUserStatus(id: string, status: string) {
           <h3 class="font-semibold">{{ editingTournament.name }}</h3>
           <label class="block text-sm">
             <span class="text-gray-600">{{ t('admin.priceSingle') }}</span>
-            <input v-model.number="editPriceSingle" type="number" min="1" step="0.01" class="input-field mt-1">
+            <input v-model.number="editPriceSingle" type="number" :min="MIN_PHOTO_PRICE" step="0.01" class="input-field mt-1">
           </label>
           <label class="block text-sm">
             <span class="text-gray-600">{{ t('admin.priceBundle') }}</span>
-            <input v-model.number="editPriceBundle" type="number" min="1" step="0.01" class="input-field mt-1">
+            <input v-model.number="editPriceBundle" type="number" :min="MIN_PHOTO_PRICE" step="0.01" class="input-field mt-1">
           </label>
           <label class="block text-sm">
             <span class="text-gray-600">{{ t('admin.statusLabel') }}</span>

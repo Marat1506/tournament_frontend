@@ -32,12 +32,14 @@ watch(tournament, (t) => {
   form.price_bundle = t.price_bundle
 }, { immediate: true })
 
+const MIN_PHOTO_PRICE = 10
+
 async function save() {
   if (!form.name.trim()) {
     error.value = t('photographer.errNameRequired')
     return
   }
-  if (form.price_single <= 0 || form.price_bundle <= 0) {
+  if (form.price_single < MIN_PHOTO_PRICE || form.price_bundle < MIN_PHOTO_PRICE || form.price_bundle < form.price_single) {
     error.value = t('photographer.errInvalidPrices')
     return
   }
@@ -132,11 +134,11 @@ async function save() {
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="mb-1 block text-xs text-gray-500">{{ t('photographer.priceSingle') }}</label>
-            <input v-model.number="form.price_single" type="number" min="0.01" step="0.01" class="input-field">
+            <input v-model.number="form.price_single" type="number" min="10" step="0.01" class="input-field">
           </div>
           <div>
             <label class="mb-1 block text-xs text-gray-500">{{ t('photographer.priceBundleShort') }}</label>
-            <input v-model.number="form.price_bundle" type="number" min="0.01" step="0.01" class="input-field">
+            <input v-model.number="form.price_bundle" type="number" min="10" step="0.01" class="input-field">
           </div>
         </div>
 

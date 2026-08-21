@@ -53,7 +53,13 @@ function goNext() {
   wizardStep.value = 2
 }
 
+const MIN_PHOTO_PRICE = 10
+
 async function submit() {
+  if (form.price_single < MIN_PHOTO_PRICE || form.price_bundle < MIN_PHOTO_PRICE || form.price_bundle < form.price_single) {
+    error.value = t('photographer.errInvalidPrices')
+    return
+  }
   loading.value = true
   error.value = ''
   let tournamentId = ''
@@ -144,11 +150,11 @@ onUnmounted(() => {
           <div class="grid grid-cols-2 gap-3">
             <div>
               <label class="mb-1 block text-xs text-gray-500">{{ t('photographer.priceSingle') }}</label>
-              <input v-model.number="form.price_single" type="number" min="1" class="input-field">
+              <input v-model.number="form.price_single" type="number" min="10" step="0.01" class="input-field">
             </div>
             <div>
               <label class="mb-1 block text-xs text-gray-500">{{ t('photographer.priceBundleShort') }}</label>
-              <input v-model.number="form.price_bundle" type="number" min="1" class="input-field">
+              <input v-model.number="form.price_bundle" type="number" min="10" step="0.01" class="input-field">
             </div>
           </div>
           <p class="text-sm leading-relaxed text-gray-400">{{ t('photographer.newSlotHint') }}</p>

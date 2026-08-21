@@ -495,6 +495,8 @@ export function useApi() {
       })
     },
 
+    clearAdminHero: () => del<AdminSettings>('/api/v1/admin/settings/hero'),
+
     getAdminTournaments: (page?: number) =>
       get<ListResponse<Tournament[]>>('/api/v1/admin/tournaments', { page: page ?? 1 }),
 
