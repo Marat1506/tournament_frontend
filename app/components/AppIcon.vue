@@ -1,5 +1,5 @@
 <script setup lang="ts">
-defineProps<{
+const props = defineProps<{
   name: 'home' | 'trophy' | 'heart' | 'user' | 'camera' | 'search' | 'upload' | 'face' | 'shirt' | 'bell' | 'help' | 'filter' | 'back' | 'check' | 'settings' | 'chevron' | 'cart' | 'photos' | 'mail' | 'download' | 'calendar' | 'pin' | 'wallet' | 'chart' | 'lock' | 'shield' | 'star' | 'grid' | 'list' | 'plus' | 'trash' | 'pencil' | 'phone' | 'sparkles' | 'clock'
   class?: string
 }>()
@@ -8,7 +8,8 @@ defineProps<{
 <template>
   <ClientOnly>
     <svg
-      :class="['block shrink-0', class]"
+      class="block shrink-0"
+      :class="props.class"
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 24 24"
       fill="none"
