@@ -746,6 +746,7 @@
     "savedOk": "Saved",
     "saveFailed": "Could not save. Check values and try again.",
     "priceMin": "Minimum price is ${min}",
+    "priceMinHint": "Minimum ${min}",
     "priceBundleMinSingle": "Bundle price cannot be lower than single photo price",
     "heroUploaded": "Hero image updated",
     "heroImage": "Home hero image",

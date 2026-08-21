@@ -124,6 +124,17 @@ const tournamentSaving = ref(false)
 const coverInput = ref<HTMLInputElement | null>(null)
 const coverTargetId = ref<string | null>(null)
 
+const pricesValid = computed(() =>
+  priceSingle.value >= MIN_PHOTO_PRICE
+  && priceBundle.value >= MIN_PHOTO_PRICE
+  && priceBundle.value >= priceSingle.value,
+)
+const editPricesValid = computed(() =>
+  editPriceSingle.value >= MIN_PHOTO_PRICE
+  && editPriceBundle.value >= MIN_PHOTO_PRICE
+  && editPriceBundle.value >= editPriceSingle.value,
+)
+
 function formatDate(iso: string) {
   return new Date(iso).toLocaleString('ru-RU')
 }
@@ -350,12 +361,14 @@ async function setUserStatus(id: string, status: string) {
           <label class="block text-sm">
             <span class="text-gray-600">{{ t('admin.priceOnePhoto') }}</span>
             <input v-model.number="priceSingle" type="number" :min="MIN_PHOTO_PRICE" step="0.01" class="input-field mt-1">
+            <span class="mt-1 block text-xs text-gray-500">{{ t('admin.priceMinHint', { min: MIN_PHOTO_PRICE }) }}</span>
           </label>
           <label class="block text-sm">
             <span class="text-gray-600">{{ t('admin.priceAllPhotos') }}</span>
             <input v-model.number="priceBundle" type="number" :min="MIN_PHOTO_PRICE" step="0.01" class="input-field mt-1">
           </label>
-          <button class="btn-primary-solid" :disabled="settingsSaving" @click="saveSettings">
+          <p v-if="!pricesValid" class="text-sm text-amber-400">{{ t('admin.priceMin', { min: MIN_PHOTO_PRICE }) }}</p>
+          <button class="btn-primary-solid" :disabled="settingsSaving || !pricesValid" @click="saveSettings">
             {{ settingsSaving ? t('settings.saving') : t('admin.savePrices') }}
           </button>
         </div>
@@ -573,6 +586,7 @@ async function setUserStatus(id: string, status: string) {
             <span class="text-gray-600">{{ t('admin.priceBundle') }}</span>
             <input v-model.number="editPriceBundle" type="number" :min="MIN_PHOTO_PRICE" step="0.01" class="input-field mt-1">
           </label>
+          <p v-if="!editPricesValid" class="text-sm text-amber-400">{{ t('admin.priceMin', { min: MIN_PHOTO_PRICE }) }}</p>
           <label class="block text-sm">
             <span class="text-gray-600">{{ t('admin.statusLabel') }}</span>
             <select v-model="editStatus" class="input-field mt-1">
@@ -581,7 +595,7 @@ async function setUserStatus(id: string, status: string) {
             </select>
           </label>
           <div class="flex gap-2">
-            <button class="btn-primary-solid flex-1" :disabled="tournamentSaving" @click="saveTournament">
+            <button class="btn-primary-solid flex-1" :disabled="tournamentSaving || !editPricesValid" @click="saveTournament">
               {{ tournamentSaving ? t('settings.saving') : t('common.save') }}
             </button>
             <button class="rounded-2xl px-4 py-3 text-sm font-medium text-gray-400 ring-1 ring-white/10" @click="editingTournament = null">
