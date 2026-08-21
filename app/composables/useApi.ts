@@ -47,7 +47,7 @@ export function useApi() {
     const reqHeaders = headers(extra)
     const sentAuth = !!reqHeaders.Authorization
     try {
-      return await $fetch<T>(url, { ...opts, headers: reqHeaders })
+      return await $fetch<T>(url, { ...opts, headers: reqHeaders, credentials: 'include' })
     }
     catch (e: unknown) {
       const status = httpStatus(e)
@@ -324,6 +324,9 @@ export function useApi() {
 
     me: () => get<User>('/api/v1/auth/me'),
 
+    logout: () =>
+      post<{ status: string }>('/api/v1/auth/logout', auth.refreshToken ? { refresh_token: auth.refreshToken } : {}),
+
     getMyTournaments: () =>
       get<ListResponse<Tournament[]>>('/api/v1/photographer/tournaments'),
 
@@ -352,6 +355,9 @@ export function useApi() {
 
     publishTournament: (id: string) =>
       post<{ status: string }>(`/api/v1/photographer/tournaments/${id}/publish`),
+
+    checkoutEventSlot: (id: string) =>
+      post<{ url: string; dev_mode?: boolean }>(`/api/v1/photographer/tournaments/${id}/event-slot/checkout`),
 
     getUploadStatus: (id: string) =>
       get<UploadBatch>(`/api/v1/photographer/tournaments/${id}/upload-status`),

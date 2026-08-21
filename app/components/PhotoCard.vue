@@ -66,7 +66,17 @@ function onSelect(e: Event) {
     </div>
 
     <button
-      class="absolute right-1.5 top-1.5 flex h-8 w-8 items-center justify-center rounded-full bg-black/35 text-white backdrop-blur-sm"
+      v-if="selectable"
+      class="absolute right-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-full backdrop-blur-sm"
+      :class="isSelected ? 'bg-brand-600 text-white' : 'bg-black/40 text-white ring-1 ring-white/40'"
+      :aria-label="t('photoCard.select')"
+      @click="onSelect"
+    >
+      <AppIcon v-if="isSelected" name="check" class="h-4 w-4" />
+    </button>
+
+    <button
+      class="absolute left-1.5 top-1.5 flex h-8 w-8 items-center justify-center rounded-full bg-black/35 text-white backdrop-blur-sm"
       :aria-label="t('photoCard.favorite')"
       @click="onHeart"
     >
@@ -80,15 +90,5 @@ function onSelect(e: Event) {
     <div class="absolute bottom-1.5 left-1.5 rounded-md bg-black/65 px-2 py-0.5 text-[11px] font-bold text-white">
       ${{ photo.price.toFixed(0) }}
     </div>
-
-    <button
-      v-if="selectable"
-      class="absolute bottom-1.5 right-1.5 flex h-8 w-8 items-center justify-center rounded-full backdrop-blur-sm"
-      :class="isSelected ? 'bg-brand-600 text-white' : 'bg-black/35 text-white'"
-      :aria-label="t('photoCard.select')"
-      @click="onSelect"
-    >
-      <AppIcon :name="isSelected ? 'check' : 'cart'" class="h-4 w-4" />
-    </button>
   </NuxtLink>
 </template>

@@ -16,30 +16,31 @@ const actionError = ref('')
 const data = ref<PayoutStatus | null>(null)
 const pending = ref(true)
 const loadError = ref(false)
+const stripeTabOpened = ref(false)
+const pollExhausted = ref(false)
 
-async function loadPayouts() {
+const POLL_MS = 8000
+const POLL_MAX = 24
+let pollTimer: ReturnType<typeof setInterval> | undefined
+let pollCount = 0
+
+async function loadPayouts(silent = false) {
   if (import.meta.client) auth.hydrate()
-  pending.value = true
-  loadError.value = false
+  if (!silent) {
+    pending.value = true
+    loadError.value = false
+  }
   try {
     data.value = await api.getPayouts()
     if (data.value?.country) country.value = data.value.country
   }
   catch {
-    loadError.value = true
+    if (!silent) loadError.value = true
   }
   finally {
-    pending.value = false
+    if (!silent) pending.value = false
   }
 }
-
-onMounted(async () => {
-  await loadPayouts()
-  const flag = route.query.onboarding
-  if (flag === 'refresh' && data.value && !data.value.can_receive_payments && data.value.stripe_configured) {
-    await startOnboarding()
-  }
-})
 
 const justReturned = computed(() => route.query.onboarding === 'return')
 
@@ -48,11 +49,65 @@ const needsCountry = computed(() => {
   return !data.value?.country && (status === 'not_started' || status === 'disabled')
 })
 
+const preparingDashboard = computed(() =>
+  !!data.value?.stripe_configured
+  && !!data.value.details_submitted
+  && !data.value.dashboard_ready,
+)
+
+const showContinue = computed(() =>
+  !!data.value?.stripe_configured
+  && !data.value.details_submitted
+  && !data.value.can_receive_payments,
+)
+
+const showOpenDashboard = computed(() => !!data.value?.details_submitted)
+
 const primaryLabel = computed(() => {
   const status = data.value?.status
   if (status === 'onboarding' || status === 'restricted') return t('photographer.payoutsContinue')
   if (status === 'disabled') return t('photographer.payoutsReconnect')
   return t('photographer.payoutsConnect')
+})
+
+function stopPolling() {
+  if (pollTimer) {
+    clearInterval(pollTimer)
+    pollTimer = undefined
+  }
+}
+
+function startPolling() {
+  stopPolling()
+  pollCount = 0
+  pollExhausted.value = false
+  if (!preparingDashboard.value) return
+  pollTimer = setInterval(async () => {
+    pollCount += 1
+    await loadPayouts(true)
+    if (data.value?.dashboard_ready) {
+      stopPolling()
+      return
+    }
+    if (pollCount >= POLL_MAX) {
+      stopPolling()
+      pollExhausted.value = true
+    }
+  }, POLL_MS)
+}
+
+watch(preparingDashboard, (preparing) => {
+  if (preparing) startPolling()
+  else stopPolling()
+})
+
+onMounted(async () => {
+  await loadPayouts()
+  if (preparingDashboard.value) startPolling()
+})
+
+onUnmounted(() => {
+  stopPolling()
 })
 
 async function startOnboarding() {
@@ -84,18 +139,33 @@ async function startOnboarding() {
   }
 }
 
+function openStripeUrl(url: string) {
+  if (!import.meta.client) return
+  const opened = window.open(url, '_blank', 'noopener,noreferrer')
+  if (!opened) {
+    window.location.href = url
+    return
+  }
+  stripeTabOpened.value = true
+}
+
 async function openDashboard() {
+  if (preparingDashboard.value) return
   loading.value = true
   actionError.value = ''
   try {
     const result = await api.getPayoutLoginLink()
-    if (import.meta.client && result.url) {
-      window.location.href = result.url
-    }
+    if (result.url) openStripeUrl(result.url)
   }
   catch {
-    actionError.value = t('photographer.payoutsLoginFailed')
-    toast.error(t('photographer.payoutsLoginFailed'))
+    if (data.value?.details_submitted) {
+      data.value = { ...data.value, dashboard_ready: false }
+      startPolling()
+    }
+    else {
+      actionError.value = t('photographer.payoutsLoginFailed')
+      toast.error(t('photographer.payoutsLoginFailed'))
+    }
   }
   finally {
     loading.value = false
@@ -134,7 +204,8 @@ async function openDashboard() {
         </div>
 
         <div v-else class="card space-y-4 p-5">
-          <AppAlert v-if="justReturned && !data.can_receive_payments" type="info" :message="t('photographer.payoutsReturned')" />
+          <AppAlert v-if="justReturned && !data.can_receive_payments && !data.details_submitted" type="info" :message="t('photographer.payoutsReturned')" />
+          <AppAlert v-if="stripeTabOpened" type="info" :message="t('photographer.payoutsOpenedTab')" />
 
           <div>
             <p class="text-xs font-medium uppercase tracking-wide text-gray-500">{{ t('photographer.payoutsStatusLabel') }}</p>
@@ -143,6 +214,10 @@ async function openDashboard() {
             </p>
             <p class="mt-1 text-sm text-gray-400">{{ t(`photographer.payoutsStatusHint.${data.status}`) }}</p>
           </div>
+
+          <p v-if="preparingDashboard" class="text-sm leading-relaxed text-gray-300">
+            {{ t('photographer.payoutsPreparingHint') }}
+          </p>
 
           <label v-if="needsCountry" class="block space-y-2">
             <span class="text-sm font-medium">{{ t('photographer.payoutsCountry') }}</span>
@@ -161,7 +236,7 @@ async function openDashboard() {
           <AppAlert v-if="actionError" type="error" :message="actionError" />
 
           <button
-            v-if="!data.can_receive_payments"
+            v-if="showContinue"
             class="btn-primary-solid w-full"
             :disabled="loading || (needsCountry && !country)"
             @click="startOnboarding"
@@ -170,12 +245,32 @@ async function openDashboard() {
           </button>
 
           <button
-            v-if="data.details_submitted"
+            v-if="showOpenDashboard && preparingDashboard"
+            class="relative w-full overflow-hidden rounded-2xl bg-[#151b28] px-4 py-3.5 text-base font-semibold text-gray-300 ring-1 ring-white/10"
+            disabled
+          >
+            {{ t('photographer.payoutsPreparingBtn') }}
+            <span class="absolute inset-x-0 bottom-0 h-1 overflow-hidden bg-white/10">
+              <span class="block h-full w-1/2 animate-pulse bg-brand-500" />
+            </span>
+          </button>
+
+          <button
+            v-else-if="showOpenDashboard"
             class="btn-secondary w-full"
             :disabled="loading"
             @click="openDashboard"
           >
-            {{ t('photographer.payoutsOpenStripe') }}
+            {{ loading ? t('photographer.payoutsRedirecting') : t('photographer.payoutsOpenStripe') }}
+          </button>
+
+          <button
+            v-if="preparingDashboard && pollExhausted"
+            type="button"
+            class="btn-secondary w-full justify-center"
+            @click="loadPayouts().then(() => { if (preparingDashboard) startPolling() })"
+          >
+            {{ t('photographer.payoutsRefreshStatus') }}
           </button>
         </div>
       </template>

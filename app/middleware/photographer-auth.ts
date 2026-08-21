@@ -3,7 +3,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   const auth = useAuthStore()
   const api = useApi()
-  await auth.ensureFresh()
+  await auth.restoreSession()
 
   if (!auth.isLoggedIn) {
     return navigateTo(`/photographer/login?redirect=${encodeURIComponent(to.fullPath)}`)

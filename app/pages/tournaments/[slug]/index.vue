@@ -29,25 +29,34 @@ const publishedPhotos = computed(() => published.value?.data ?? [])
     <div class="page-container">
       <SearchStepper :current="2" tournament-to="/tournaments" />
 
-      <p class="mb-2 text-xs font-medium uppercase tracking-wide text-gray-500">{{ t('tournaments.selectedLabel') }}</p>
-      <TournamentCard :tournament="tournament" compact class="mb-3" />
+      <h2 class="text-xl font-bold">{{ t('search.findYourselfTitle') }}</h2>
+      <p class="mt-2 text-sm text-gray-400">{{ t('search.findYourselfHint') }}</p>
+
+      <div class="mt-4">
+        <SearchModeTabs :slug="slug" mode="face" />
+      </div>
+
+      <TournamentCard :tournament="tournament" compact class="mb-4" />
+      <div class="mb-4 flex justify-end">
+        <NuxtLink to="/tournaments" class="inline-flex items-center gap-1 text-sm font-medium text-brand-400">
+          <AppIcon name="pencil" class="h-3.5 w-3.5" />
+          {{ t('search.changeTournament') }}
+        </NuxtLink>
+      </div>
+
       <div v-if="tournament.payouts_ready === false" class="mb-4">
         <AppAlert type="info" :message="t('cart.errorPayouts')" />
       </div>
-      <p class="mb-5 text-sm leading-relaxed text-gray-400">
-        {{ t('tournaments.searchHint') }}
-      </p>
-
-      <p class="mb-3 text-base font-semibold">{{ t('tournaments.chooseSearch') }}</p>
 
       <NuxtLink :to="`/tournaments/${slug}/search/face`" class="search-card mb-3">
-        <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand-600">
+        <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-brand-600/20 text-brand-400">
           <AppIcon name="face" class="h-6 w-6" />
         </div>
         <div>
           <div class="font-semibold">{{ t('tournaments.searchByFace') }}</div>
           <div class="mt-1 text-xs text-gray-500">{{ t('tournaments.searchByFaceHint') }}</div>
         </div>
+        <AppIcon name="chevron" class="h-5 w-5 text-gray-500" />
       </NuxtLink>
 
       <NuxtLink :to="`/tournaments/${slug}/search`" class="search-card">
@@ -58,6 +67,7 @@ const publishedPhotos = computed(() => published.value?.data ?? [])
           <div class="font-semibold">{{ t('tournaments.searchByName') }}</div>
           <div class="mt-1 text-xs text-gray-500">{{ t('tournaments.searchByNameHint') }}</div>
         </div>
+        <AppIcon name="chevron" class="h-5 w-5 text-gray-500" />
       </NuxtLink>
 
       <section v-if="publishedPhotos.length" class="mt-8">

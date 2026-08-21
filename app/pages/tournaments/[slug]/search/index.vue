@@ -65,9 +65,16 @@ function onFiltersApply(v: typeof filters.value) {
 
     <div class="page-container">
       <SearchStepper :current="2" tournament-to="/tournaments" />
+      <SearchModeTabs :slug="slug" mode="name" />
 
-      <p class="mb-2 text-xs font-medium uppercase tracking-wide text-gray-500">{{ t('tournaments.selectedLabel') }}</p>
-      <TournamentCard v-if="tournament" :tournament="tournament" compact class="mb-4" />
+      <h2 class="mb-2 text-xl font-bold">{{ t('search.findYourselfTitle') }}</h2>
+      <TournamentCard v-if="tournament" :tournament="tournament" compact class="mb-3" />
+      <div class="mb-4 flex justify-end">
+        <NuxtLink :to="`/tournaments/${slug}`" class="inline-flex items-center gap-1 text-sm font-medium text-brand-400">
+          <AppIcon name="pencil" class="h-3.5 w-3.5" />
+          {{ t('search.changeTournament') }}
+        </NuxtLink>
+      </div>
 
       <input
         v-model="query"
@@ -90,7 +97,7 @@ function onFiltersApply(v: typeof filters.value) {
           @click="selectAthlete(athlete.id, athlete.name)"
         >
           <div class="flex items-center gap-3">
-            <div class="flex h-11 w-11 items-center justify-center rounded-full bg-brand-50 text-brand-600">
+            <div class="flex h-11 w-11 items-center justify-center rounded-full bg-brand-600/20 text-brand-400">
               <AppIcon name="user" class="h-5 w-5" />
             </div>
             <div>
@@ -98,7 +105,7 @@ function onFiltersApply(v: typeof filters.value) {
               <div v-if="athlete.category" class="text-sm text-gray-500">{{ athlete.category }}</div>
             </div>
           </div>
-          <div class="text-sm font-semibold text-brand-600">{{ t('tournaments.uploadedCount', { count: athlete.photo_count }) }}</div>
+          <div class="text-sm font-semibold text-brand-400">{{ t('tournaments.uploadedCount', { count: athlete.photo_count }) }}</div>
         </button>
       </div>
 

@@ -1,13 +1,14 @@
 <script setup lang="ts">
 definePageMeta({ middleware: 'client-auth', ssr: false })
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const api = useApi()
 const router = useRouter()
 
 const route = useRoute()
 const filter = ref<'all' | 'purchased' | 'unpurchased' | 'favorites'>('all')
 const tournamentId = ref((route.query.tournament_id as string) || '')
+const sort = ref<'newest' | 'oldest'>('newest')
 
 const { data, pending } = await useAsyncData(
   () => `profile-photos-${filter.value}-${tournamentId.value}`,
@@ -25,13 +26,30 @@ const { data: tournamentOptions } = await useAsyncData(
 )
 
 const chips = computed(() => [
-  { id: 'all' as const, label: t('profilePhotos.filterAll'), count: data.value?.counts.all },
   { id: 'purchased' as const, label: t('profilePhotos.filterPurchased'), count: data.value?.counts.purchased },
-  { id: 'unpurchased' as const, label: t('profilePhotos.filterUnpurchased'), count: data.value?.counts.unpurchased },
   { id: 'favorites' as const, label: t('profilePhotos.filterFavorites'), count: data.value?.counts.favorites },
+  { id: 'all' as const, label: t('profilePhotos.filterAll'), count: data.value?.counts.all },
+  { id: 'unpurchased' as const, label: t('profilePhotos.filterUnpurchased'), count: data.value?.counts.unpurchased },
 ])
 
-const photos = computed(() => data.value?.data ?? [])
+const selectedTournament = computed(() =>
+  tournamentOptions.value?.data?.find(item => item.id === tournamentId.value) ?? null,
+)
+
+const photos = computed(() => {
+  const list = [...(data.value?.data ?? [])]
+  list.sort((a, b) => {
+    const cmp = a.id.localeCompare(b.id)
+    return sort.value === 'newest' ? -cmp : cmp
+  })
+  return list
+})
+
+function formatDate(iso?: string) {
+  if (!iso) return ''
+  const loc = locale.value === 'ru' ? 'ru-RU' : locale.value === 'es' ? 'es-ES' : 'en-US'
+  return new Date(iso).toLocaleDateString(loc, { day: 'numeric', month: 'short', year: 'numeric' })
+}
 </script>
 
 <template>
@@ -50,7 +68,7 @@ const photos = computed(() => data.value?.data ?? [])
     </AppPageHeader>
 
     <div class="page-container space-y-4 !pt-0">
-      <div class="flex gap-2 overflow-x-auto pb-1">
+      <div class="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
         <button
           v-for="chip in chips"
           :key="chip.id"
@@ -62,10 +80,35 @@ const photos = computed(() => data.value?.data ?? [])
         </button>
       </div>
 
-      <div class="flex flex-wrap gap-2">
-        <select v-model="tournamentId" class="input-field w-auto min-w-[140px] py-2.5 text-sm">
-          <option value="">{{ t('profilePhotos.tournament') }}</option>
-          <option v-for="tour in tournamentOptions?.data" :key="tour.id" :value="tour.id">{{ tour.name }}</option>
+      <select v-model="tournamentId" class="input-field w-full py-2.5 text-sm">
+        <option value="">{{ t('profilePhotos.tournament') }}</option>
+        <option v-for="tour in tournamentOptions?.data" :key="tour.id" :value="tour.id">{{ tour.name }}</option>
+      </select>
+
+      <NuxtLink
+        v-if="selectedTournament"
+        :to="`/tournaments/${selectedTournament.slug}`"
+        class="card flex items-center gap-3 p-3 transition active:scale-[0.99]"
+      >
+        <div class="h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-white/10">
+          <AppImage :src="selectedTournament.cover_image" aspect="square" :alt="selectedTournament.name" />
+        </div>
+        <div class="min-w-0 flex-1">
+          <div class="truncate font-semibold">{{ selectedTournament.name }}</div>
+          <div v-if="selectedTournament.location" class="truncate text-xs text-gray-500">{{ selectedTournament.location }}</div>
+          <div v-if="selectedTournament.date" class="text-xs text-gray-500">{{ formatDate(selectedTournament.date) }}</div>
+        </div>
+        <AppIcon name="chevron" class="h-5 w-5 shrink-0 text-gray-400" />
+      </NuxtLink>
+
+      <div class="flex items-center justify-between gap-3">
+        <p v-if="filter === 'purchased' && data?.counts.purchased != null" class="text-sm text-gray-400">
+          {{ t('profilePhotos.purchasedCount', { count: data.counts.purchased }) }}
+        </p>
+        <span v-else class="flex-1" />
+        <select v-model="sort" class="input-field w-auto min-w-[148px] py-2 text-sm">
+          <option value="newest">{{ t('profilePhotos.sortNewest') }}</option>
+          <option value="oldest">{{ t('profilePhotos.sortOldest') }}</option>
         </select>
       </div>
 

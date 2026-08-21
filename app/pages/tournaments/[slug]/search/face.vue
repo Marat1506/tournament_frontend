@@ -205,9 +205,18 @@ onBeforeUnmount(() => {
 
     <div class="page-container">
       <SearchStepper :current="results ? 3 : 2" tournament-to="/tournaments" />
+      <SearchModeTabs :slug="slug" mode="face" />
 
-      <p class="mb-2 text-xs font-medium uppercase tracking-wide text-gray-500">{{ t('tournaments.selectedLabel') }}</p>
-      <TournamentCard v-if="tournament" :tournament="tournament" compact class="mb-5" />
+      <h2 class="mb-2 text-xl font-bold">{{ t('search.findYourselfTitle') }}</h2>
+      <p class="mb-4 text-sm text-gray-400">{{ t('search.findYourselfHint') }}</p>
+
+      <TournamentCard v-if="tournament" :tournament="tournament" compact class="mb-3" />
+      <div class="mb-5 flex justify-end">
+        <NuxtLink :to="`/tournaments/${slug}`" class="inline-flex items-center gap-1 text-sm font-medium text-brand-400">
+          <AppIcon name="pencil" class="h-3.5 w-3.5" />
+          {{ t('search.changeTournament') }}
+        </NuxtLink>
+      </div>
 
       <div v-if="!faceSearchEnabled" class="mb-4 rounded-xl bg-amber-500/10 px-4 py-3 text-sm text-amber-200 ring-1 ring-amber-500/20">
         {{ t('search.faceDisabledHint') }}
@@ -235,7 +244,7 @@ onBeforeUnmount(() => {
           <input
             v-model="consentPersonal"
             type="checkbox"
-            class="mt-1 h-5 w-5 shrink-0 rounded border-gray-500"
+            class="input-check"
           >
           <span class="text-sm leading-relaxed text-gray-200">{{ t('search.consentCheckbox') }}</span>
         </label>
@@ -246,9 +255,18 @@ onBeforeUnmount(() => {
       </div>
 
       <div class="card mb-4 p-5" :class="{ 'opacity-60': !faceSearchEnabled || !consentOk }">
-        <p class="mb-4 text-sm text-gray-600">
-          {{ t('search.faceHint') }}
-        </p>
+        <div
+          class="mb-4 flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-brand-500/50 bg-brand-600/5 px-4 py-8 text-center"
+        >
+          <div class="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-brand-600/20 text-brand-400">
+            <AppIcon name="face" class="h-7 w-7" />
+          </div>
+          <div class="font-semibold">{{ t('search.uploadSelfie') }}</div>
+          <p class="mt-1 max-w-xs text-xs text-gray-400">{{ t('search.uploadSelfieHint') }}</p>
+          <button type="button" class="btn-primary-solid mt-4 max-w-xs" :disabled="!faceSearchEnabled || !consentOk" @click="pickFile">
+            {{ previewUrl ? t('search.anotherPhoto') : t('search.choosePhoto') }}
+          </button>
+        </div>
 
         <input
           ref="fileInput"
@@ -264,18 +282,29 @@ onBeforeUnmount(() => {
           <img :src="previewUrl" :alt="t('search.previewAlt')" class="mx-auto max-h-64 w-full object-contain">
         </div>
 
-        <div class="grid grid-cols-2 gap-3">
-          <button type="button" class="btn-secondary" :disabled="!faceSearchEnabled || !consentOk" @click="pickFile">
-            {{ previewUrl ? t('search.anotherPhoto') : t('search.choosePhoto') }}
-          </button>
-          <button
-            type="button"
-            class="btn-primary-solid"
-            :disabled="!canSearch"
-            @click="search"
-          >
-            {{ searching ? t('search.searching') : t('search.findPhotos') }}
-          </button>
+        <p class="mb-3 text-center text-xs uppercase tracking-wide text-gray-500">{{ t('search.or') }}</p>
+        <button type="button" class="btn-secondary justify-center gap-2" :disabled="!faceSearchEnabled || !consentOk" @click="pickFile">
+          <AppIcon name="camera" class="h-5 w-5" />
+          {{ t('search.takePhotoNow') }}
+        </button>
+
+        <button
+          type="button"
+          class="btn-primary-solid mt-3"
+          :disabled="!canSearch"
+          @click="search"
+        >
+          {{ searching ? t('search.searching') : t('search.findPhotos') }}
+        </button>
+      </div>
+
+      <div class="cabinet-row mb-4">
+        <div class="icon-tile">
+          <AppIcon name="shield" class="h-5 w-5" />
+        </div>
+        <div class="min-w-0 flex-1">
+          <div class="font-semibold">{{ t('search.privacyTitle') }}</div>
+          <div class="text-sm text-gray-500">{{ t('search.privacyBody') }}</div>
         </div>
       </div>
 
@@ -315,13 +344,22 @@ onBeforeUnmount(() => {
     </div>
 
     <div v-if="results?.length" class="floating-above-nav">
-      <NuxtLink
-        v-if="selection.count"
-        :to="`/cart?tournament_id=${tournament?.id}`"
-        class="btn-primary-solid block text-center"
-      >
-        {{ t('search.toCart', { count: selection.count, total: selection.total.toFixed(0) }) }}
-      </NuxtLink>
+      <div class="card flex items-center gap-3 p-3 shadow-lg">
+        <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand-600 text-white">
+          <AppIcon name="cart" class="h-5 w-5" />
+        </div>
+        <div class="min-w-0 flex-1">
+          <div class="text-sm font-semibold">{{ t('search.selectedCount', { count: selection.count }) }}</div>
+          <div class="text-xs text-gray-400">${{ selection.total.toFixed(2) }}</div>
+        </div>
+        <NuxtLink
+          :to="`/cart?tournament_id=${tournament?.id}`"
+          class="rounded-xl bg-brand-600 px-3 py-2.5 text-sm font-semibold text-white"
+          :class="{ 'pointer-events-none opacity-40': !selection.count }"
+        >
+          {{ t('search.toCart') }} ›
+        </NuxtLink>
+      </div>
     </div>
   </div>
 </template>

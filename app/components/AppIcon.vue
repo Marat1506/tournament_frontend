@@ -1,6 +1,6 @@
 <script setup lang="ts">
 defineProps<{
-  name: 'home' | 'trophy' | 'heart' | 'user' | 'camera' | 'search' | 'upload' | 'face' | 'shirt' | 'bell' | 'help' | 'filter' | 'back' | 'check' | 'settings' | 'chevron' | 'cart' | 'photos' | 'mail' | 'download'
+  name: 'home' | 'trophy' | 'heart' | 'user' | 'camera' | 'search' | 'upload' | 'face' | 'shirt' | 'bell' | 'help' | 'filter' | 'back' | 'check' | 'settings' | 'chevron' | 'cart' | 'photos' | 'mail' | 'download' | 'calendar' | 'pin' | 'wallet' | 'chart' | 'lock' | 'shield' | 'star' | 'grid' | 'list' | 'plus' | 'trash' | 'pencil' | 'phone' | 'sparkles'
   class?: string
 }>()
 </script>
@@ -89,11 +89,67 @@ defineProps<{
       </template>
       <template v-else-if="name === 'mail'">
         <rect x="4" y="6" width="16" height="12" rx="2" />
-        <path d="m4 8 8 6 8 6 8 6 20 8" />
+        <path d="m4 8 8 6 8-6" />
       </template>
       <template v-else-if="name === 'download'">
         <path d="M12 4v10M8 10l4 4 4-4" />
         <path d="M4 18h16" />
+      </template>
+      <template v-else-if="name === 'calendar'">
+        <rect x="4" y="6" width="16" height="14" rx="2" />
+        <path d="M8 4v4M16 4v4M4 11h16" />
+      </template>
+      <template v-else-if="name === 'pin'">
+        <path d="M12 21s7-5.4 7-11a7 7 0 1 0-14 0c0 5.6 7 11 7 11z" />
+        <circle cx="12" cy="10" r="2.2" />
+      </template>
+      <template v-else-if="name === 'wallet'">
+        <rect x="3" y="7" width="18" height="12" rx="2" />
+        <path d="M3 10h18" />
+        <circle cx="16.5" cy="14" r="1" fill="currentColor" stroke="none" />
+      </template>
+      <template v-else-if="name === 'chart'">
+        <path d="M4 19h16" />
+        <path d="M7 16v-5M12 16V8M17 16v-8" />
+      </template>
+      <template v-else-if="name === 'lock'">
+        <rect x="6" y="11" width="12" height="9" rx="2" />
+        <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+      </template>
+      <template v-else-if="name === 'shield'">
+        <path d="M12 3 5 6v6c0 4.5 3 7.5 7 9 4-1.5 7-4.5 7-9V6z" />
+      </template>
+      <template v-else-if="name === 'star'">
+        <path d="m12 3 2.4 6.6H21l-5.2 4 2 6.4L12 16.8 6.2 20l2-6.4L3 9.6h6.6z" />
+      </template>
+      <template v-else-if="name === 'grid'">
+        <rect x="4" y="4" width="6" height="6" rx="1" />
+        <rect x="14" y="4" width="6" height="6" rx="1" />
+        <rect x="4" y="14" width="6" height="6" rx="1" />
+        <rect x="14" y="14" width="6" height="6" rx="1" />
+      </template>
+      <template v-else-if="name === 'list'">
+        <path d="M8 7h12M8 12h12M8 17h12" />
+        <circle cx="4.5" cy="7" r=".8" fill="currentColor" stroke="none" />
+        <circle cx="4.5" cy="12" r=".8" fill="currentColor" stroke="none" />
+        <circle cx="4.5" cy="17" r=".8" fill="currentColor" stroke="none" />
+      </template>
+      <template v-else-if="name === 'plus'">
+        <path d="M12 5v14M5 12h14" />
+      </template>
+      <template v-else-if="name === 'trash'">
+        <path d="M5 7h14M9 7V5h6v2M8 7l.8 12h6.4L16 7" />
+      </template>
+      <template v-else-if="name === 'pencil'">
+        <path d="M4 20h4L19 9l-4-4L4 16z" />
+        <path d="m13 7 4 4" />
+      </template>
+      <template v-else-if="name === 'phone'">
+        <path d="M7 3h4l1 4-2 1.5a12 12 0 0 0 5.5 5.5L17 12l4 1v4a2 2 0 0 1-2 2A16 16 0 0 1 5 7a2 2 0 0 1 2-2z" />
+      </template>
+      <template v-else-if="name === 'sparkles'">
+        <path d="M12 3v4M12 17v4M4.2 6.2l2.8 2.8M17 17l2.8 2.8M3 12h4M17 12h4M4.2 17.8 7 15M17 9l2.8-2.8" />
+        <circle cx="12" cy="12" r="2.2" />
       </template>
     </svg>
     <template #fallback>

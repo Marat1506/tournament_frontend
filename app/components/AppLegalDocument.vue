@@ -9,15 +9,29 @@ defineProps<{
 }>()
 
 const { t } = useI18n()
+const router = useRouter()
+
+function goBack() {
+  if (import.meta.client && window.history.length > 1) {
+    router.back()
+    return
+  }
+  navigateTo('/')
+}
 </script>
 
 <template>
   <div>
     <AppPageHeader :title="title">
       <template #left>
-        <NuxtLink to="/" class="flex h-10 w-10 items-center justify-center rounded-full hover:bg-white/10">
+        <button
+          type="button"
+          class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full hover:bg-white/10"
+          :aria-label="t('common.back')"
+          @click="goBack"
+        >
           <AppIcon name="back" class="h-5 w-5" />
-        </NuxtLink>
+        </button>
       </template>
     </AppPageHeader>
 

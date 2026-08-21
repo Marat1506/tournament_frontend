@@ -85,16 +85,16 @@ async function submit() {
       <AuthSessionNotice world="photographer" />
       <form class="space-y-4" @submit.prevent="submit">
         <p class="text-sm text-gray-500">{{ t('photographer.registerHint') }}</p>
-        <input v-model="form.name" type="text" class="input-field" :placeholder="t('photographer.name')" required>
-        <input v-model="form.display_name" type="text" class="input-field" :placeholder="t('photographer.displayName')">
-        <input v-model="form.email" type="email" class="input-field" :placeholder="t('auth.email')" required>
-        <input v-model="form.phone" type="tel" class="input-field" :placeholder="t('photographer.phone')" required>
-        <input v-model="form.city" type="text" class="input-field" :placeholder="t('photographer.city')" required>
-        <input v-model="form.password" type="password" class="input-field" :placeholder="t('auth.password')" minlength="8" required>
+        <input v-model="form.name" type="text" name="name" autocomplete="name" class="input-field" :placeholder="t('photographer.name')" required>
+        <input v-model="form.display_name" type="text" name="organization" autocomplete="organization" class="input-field" :placeholder="t('photographer.displayName')">
+        <input v-model="form.email" type="email" name="email" autocomplete="email" class="input-field" :placeholder="t('auth.email')" required>
+        <input v-model="form.phone" type="tel" name="tel" autocomplete="tel" class="input-field" :placeholder="t('photographer.phone')" required>
+        <input v-model="form.city" type="text" name="city" autocomplete="address-level2" class="input-field" :placeholder="t('photographer.city')" required>
+        <input v-model="form.password" type="password" name="new-password" autocomplete="new-password" class="input-field" :placeholder="t('auth.password')" minlength="8" required>
         <p class="text-xs text-gray-500">{{ t('photographer.registerPayoutsLater') }}</p>
 
         <label class="flex cursor-pointer items-start gap-3 rounded-xl border border-white/10 p-3">
-          <input v-model="acceptTerms" type="checkbox" class="mt-1 h-4 w-4 rounded border-gray-500" required>
+          <input v-model="acceptTerms" type="checkbox" class="input-check" required>
           <span class="text-sm text-gray-300">
             {{ t('auth.termsPrefix') }}
             <NuxtLink to="/terms" class="text-brand-400 hover:underline">{{ t('auth.termsLink') }}</NuxtLink>
@@ -103,11 +103,11 @@ async function submit() {
           </span>
         </label>
         <label class="flex cursor-pointer items-start gap-3 rounded-xl border border-white/10 p-3">
-          <input v-model="acceptPhotoRights" type="checkbox" class="mt-1 h-4 w-4 rounded border-gray-500" required>
+          <input v-model="acceptPhotoRights" type="checkbox" class="input-check" required>
           <span class="text-sm text-gray-300">{{ t('photographer.registerRights') }}</span>
         </label>
         <label class="flex cursor-pointer items-start gap-3 rounded-xl border border-white/10 p-3">
-          <input v-model="acceptCommission" type="checkbox" class="mt-1 h-4 w-4 rounded border-gray-500" required>
+          <input v-model="acceptCommission" type="checkbox" class="input-check" required>
           <span class="text-sm text-gray-300">{{ t('photographer.registerCommission') }}</span>
         </label>
 
@@ -126,7 +126,7 @@ async function submit() {
         >
           {{ t('photographer.goClientLogin') }}
         </NuxtLink>
-        <button type="submit" class="btn-primary-solid w-full" :disabled="!canSubmit">
+        <button type="submit" class="btn-primary-solid w-full" :disabled="loading">
           {{ t('photographer.submitApplication') }}
         </button>
       </form>

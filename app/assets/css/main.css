@@ -10,11 +10,11 @@
   }
 
   body {
-    @apply bg-[#0b0f17] text-white;
+    @apply bg-page text-white;
   }
 
   body.theme-dark {
-    @apply bg-[#0b0f17] text-white;
+    @apply bg-page text-white;
   }
 }
 
@@ -34,11 +34,11 @@
   }
 
   .page-dark {
-    @apply min-h-screen bg-[#0b0f17] text-white;
+    @apply min-h-screen bg-page text-white;
   }
 
   .card {
-    @apply rounded-2xl bg-[#151b28] shadow-sm ring-1 ring-white/10;
+    @apply rounded-2xl bg-surface shadow-sm ring-1 ring-white/[0.06];
   }
 
   .btn-primary {
@@ -46,15 +46,47 @@
   }
 
   .btn-secondary {
-    @apply flex min-h-[56px] w-full items-center gap-3 rounded-2xl bg-[#151b28] px-4 text-left text-base font-semibold text-white ring-1 ring-white/10 transition active:scale-[0.99];
+    @apply flex min-h-[56px] w-full items-center gap-3 rounded-2xl bg-surface px-4 text-left text-base font-semibold text-white ring-1 ring-white/10 transition active:scale-[0.99];
   }
 
   .btn-primary-solid {
-    @apply flex min-h-[52px] w-full items-center justify-center rounded-2xl bg-brand-600 px-4 text-base font-semibold text-white shadow-lg transition active:scale-[0.99];
+    @apply flex min-h-[52px] w-full items-center justify-center gap-2 rounded-2xl bg-brand-500 px-4 text-base font-semibold text-white shadow-[0_10px_28px_rgba(123,97,255,0.35)] transition active:scale-[0.99];
+  }
+
+  .btn-ghost-brand {
+    @apply flex min-h-[52px] w-full items-center justify-center gap-2 rounded-2xl bg-transparent px-4 text-base font-semibold text-white ring-1 ring-brand-500/80 transition active:scale-[0.99];
+  }
+
+  .home-step-card {
+    @apply relative flex min-h-[148px] min-w-0 flex-1 flex-col items-center rounded-2xl bg-surface px-2 pb-3.5 pt-9 text-center ring-1 ring-white/[0.06];
+  }
+
+  .btn-outline {
+    @apply inline-flex items-center justify-center rounded-xl px-3.5 py-2 text-sm font-semibold text-brand-400 ring-1 ring-brand-500/70 transition active:scale-[0.99];
+  }
+
+  .icon-tile {
+    @apply flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-brand-600/20 text-brand-400;
+  }
+
+  .cabinet-row {
+    @apply card flex items-center gap-3 p-4 transition active:scale-[0.99];
   }
 
   .input-field {
     @apply w-full rounded-xl border-0 bg-[#151b28] px-4 py-3.5 text-base text-white shadow-sm ring-1 ring-white/10 outline-none placeholder:text-gray-500 focus:ring-2 focus:ring-brand-600;
+  }
+
+  .input-check {
+    @apply mt-0.5 size-5 shrink-0 cursor-pointer appearance-none rounded border border-gray-400 bg-transparent;
+    background-size: 0.7rem;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+
+  .input-check:checked {
+    @apply border-brand-600 bg-brand-600;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2 6.2 4.7 9 10 3'/%3E%3C/svg%3E");
   }
 
   .chip {
@@ -73,17 +105,13 @@
     @apply flex h-14 w-14 items-center justify-center rounded-full bg-white/5 text-white ring-1 ring-white/15;
   }
 
-  .hero-bg-default {
-    @apply h-full w-full bg-cover bg-no-repeat;
-    background-image: url('/main_background_mobile.png');
-    background-position: 72% 28%;
+  .scrollbar-none {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
 
-  @media (min-width: 768px) {
-    .hero-bg-default {
-      background-image: url('/main_background.png');
-      background-position: center 30%;
-    }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
   }
 
   .search-card {

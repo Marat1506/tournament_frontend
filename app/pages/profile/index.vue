@@ -4,7 +4,6 @@ definePageMeta({ ssr: false })
 const { t, locale } = useI18n()
 const auth = useAuthStore()
 const api = useApi()
-const router = useRouter()
 const { unreadCount, canLoad: canLoadNotifications } = useNotificationBadge()
 
 const beltLabel = useBeltLabel(() => auth.user?.belt)
@@ -19,14 +18,32 @@ const { data: stats } = await useAsyncData(
   { watch: [canLoadStats], server: false },
 )
 
-const menuItems = computed(() => [
-  { to: '/profile/photos', label: t('profile.myPhotos'), icon: 'photos' as const, primary: true },
+const primaryItems = computed(() => [
+  {
+    to: '/profile/photos',
+    label: t('profile.myPhotos'),
+    hint: t('profile.myPhotosHint'),
+    icon: 'photos' as const,
+  },
+  {
+    to: '/favorites',
+    label: t('nav.favorites'),
+    hint: t('profile.favoritesHint'),
+    icon: 'heart' as const,
+  },
+  {
+    to: '/profile/settings',
+    label: t('profile.settings'),
+    hint: t('profile.settingsHint'),
+    icon: 'settings' as const,
+  },
+])
+
+const secondaryItems = computed(() => [
   { to: '/profile/tournaments', label: t('profile.myTournaments'), icon: 'trophy' as const },
   { to: '/profile/orders', label: t('profile.myOrders'), icon: 'cart' as const },
   { to: '/profile/notifications', label: t('notifications.title'), icon: 'bell' as const },
-  { to: '/favorites', label: t('nav.favorites'), icon: 'heart' as const },
   { to: '/profile/selfies', label: t('profile.mySelfies'), icon: 'face' as const },
-  { to: '/profile/settings', label: t('profile.settings'), icon: 'settings' as const },
 ])
 
 function formatStat(n?: number) {
@@ -48,7 +65,7 @@ onMounted(async () => {
         <NuxtLink
           v-if="auth.isLoggedIn && auth.user?.role === 'client'"
           to="/profile/notifications"
-          class="relative flex h-10 w-10 items-center justify-center text-gray-500"
+          class="relative flex h-10 w-10 items-center justify-center text-gray-400"
           :aria-label="t('notifications.title')"
         >
           <AppIcon name="bell" class="h-5 w-5" />
@@ -96,72 +113,82 @@ onMounted(async () => {
       <template v-else>
         <EmailVerificationBanner />
 
-        <div class="card p-5">
-          <div class="flex items-center gap-4">
-            <div class="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-brand-600/20 text-brand-400">
-              <img v-if="auth.user?.avatar_url" :src="auth.user.avatar_url" alt="" class="h-full w-full object-cover">
-              <AppIcon v-else name="user" class="h-8 w-8" />
-            </div>
-            <div class="min-w-0">
-              <h2 class="truncate text-lg font-bold">{{ auth.user?.name || t('profile.athlete') }}</h2>
-              <p class="truncate text-sm text-gray-500">{{ auth.user?.email }}</p>
-              <div
-                v-if="auth.user?.belt"
-                class="mt-1.5 inline-flex items-center gap-1 rounded-full bg-brand-600/20 px-2.5 py-0.5 text-xs font-medium text-brand-400"
-              >
-                <AppIcon name="trophy" class="h-3.5 w-3.5" />
-                {{ beltLabel }}
-              </div>
+        <NuxtLink to="/profile/settings" class="card flex items-center gap-4 p-4 transition active:scale-[0.99]">
+          <div class="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-brand-600/20 text-brand-400">
+            <img v-if="auth.user?.avatar_url" :src="auth.user.avatar_url" alt="" class="h-full w-full object-cover">
+            <AppIcon v-else name="user" class="h-8 w-8" />
+          </div>
+          <div class="min-w-0 flex-1">
+            <h2 class="truncate text-lg font-bold">{{ auth.user?.name || t('profile.athlete') }}</h2>
+            <p class="truncate text-sm text-gray-500">{{ auth.user?.email }}</p>
+            <div
+              v-if="auth.user?.belt"
+              class="mt-1.5 inline-flex items-center gap-1 rounded-full bg-brand-600/20 px-2.5 py-0.5 text-xs font-medium text-brand-400"
+            >
+              <AppIcon name="trophy" class="h-3.5 w-3.5" />
+              {{ beltLabel }}
             </div>
           </div>
+          <AppIcon name="chevron" class="h-5 w-5 text-gray-500" />
+        </NuxtLink>
 
-          <div v-if="stats" class="mt-5 grid grid-cols-3 gap-2 border-t border-white/10 pt-5">
-            <div class="text-center">
-              <div class="text-xl font-bold text-brand-600">{{ formatStat(stats.found_photos) }}</div>
-              <div class="text-[11px] text-gray-500">{{ t('profile.found') }}</div>
-            </div>
-            <div class="text-center">
-              <div class="text-xl font-bold">{{ formatStat(stats.purchased_photos) }}</div>
-              <div class="text-[11px] text-gray-500">{{ t('profile.purchased') }}</div>
-            </div>
-            <div class="text-center">
-              <div class="text-xl font-bold">{{ formatStat(stats.tournaments_count) }}</div>
-              <div class="text-[11px] text-gray-500">{{ t('profile.tournamentsCount') }}</div>
-            </div>
+        <div v-if="stats" class="grid grid-cols-3 gap-2">
+          <div class="card p-3 text-center">
+            <div class="text-xl font-bold text-brand-400">{{ formatStat(stats.found_photos) }}</div>
+            <div class="text-[11px] text-gray-500">{{ t('profile.found') }}</div>
+          </div>
+          <div class="card p-3 text-center">
+            <div class="text-xl font-bold">{{ formatStat(stats.purchased_photos) }}</div>
+            <div class="text-[11px] text-gray-500">{{ t('profile.purchased') }}</div>
+          </div>
+          <div class="card p-3 text-center">
+            <div class="text-xl font-bold">{{ formatStat(stats.tournaments_count) }}</div>
+            <div class="text-[11px] text-gray-500">{{ t('profile.tournamentsCount') }}</div>
           </div>
         </div>
 
-        <nav class="card divide-y divide-white/10 overflow-hidden">
+        <div class="space-y-3">
           <NuxtLink
-            v-for="item in menuItems"
+            v-for="item in primaryItems"
             :key="item.to"
             :to="item.to"
-            class="flex items-center gap-3 px-4 py-3.5 transition active:bg-white/5"
-            :class="item.primary ? 'bg-brand-600/10' : ''"
+            class="cabinet-row"
           >
-            <div
-              class="flex h-9 w-9 items-center justify-center rounded-xl"
-              :class="item.primary ? 'bg-brand-600 text-white' : 'bg-white/10 text-gray-400'"
-            >
+            <div class="icon-tile">
               <AppIcon :name="item.icon" class="h-5 w-5" />
             </div>
-            <span class="flex-1 font-medium" :class="item.primary ? 'text-brand-400' : ''">{{ item.label }}</span>
+            <div class="min-w-0 flex-1">
+              <div class="font-semibold">{{ item.label }}</div>
+              <div class="text-sm text-gray-500">{{ item.hint }}</div>
+            </div>
             <AppIcon name="chevron" class="h-5 w-5 text-gray-500" />
           </NuxtLink>
-        </nav>
+        </div>
 
-        <NuxtLink to="/tournaments" class="card flex items-center gap-4 p-4 transition active:scale-[0.99]">
-          <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-600 text-white">
-            <AppIcon name="face" class="h-6 w-6" />
-          </div>
-          <div class="flex-1">
-            <div class="font-semibold text-brand-400">{{ t('profile.findNewPhotos') }}</div>
-            <div class="text-sm text-gray-500">{{ t('profile.findNewPhotosHint') }}</div>
-          </div>
-          <AppIcon name="chevron" class="h-5 w-5 text-brand-400" />
-        </NuxtLink>
+        <div>
+          <p class="mb-2 px-1 text-xs font-medium uppercase tracking-wide text-gray-500">
+            {{ t('profile.moreSection') }}
+          </p>
+          <nav class="card divide-y divide-white/10 overflow-hidden">
+            <NuxtLink
+              v-for="item in secondaryItems"
+              :key="item.to"
+              :to="item.to"
+              class="flex items-center gap-3 px-4 py-3.5 transition active:bg-white/5"
+            >
+              <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 text-gray-400">
+                <AppIcon :name="item.icon" class="h-5 w-5" />
+              </div>
+              <span class="flex-1 font-medium">{{ item.label }}</span>
+              <AppIcon name="chevron" class="h-5 w-5 text-gray-500" />
+            </NuxtLink>
+          </nav>
+        </div>
 
-        <button class="w-full py-2 text-center text-sm text-gray-500" @click="auth.logout()">
+        <button
+          class="w-full rounded-2xl border border-red-500/30 py-3 text-center text-sm font-semibold text-red-400 transition hover:bg-red-500/10"
+          @click="auth.logout()"
+        >
           {{ t('profile.logout') }}
         </button>
       </template>

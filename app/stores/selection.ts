@@ -81,6 +81,17 @@ export const useSelectionStore = defineStore('selection', () => {
     payoutsReady.value = ready
   }
 
+  function selectAll(photos: Photo[]) {
+    bundle.value = null
+    const seen = new Set(items.value.map(p => p.id))
+    for (const photo of photos) {
+      if (!seen.has(photo.id)) {
+        items.value.push(photo)
+        seen.add(photo.id)
+      }
+    }
+  }
+
   function has(id: string) {
     return items.value.some(p => p.id === id)
   }
@@ -99,5 +110,5 @@ export const useSelectionStore = defineStore('selection', () => {
     return items.value.reduce((sum, p) => sum + p.price, 0)
   })
 
-  return { items, bundle, tournamentId, payoutsReady, toggle, setBundle, setContext, has, clear, hydrate, count, total }
+  return { items, bundle, tournamentId, payoutsReady, toggle, setBundle, setContext, has, selectAll, clear, hydrate, count, total }
 })

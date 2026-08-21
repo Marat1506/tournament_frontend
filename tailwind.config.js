@@ -9,12 +9,15 @@ export default {
   theme: {
     extend: {
       colors: {
+        page: '#080b16',
+        surface: '#121826',
         brand: {
-          50: '#eef4ff',
-          100: '#d9e6ff',
-          500: '#0056ff',
-          600: '#0056ff',
-          700: '#0044cc',
+          50: '#1b1533',
+          100: '#2a2150',
+          400: '#a594ff',
+          500: '#7b61ff',
+          600: '#6e52f0',
+          700: '#5d45e6',
         },
       },
       boxShadow: {

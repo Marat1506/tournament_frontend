@@ -4,16 +4,13 @@ useHead({
 })
 
 const route = useRoute()
-const showAthleteNav = computed(() => {
-  const path = route.path
-  return !path.startsWith('/photographer') && !path.startsWith('/admin')
-})
+const showAppNav = computed(() => !route.path.startsWith('/admin'))
 </script>
 
 <template>
-  <div class="min-h-screen bg-[#0b0f17] text-white">
+  <div class="min-h-screen bg-page text-white">
     <AppToast />
     <slot />
-    <AppBottomNav v-if="showAthleteNav" />
+    <AppBottomNav v-if="showAppNav" />
   </div>
 </template>

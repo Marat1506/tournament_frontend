@@ -109,6 +109,11 @@ export interface Tournament {
   status: string
   photo_count: number
   payouts_ready?: boolean
+  event_fee_required?: boolean
+  event_fee_paid_at?: string
+  event_slot_needed?: boolean
+  event_slot_amount?: number
+  platform_fee_percent?: number
 }
 
 export interface Athlete {
@@ -244,6 +249,7 @@ export interface PayoutStatus {
   payouts_enabled: boolean
   requirements_due?: string[]
   can_receive_payments: boolean
+  dashboard_ready?: boolean
   stripe_configured: boolean
   platform_fee_percent: number
   countries: ConnectCountry[]

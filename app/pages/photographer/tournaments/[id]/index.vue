@@ -52,13 +52,43 @@ watch(agreementStatus, (s) => {
   if (s?.agreed) agreementAgreed.value = true
 }, { immediate: true })
 
+const needsSlot = computed(() => !!tournament.value?.event_slot_needed)
+const slotAmount = computed(() => tournament.value?.event_slot_amount ?? 10)
+const feePercent = computed(() =>
+  tournament.value?.platform_fee_percent
+  ?? payouts.value?.platform_fee_percent
+  ?? 10,
+)
+
+const canUpload = computed(() => agreementAgreed.value && !needsSlot.value)
+const slotPaying = ref(false)
+const slotError = ref('')
+
+const flowSteps = computed(() => {
+  const steps = [t('photographer.flowRules')]
+  if (needsSlot.value) steps.push(t('photographer.flowPay'))
+  steps.push(t('photographer.flowFiles'), t('photographer.flowUpload'), t('photographer.flowPublish'))
+  return steps
+})
+
+const filesStep = computed(() => needsSlot.value ? 3 : 2)
+const uploadStep = computed(() => needsSlot.value ? 4 : 3)
+const publishStep = computed(() => needsSlot.value ? 5 : 4)
+
+function advanceAfterAgreement() {
+  if (needsSlot.value) {
+    flowStep.value = 2
+    return
+  }
+  flowStep.value = (tournament.value?.photo_count ?? 0) > 0 ? publishStep.value : filesStep.value
+}
+
 watch(agreementAgreed, (v) => {
   if (v && flowStep.value < 2) {
-    flowStep.value = (tournament.value?.photo_count ?? 0) > 0 ? 4 : 2
+    advanceAfterAgreement()
   }
 }, { immediate: true })
 
-const canUpload = computed(() => agreementAgreed.value)
 const uploadInProgress = computed(() => uploading.value || batch.value?.status === 'in_progress' || uploadPhase.value !== 'idle')
 const barPercent = computed(() => {
   if (uploadPhase.value === 'sending') {
@@ -92,27 +122,53 @@ const canPublish = computed(() =>
   !isPublished.value
   && !publishing.value
   && !uploadInProgress.value
+  && !needsSlot.value
   && (tournament.value?.photo_count ?? 0) > 0,
 )
-
-const flowSteps = computed(() => [
-  t('photographer.flowRules'),
-  t('photographer.flowFiles'),
-  t('photographer.flowUpload'),
-  t('photographer.flowPublish'),
-])
 
 function canOpenStep(n: number) {
   if (n === 1) return !agreementAgreed.value || flowStep.value === 1
   if (!agreementAgreed.value) return false
-  if (n === 2) return true
-  if (n === 3) return files.value.length > 0 || !!batch.value || uploadInProgress.value || (tournament.value?.photo_count ?? 0) > 0
-  return (tournament.value?.photo_count ?? 0) > 0
+  if (needsSlot.value && n === 2) return true
+  if (n === filesStep.value) return !needsSlot.value
+  if (n === uploadStep.value) return files.value.length > 0 || !!batch.value || uploadInProgress.value || (tournament.value?.photo_count ?? 0) > 0
+  if (n === publishStep.value) return (tournament.value?.photo_count ?? 0) > 0
+  return false
 }
 
 function goToStep(n: number) {
   if (!canOpenStep(n)) return
   flowStep.value = n
+}
+
+async function payEventSlot() {
+  slotPaying.value = true
+  slotError.value = ''
+  try {
+    const result = await api.checkoutEventSlot(id)
+    if (result.dev_mode) {
+      await refreshList()
+      toast.success(t('photographer.slotPaid'))
+      flowStep.value = filesStep.value
+      return
+    }
+    if (import.meta.client && result.url) {
+      window.location.href = result.url
+    }
+  } catch (e: unknown) {
+    const key = mapApiError(e, [
+      { match: 'event_fee_already_paid', key: 'photographer.slotPaid' },
+      { match: 'event_fee_required', key: 'photographer.slotPayFailed' },
+    ], 'photographer.slotPayFailed')
+    slotError.value = t(key)
+    toast.error(slotError.value)
+    await refreshList()
+    if (!tournament.value?.event_slot_needed) {
+      flowStep.value = filesStep.value
+    }
+  } finally {
+    slotPaying.value = false
+  }
 }
 
 async function submitAgreement() {
@@ -167,7 +223,7 @@ function finishBatch(status: UploadBatch) {
 
   uploadAlert.value = { type: 'success', message: t('photographer.msgProcessed') }
   toast.success(t('photographer.msgProcessed'))
-  flowStep.value = 4
+  flowStep.value = publishStep.value
 }
 
 async function pollUploadStatus() {
@@ -233,7 +289,7 @@ async function upload() {
   batch.value = null
   sendPercent.value = 0
   uploadPhase.value = 'sending'
-  flowStep.value = 3
+  flowStep.value = uploadStep.value
   try {
     batch.value = await api.uploadPhotos(id, files.value, (loaded, total) => {
       sendPercent.value = total > 0 ? Math.round((loaded / total) * 100) : 0
@@ -276,6 +332,7 @@ async function publish() {
     const key = mapApiError(e, [
       { match: 'upload photos first', key: 'photographer.msgUploadFirst' },
       { match: 'already published', key: 'photographer.msgAlreadyPublished' },
+      { match: 'event_fee_required', key: 'photographer.slotRequired' },
       { match: 'tournament not found', key: 'photographer.errNotFound' },
     ], 'photographer.msgPublishFailed')
     publishAlert.value = { type: 'error', message: t(key) }
@@ -333,6 +390,25 @@ onUnmounted(() => {
   stopPolling()
   if (qrBlobUrl.value) URL.revokeObjectURL(qrBlobUrl.value)
 })
+
+onMounted(async () => {
+  const slot = route.query.slot
+  if (slot === 'paid' || slot === 'cancel') {
+    await refreshList()
+    if (slot === 'paid') {
+      toast.success(t('photographer.slotPaid'))
+    }
+    if (agreementAgreed.value) {
+      flowStep.value = needsSlot.value ? 2 : filesStep.value
+    }
+  }
+})
+
+watch(needsSlot, (needed, wasNeeded) => {
+  if (wasNeeded && !needed && agreementAgreed.value && flowStep.value === 2) {
+    flowStep.value = filesStep.value
+  }
+})
 </script>
 
 <template>
@@ -358,6 +434,8 @@ onUnmounted(() => {
     </div>
 
     <div v-else class="page-container space-y-5">
+      <PhotographerEventTabs :id="id" active="photos" />
+
       <AppAlert
         v-if="isPublished"
         type="success"
@@ -403,7 +481,7 @@ onUnmounted(() => {
         </div>
       </div>
 
-      <p class="text-sm text-gray-400">{{ t('photographer.flowStepOf', { current: flowStep, total: 4 }) }}</p>
+      <p class="text-sm text-gray-400">{{ t('photographer.flowStepOf', { current: flowStep, total: flowSteps.length }) }}</p>
       <div class="flex items-start px-1">
         <template v-for="(label, index) in flowSteps" :key="label">
           <button
@@ -437,25 +515,39 @@ onUnmounted(() => {
         <h2 class="font-semibold">{{ t('photographer.agreementTitle') }}</h2>
         <p class="text-sm text-gray-400">{{ t('photographer.agreementIntro') }}</p>
         <label class="flex cursor-pointer items-start gap-3 rounded-xl border border-white/10 p-3">
-          <input v-model="agreementShoot" type="checkbox" class="mt-1 h-5 w-5 rounded border-gray-500">
-          <span class="text-sm">{{ t('photographer.agreementShoot') }}</span>
+          <input v-model="agreementShoot" type="checkbox" class="input-check">
+          <span class="text-sm leading-relaxed">{{ t('photographer.agreementShoot') }}</span>
         </label>
         <label class="flex cursor-pointer items-start gap-3 rounded-xl border border-white/10 p-3">
-          <input v-model="agreementDistribute" type="checkbox" class="mt-1 h-5 w-5 rounded border-gray-500">
-          <span class="text-sm">{{ t('photographer.agreementDistribute') }}</span>
+          <input v-model="agreementDistribute" type="checkbox" class="input-check">
+          <span class="text-sm leading-relaxed">{{ t('photographer.agreementDistribute') }}</span>
         </label>
         <NuxtLink to="/terms" class="text-sm text-brand-500 hover:underline">{{ t('photographer.agreementTermsLink') }}</NuxtLink>
         <AppAlert v-if="agreementError" type="error" :message="agreementError" />
         <button
           class="btn-primary-solid w-full"
-          :disabled="agreementSaving || !agreementShoot || !agreementDistribute"
+          :disabled="agreementSaving"
           @click="submitAgreement"
         >
           {{ agreementSaving ? t('photographer.creating') : t('photographer.agreementContinue') }}
         </button>
       </section>
 
-      <section v-else-if="flowStep === 2" class="card space-y-4 p-4">
+      <section v-else-if="needsSlot && flowStep === 2" class="card space-y-4 p-5">
+        <h2 class="font-semibold">{{ t('photographer.slotTitle') }}</h2>
+        <p class="text-3xl font-bold tracking-tight">${{ slotAmount }}</p>
+        <p class="text-sm leading-relaxed text-gray-400">{{ t('photographer.slotIntro') }}</p>
+        <p class="text-sm leading-relaxed text-gray-400">{{ t('photographer.slotCommission', { percent: feePercent }) }}</p>
+        <AppAlert v-if="slotError" type="error" :message="slotError" />
+        <button class="btn-primary-solid w-full" :disabled="slotPaying" @click="payEventSlot">
+          {{ slotPaying ? t('photographer.slotPaying') : t('photographer.slotPay', { amount: slotAmount }) }}
+        </button>
+        <NuxtLink v-if="!payoutsReady" to="/photographer/payouts" class="btn-secondary w-full justify-center">
+          {{ t('photographer.payoutsConnect') }}
+        </NuxtLink>
+      </section>
+
+      <section v-else-if="flowStep === filesStep" class="card space-y-4 p-4">
         <h2 class="font-semibold">{{ t('photographer.stepSelect') }}</h2>
         <p class="text-sm text-gray-400">{{ t('photographer.pickManyHint') }}</p>
         <input
@@ -494,7 +586,7 @@ onUnmounted(() => {
         </button>
       </section>
 
-      <section v-else-if="flowStep === 3" class="card space-y-3 p-4">
+      <section v-else-if="flowStep === uploadStep" class="card space-y-3 p-4">
         <h2 class="font-semibold">{{ t('photographer.stepUpload') }}</h2>
         <p v-if="files.length && uploadPhase === 'idle'" class="text-sm text-gray-400">{{ t('photographer.filesPicked', { count: files.length }) }}</p>
         <button
@@ -513,7 +605,7 @@ onUnmounted(() => {
           <div class="text-sm text-gray-400">{{ progressLabel }}</div>
         </div>
         <AppAlert v-if="uploadAlert" :type="uploadAlert.type" :message="uploadAlert.message" />
-        <button type="button" class="text-sm font-medium text-brand-400" :disabled="uploadInProgress" @click="goToStep(2)">
+        <button type="button" class="text-sm font-medium text-brand-400" :disabled="uploadInProgress" @click="goToStep(filesStep)">
           {{ t('photographer.backToFiles') }}
         </button>
       </section>
@@ -526,6 +618,13 @@ onUnmounted(() => {
           type="info"
           :message="t('photographer.publishWithoutPayouts')"
         />
+        <NuxtLink
+          v-if="!isPublished && !payoutsReady"
+          to="/photographer/payouts"
+          class="btn-secondary w-full justify-center"
+        >
+          {{ t('photographer.payoutsConnect') }}
+        </NuxtLink>
         <button
           class="btn-primary-solid w-full"
           :disabled="!canPublish"
@@ -542,7 +641,7 @@ onUnmounted(() => {
           v-if="!isPublished"
           type="button"
           class="text-sm font-medium text-brand-400"
-          @click="goToStep(2)"
+          @click="goToStep(filesStep)"
         >
           {{ t('photographer.addMorePhotos') }}
         </button>

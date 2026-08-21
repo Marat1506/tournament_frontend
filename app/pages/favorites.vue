@@ -6,6 +6,7 @@ definePageMeta({ ssr: false })
 const { t } = useI18n()
 const auth = useAuthStore()
 const favorites = useFavoritesStore()
+const selection = useSelectionStore()
 const api = useApi()
 
 const photoMap = ref<Record<string, Photo>>({})
@@ -43,7 +44,8 @@ async function loadFavoritePhotos() {
     if (validIds.length !== favorites.ids.length) {
       favorites.setIds(validIds)
     }
-  } finally {
+  }
+  finally {
     loading.value = false
   }
 }
@@ -60,19 +62,42 @@ watch(
 )
 
 const photos = computed(() => Object.values(photoMap.value))
+
+function buySelected() {
+  if (!selection.count) return
+  const tid = selection.tournamentId || photos.value[0]?.tournament_id
+  navigateTo(tid ? `/cart?tournament_id=${tid}` : '/cart')
+}
 </script>
 
 <template>
-  <div>
+  <div class="page-with-floating-cta">
     <AppPageHeader :title="t('favorites.title')" />
     <div class="page-container">
-      <PhotoGrid :photos="photos" :loading="loading" />
+      <p class="mb-4 text-sm text-gray-400">{{ t('profile.favoritesHint') }}</p>
+      <PhotoGrid :photos="photos" :loading="loading" selectable />
       <p v-if="!loading && !photos.length" class="mt-8 text-center text-gray-500">
         {{ t('favorites.empty') }}
       </p>
       <p v-if="!auth.isLoggedIn && photos.length" class="mt-4 text-center text-xs text-gray-400">
         {{ t('favorites.syncHint') }}
       </p>
+    </div>
+
+    <div v-if="photos.length" class="floating-above-nav">
+      <div class="card flex items-center gap-3 p-3 shadow-lg">
+        <div class="min-w-0 flex-1">
+          <div class="text-sm font-semibold">{{ t('search.selectedCount', { count: selection.count }) }}</div>
+          <div class="text-xs text-gray-400">${{ selection.total.toFixed(2) }}</div>
+        </div>
+        <button
+          class="rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-40"
+          :disabled="!selection.count"
+          @click="buySelected"
+        >
+          {{ t('search.goToPay') }}
+        </button>
+      </div>
     </div>
   </div>
 </template>

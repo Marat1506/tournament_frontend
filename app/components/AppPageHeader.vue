@@ -8,10 +8,10 @@ const { t } = useI18n()
 </script>
 
 <template>
-  <header class="sticky top-0 z-40 flex items-center justify-between bg-[#0b0f17]/90 px-4 py-3 text-white backdrop-blur-md">
-    <div class="flex min-w-0 flex-1 items-center gap-3">
+  <header class="sticky top-0 z-40 flex items-center justify-between bg-page/90 px-4 py-3 text-white backdrop-blur-md">
+    <div class="flex min-w-0 flex-1 items-center gap-2">
       <slot name="left" />
-      <h1 class="truncate text-lg font-bold">{{ title }}</h1>
+      <h1 class="min-w-0 truncate text-lg font-bold leading-none">{{ title }}</h1>
     </div>
     <div class="flex shrink-0 items-center gap-2">
       <AppLocaleSwitcher />

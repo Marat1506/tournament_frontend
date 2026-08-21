@@ -13,6 +13,7 @@ const saving = ref(false)
 const saved = ref(false)
 const error = ref('')
 const consentBusy = ref(false)
+const showPersonal = ref(true)
 
 const belts = beltOptions()
 
@@ -40,11 +41,13 @@ async function save() {
     auth.setUser(user)
     saved.value = true
     toast.success(t('settings.saved'))
-  } catch (e: unknown) {
+  }
+  catch (e: unknown) {
     const msg = getApiErrorMessage(e)
     error.value = msg || t('settings.saveFailed')
     toast.error(error.value)
-  } finally {
+  }
+  finally {
     saving.value = false
   }
 }
@@ -56,9 +59,11 @@ async function unpublishCatalog() {
     await api.unpublishCatalog()
     await refreshConsent()
     toast.success(t('settings.consentUnpublished'))
-  } catch {
+  }
+  catch {
     toast.error(t('settings.consentActionFailed'))
-  } finally {
+  }
+  finally {
     consentBusy.value = false
   }
 }
@@ -70,11 +75,18 @@ async function revokeConsent() {
     await api.revokeConsent()
     await refreshConsent()
     toast.success(t('settings.consentRevoked'))
-  } catch {
+  }
+  catch {
     toast.error(t('settings.consentActionFailed'))
-  } finally {
+  }
+  finally {
     consentBusy.value = false
   }
+}
+
+async function logout() {
+  auth.logout()
+  await router.push('/')
 }
 </script>
 
@@ -89,7 +101,28 @@ async function revokeConsent() {
     </AppPageHeader>
 
     <div class="page-container space-y-4 !pt-0">
-      <div class="card space-y-4 p-4">
+      <div class="card flex items-center gap-3 p-4">
+        <div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-brand-600/20 text-brand-400">
+          <AppIcon name="user" class="h-7 w-7" />
+        </div>
+        <div class="min-w-0 flex-1">
+          <div class="truncate text-lg font-semibold">{{ auth.user?.name || auth.user?.email }}</div>
+          <div class="truncate text-sm text-gray-400">{{ auth.user?.email }}</div>
+        </div>
+      </div>
+
+      <button type="button" class="cabinet-row w-full text-left" @click="showPersonal = !showPersonal">
+        <span class="icon-tile">
+          <AppIcon name="user" class="h-5 w-5" />
+        </span>
+        <span class="min-w-0 flex-1">
+          <span class="block font-semibold">{{ t('settings.personalData') }}</span>
+          <span class="block text-sm text-gray-400">{{ t('settings.personalDataHint') }}</span>
+        </span>
+        <AppIcon name="chevron" class="h-5 w-5 shrink-0 text-gray-500 transition" :class="showPersonal ? 'rotate-90' : ''" />
+      </button>
+
+      <div v-if="showPersonal" class="card space-y-4 p-4">
         <label class="block text-sm">
           <span class="text-gray-400">{{ t('settings.name') }}</span>
           <input v-model="name" type="text" class="input-field mt-1" :placeholder="t('settings.namePlaceholder')">
@@ -108,6 +141,66 @@ async function revokeConsent() {
         <p v-if="saved" class="text-center text-sm text-green-400">{{ t('settings.saved') }}</p>
         <p v-if="error" class="text-center text-sm text-red-400">{{ error }}</p>
       </div>
+
+      <NuxtLink to="/forgot-password" class="cabinet-row">
+        <span class="icon-tile">
+          <AppIcon name="lock" class="h-5 w-5" />
+        </span>
+        <span class="min-w-0 flex-1">
+          <span class="block font-semibold">{{ t('settings.password') }}</span>
+          <span class="block text-sm text-gray-400">{{ t('settings.passwordHint') }}</span>
+        </span>
+        <AppIcon name="chevron" class="h-5 w-5 shrink-0 text-gray-500" />
+      </NuxtLink>
+
+      <NuxtLink to="/profile/notifications" class="cabinet-row">
+        <span class="icon-tile">
+          <AppIcon name="bell" class="h-5 w-5" />
+        </span>
+        <span class="min-w-0 flex-1">
+          <span class="block font-semibold">{{ t('settings.notifications') }}</span>
+          <span class="block text-sm text-gray-400">{{ t('settings.notificationsHint') }}</span>
+        </span>
+        <AppIcon name="chevron" class="h-5 w-5 shrink-0 text-gray-500" />
+      </NuxtLink>
+
+      <div class="cabinet-row">
+        <span class="icon-tile">
+          <AppIcon name="settings" class="h-5 w-5" />
+        </span>
+        <span class="min-w-0 flex-1">
+          <span class="block font-semibold">{{ t('settings.language') }}</span>
+          <span class="block text-sm text-gray-400">{{ t('settings.languageHint') }}</span>
+        </span>
+        <AppLocaleSwitcher />
+      </div>
+
+      <NuxtLink to="/support" class="cabinet-row">
+        <span class="icon-tile">
+          <AppIcon name="help" class="h-5 w-5" />
+        </span>
+        <span class="min-w-0 flex-1">
+          <span class="block font-semibold">{{ t('settings.help') }}</span>
+          <span class="block text-sm text-gray-400">{{ t('settings.helpHint') }}</span>
+        </span>
+        <AppIcon name="chevron" class="h-5 w-5 shrink-0 text-gray-500" />
+      </NuxtLink>
+
+      <NuxtLink to="/terms" class="cabinet-row">
+        <span class="icon-tile">
+          <AppIcon name="list" class="h-5 w-5" />
+        </span>
+        <span class="min-w-0 flex-1 font-semibold">{{ t('settings.terms') }}</span>
+        <AppIcon name="chevron" class="h-5 w-5 shrink-0 text-gray-500" />
+      </NuxtLink>
+
+      <NuxtLink to="/privacy" class="cabinet-row">
+        <span class="icon-tile">
+          <AppIcon name="shield" class="h-5 w-5" />
+        </span>
+        <span class="min-w-0 flex-1 font-semibold">{{ t('settings.privacy') }}</span>
+        <AppIcon name="chevron" class="h-5 w-5 shrink-0 text-gray-500" />
+      </NuxtLink>
 
       <div class="card space-y-4 p-4">
         <div>
@@ -154,9 +247,15 @@ async function revokeConsent() {
         </div>
       </div>
 
-      <button class="w-full py-2 text-center text-sm text-gray-500" @click="auth.logout(); router.push('/')">
+      <button
+        type="button"
+        class="w-full rounded-2xl border border-red-500/40 py-3.5 text-center text-sm font-semibold text-red-400 transition hover:bg-red-500/10"
+        @click="logout"
+      >
         {{ t('settings.logout') }}
       </button>
+
+      <p class="pb-2 text-center text-xs text-gray-600">{{ t('settings.version') }}</p>
     </div>
   </div>
 </template>

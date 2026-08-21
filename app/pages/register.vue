@@ -61,11 +61,11 @@ async function submit() {
       <AuthSessionNotice world="client" />
       <p class="mb-4 text-sm text-gray-400">{{ t('auth.registerHint') }}</p>
       <form class="space-y-4" @submit.prevent="submit">
-        <input v-model="form.name" type="text" class="input-field" :placeholder="t('settings.name')" required>
-        <input v-model="form.email" type="email" class="input-field" :placeholder="t('auth.email')" required>
-        <input v-model="form.password" type="password" class="input-field" :placeholder="t('auth.password')" minlength="8" required>
+        <input v-model="form.name" type="text" name="name" autocomplete="name" class="input-field" :placeholder="t('settings.name')" required>
+        <input v-model="form.email" type="email" name="email" autocomplete="email" class="input-field" :placeholder="t('auth.email')" required>
+        <input v-model="form.password" type="password" name="new-password" autocomplete="new-password" class="input-field" :placeholder="t('auth.password')" minlength="8" required>
         <label class="flex cursor-pointer items-start gap-3 rounded-xl border border-white/10 p-3">
-          <input v-model="termsAccepted" type="checkbox" class="mt-1 h-4 w-4 rounded border-gray-500" required>
+          <input v-model="termsAccepted" type="checkbox" class="input-check" required>
           <span class="text-sm text-gray-300">
             {{ t('auth.termsPrefix') }}
             <NuxtLink to="/terms" class="text-brand-400 hover:underline">{{ t('auth.termsLink') }}</NuxtLink>
@@ -88,7 +88,7 @@ async function submit() {
         >
           {{ t('auth.loginBtn') }}
         </NuxtLink>
-        <button type="submit" class="btn-primary-solid w-full" :disabled="loading || !termsAccepted">
+        <button type="submit" class="btn-primary-solid w-full" :disabled="loading">
           {{ loading ? t('auth.registering') : t('auth.registerBtn') }}
         </button>
       </form>

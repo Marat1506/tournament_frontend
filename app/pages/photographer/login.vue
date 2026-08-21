@@ -26,6 +26,15 @@ async function submit() {
   loading.value = true
   try {
     const resp = await api.login({ email: email.value, password: password.value })
+    if (resp.user.role === 'admin') {
+      auth.setSession({
+        access_token: resp.access_token!,
+        refresh_token: resp.refresh_token!,
+        user: resp.user,
+      })
+      await router.push('/admin')
+      return
+    }
     if (resp.user.role !== 'photographer') {
       error.value = t('photographer.wrongRole')
       showClientLink.value = true

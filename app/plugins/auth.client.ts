@@ -5,8 +5,14 @@ export default defineNuxtPlugin(() => {
   useFaceSearchStore().hydrate()
   useFavoritesStore().load()
 
+  if (import.meta.client) {
+    window.addEventListener('pageshow', () => {
+      auth.hydrate()
+    })
+  }
+
   onNuxtReady(async () => {
-    await auth.ensureFresh()
+    await auth.restoreSession()
     if (!auth.accessToken) return
     const api = useApi()
     const route = useRoute()

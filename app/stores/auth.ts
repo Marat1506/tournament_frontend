@@ -6,6 +6,7 @@ const REFRESH_KEY = 'bjj_refresh_token'
 const USER_KEY = 'bjj_user'
 
 let refreshInFlight: Promise<boolean> | null = null
+let cookieRestoreAttempted = false
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref<User | null>(null)
@@ -63,7 +64,7 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  function logout() {
+  function clearLocalSession() {
     user.value = null
     accessToken.value = ''
     refreshToken.value = ''
@@ -71,6 +72,24 @@ export const useAuthStore = defineStore('auth', () => {
     persistUser()
     if (import.meta.client) {
       useFavoritesStore().synced = false
+    }
+  }
+
+  async function logout() {
+    const currentRefresh = refreshToken.value
+    clearLocalSession()
+    cookieRestoreAttempted = true
+    if (!import.meta.client) return
+    try {
+      const config = useRuntimeConfig()
+      await $fetch(`${config.public.apiBase}/api/v1/auth/logout`, {
+        method: 'POST',
+        body: currentRefresh ? { refresh_token: currentRefresh } : {},
+        credentials: 'include',
+      })
+    }
+    catch {
+      // Local session is already cleared.
     }
   }
 
@@ -91,7 +110,6 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function refreshSession(): Promise<boolean> {
     hydrate()
-    if (!refreshToken.value) return false
     if (refreshInFlight) return refreshInFlight
 
     const currentRefresh = refreshToken.value
@@ -101,14 +119,17 @@ export const useAuthStore = defineStore('auth', () => {
         const base = import.meta.server ? config.apiBase : config.public.apiBase
         const data = await $fetch<AuthResponse>(`${base}/api/v1/auth/refresh`, {
           method: 'POST',
-          body: { refresh_token: currentRefresh },
+          body: currentRefresh ? { refresh_token: currentRefresh } : {},
+          credentials: 'include',
         })
+        if (!data.access_token || !data.refresh_token) return false
         setSession(data)
+        cookieRestoreAttempted = false
         return true
       }
       catch (e: unknown) {
         if (httpStatus(e) === 401) {
-          logout()
+          clearLocalSession()
         }
         return false
       }
@@ -119,14 +140,19 @@ export const useAuthStore = defineStore('auth', () => {
     return refreshInFlight
   }
 
+  async function restoreSession(): Promise<boolean> {
+    hydrate()
+    if (isAccessTokenFresh(accessToken.value)) return true
+    if (refreshToken.value) return refreshSession()
+    if (cookieRestoreAttempted) return false
+    cookieRestoreAttempted = true
+    return refreshSession()
+  }
+
   async function ensureFresh(): Promise<boolean> {
     hydrate()
     if (!accessToken.value && !refreshToken.value) return true
     if (isAccessTokenFresh(accessToken.value)) return true
-    if (!refreshToken.value) {
-      logout()
-      return false
-    }
     return refreshSession()
   }
 
@@ -141,6 +167,6 @@ export const useAuthStore = defineStore('auth', () => {
   return {
     user, accessToken, refreshToken, setSession, setUser, logout,
     isLoggedIn, isPhotographer, isApprovedPhotographer, isAdmin, isEmailVerified,
-    hydrate, ensureFresh, refreshSession,
+    hydrate, ensureFresh, restoreSession, refreshSession,
   }
 })

@@ -66,11 +66,21 @@ async function save() {
 
 <template>
   <div>
-    <AppPageHeader :title="t('photographer.settingsTitle')">
+    <AppPageHeader :title="t('photographer.tabEdit')">
       <template #left>
         <NuxtLink :to="`/photographer/tournaments/${id}`" class="flex h-10 w-10 items-center justify-center rounded-full hover:bg-white/10">
           <AppIcon name="back" class="h-5 w-5" />
         </NuxtLink>
+      </template>
+      <template #right>
+        <button
+          type="button"
+          class="rounded-full bg-brand-600 px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-50"
+          :disabled="saving"
+          @click="save"
+        >
+          {{ saving ? t('settings.saving') : t('common.save') }}
+        </button>
       </template>
     </AppPageHeader>
 
@@ -83,13 +93,42 @@ async function save() {
     </div>
 
     <div v-else class="page-container max-w-lg space-y-4">
+      <PhotographerEventTabs :id="id" active="edit" />
+
+      <div class="card flex gap-3 p-3">
+        <div class="h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-white/5">
+          <AppImage :src="tournament.cover_image" :alt="tournament.name" aspect="square" />
+        </div>
+        <div class="min-w-0 flex-1">
+          <div class="font-semibold">{{ tournament.name }}</div>
+          <span
+            class="mt-2 inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium"
+            :class="tournament.status === 'published' ? 'bg-green-500/20 text-green-300' : 'bg-white/10 text-gray-400'"
+          >
+            {{ tournament.status === 'published' ? t('photographer.statusPublished') : t('photographer.statusDraft') }}
+          </span>
+        </div>
+      </div>
+
       <p class="text-sm text-gray-400">{{ t('photographer.settingsHint') }}</p>
 
       <form class="card space-y-4 p-4" @submit.prevent="save">
-        <input v-model="form.name" class="input-field" :placeholder="`${t('photographer.tournamentName')} *`" required>
-        <input v-model="form.date" type="date" class="input-field">
-        <input v-model="form.location" class="input-field" :placeholder="t('photographer.tournamentLocation')">
-        <input v-model="form.organizer" class="input-field" :placeholder="t('photographer.organizer')">
+        <label class="block text-sm">
+          <span class="text-gray-400">{{ t('photographer.tournamentName') }}</span>
+          <input v-model="form.name" class="input-field mt-1" required>
+        </label>
+        <label class="block text-sm">
+          <span class="text-gray-400">{{ t('photographer.tournamentDate') }}</span>
+          <input v-model="form.date" type="date" class="input-field mt-1">
+        </label>
+        <label class="block text-sm">
+          <span class="text-gray-400">{{ t('photographer.tournamentLocation') }}</span>
+          <input v-model="form.location" class="input-field mt-1">
+        </label>
+        <label class="block text-sm">
+          <span class="text-gray-400">{{ t('photographer.organizer') }}</span>
+          <input v-model="form.organizer" class="input-field mt-1">
+        </label>
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="mb-1 block text-xs text-gray-500">{{ t('photographer.priceSingle') }}</label>
@@ -107,6 +146,16 @@ async function save() {
           {{ saving ? t('settings.saving') : t('common.save') }}
         </button>
       </form>
+
+      <NuxtLink :to="`/photographer/tournaments/${id}/photos`" class="cabinet-row">
+        <div class="icon-tile">
+          <AppIcon name="photos" class="h-5 w-5" />
+        </div>
+        <div class="min-w-0 flex-1">
+          <div class="font-semibold">{{ t('photographer.tagPhotos') }}</div>
+        </div>
+        <AppIcon name="chevron" class="h-5 w-5 text-gray-500" />
+      </NuxtLink>
     </div>
   </div>
 </template>
