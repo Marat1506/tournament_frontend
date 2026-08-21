@@ -8,7 +8,7 @@ defineProps<{
 <template>
   <ClientOnly>
     <svg
-      :class="class"
+      :class="['block shrink-0', class]"
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 24 24"
       fill="none"

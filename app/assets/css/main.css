@@ -50,11 +50,11 @@
   }
 
   .btn-primary-solid {
-    @apply flex min-h-[50px] w-full items-center justify-center gap-2 rounded-xl bg-brand-500 px-4 text-base font-semibold text-white shadow-[0_8px_20px_rgba(123,97,255,0.25)] transition duration-150 hover:bg-brand-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 focus-visible:ring-offset-2 focus-visible:ring-offset-page active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none disabled:active:scale-100;
+    @apply flex min-h-[50px] w-full items-center justify-center gap-2 rounded-xl bg-brand-500 px-4 text-base font-semibold leading-none text-white shadow-[0_8px_20px_rgba(123,97,255,0.25)] transition duration-150 hover:bg-brand-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 focus-visible:ring-offset-2 focus-visible:ring-offset-page active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none disabled:active:scale-100;
   }
 
   .btn-ghost-brand {
-    @apply flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl bg-transparent px-4 text-base font-semibold text-white ring-1 ring-brand-500/80 transition duration-150 hover:bg-brand-500/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100;
+    @apply flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl bg-transparent px-4 text-base font-semibold leading-none text-white ring-1 ring-brand-500/80 transition duration-150 hover:bg-brand-500/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100;
   }
 
   .home-step-card {
